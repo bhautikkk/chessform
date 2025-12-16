@@ -34,9 +34,9 @@ document.addEventListener('DOMContentLoaded', () => {
             window.history.replaceState({}, document.title, window.location.pathname);
 
             // Hide after 3 seconds
-            setTimeout(() => {
-                successOverlay.classList.remove('active');
-            }, 4000);
+            // setTimeout(() => {
+            //     successOverlay.classList.remove('active');
+            // }, 4000);
         }
     }
 });
