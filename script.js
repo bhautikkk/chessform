@@ -1,4 +1,24 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // ==========================================
+    // CONFIGURATION
+    // Change true to false to CLOSE registration
+    // Change false to true to OPEN registration
+    // ==========================================
+    const isRegistrationOpen = false;
+    // ==========================================
+
+    const form = document.getElementById('chessForm');
+    const closedMessage = document.getElementById('closedMessage');
+
+    if (!isRegistrationOpen) {
+        if (form) form.style.display = 'none';
+        if (closedMessage) {
+            closedMessage.style.display = 'block';
+            closedMessage.style.animation = 'slideUpFade 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards';
+        }
+        return; // Stop further script execution
+    }
+
     // Add staggered animation delay to form groups
     const formGroups = document.querySelectorAll('.form-group');
     formGroups.forEach((group, index) => {
@@ -33,10 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Optional: Clean up the URL
             window.history.replaceState({}, document.title, window.location.pathname);
 
-            // Hide after 3 seconds
-            // setTimeout(() => {
-            //     successOverlay.classList.remove('active');
-            // }, 4000);
+            // Manual close is now required via button, so we don't auto-close
         }
     }
 });
