@@ -22,4 +22,21 @@ document.addEventListener('DOMContentLoaded', () => {
             input.parentElement.parentElement.classList.remove('focused');
         });
     });
+
+    // Check for success query parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('success') === 'true') {
+        const successOverlay = document.querySelector('.success-overlay');
+        if (successOverlay) {
+            successOverlay.classList.add('active');
+
+            // Optional: Clean up the URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+
+            // Hide after 3 seconds
+            setTimeout(() => {
+                successOverlay.classList.remove('active');
+            }, 4000);
+        }
+    }
 });
