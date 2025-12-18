@@ -33,7 +33,7 @@
         <div class="form-card">
             <div class="header">
                 <h1>Player Registration</h1>
-                <p>Join the elite chess community</p>
+                <p>Join the neon chess community</p>
             </div>
 
             <div id="closedMessage" style="display: none; text-align: center; padding: 20px;">
@@ -43,12 +43,19 @@
                 </p>
             </div>
 
+            <div id="alreadyRegisteredMessage" style="display: none; text-align: center; padding: 20px;">
+                <i class="fas fa-check-circle" style="font-size: 3rem; color: #4ade80; margin-bottom: 20px;"></i>
+                <h2>Already Registered</h2>
+                <p style="color: var(--text-muted); margin-top: 10px;">You have already submitted your registration.
+                </p>
+            </div>
+
             <form id="chessForm" action="https://formsubmit.co/hrr26400@gmail.com" method="POST">
                 <!-- Disable Captcha (optional) -->
                 <input type="hidden" name="_captcha" value="false">
                 <input type="hidden" name="_template" value="table">
-                <!-- Redirect back to the site after submission -->
-                <input type="hidden" name="_next" value="https://bhautikkk.github.io/chessform/?success=true">
+                <!-- Redirect back to the site after submission (set dynamically in script.js) -->
+                <input type="hidden" name="_next" id="nextRedirect" value="">
 
                 <div class="form-group">
                     <label for="name">Full Name</label>
