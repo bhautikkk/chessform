@@ -79,8 +79,10 @@
                     <label for="rating">Current Chess Rating</label>
                     <div class="input-wrapper">
                         <i class="fas fa-chart-line"></i>
-                        <input type="number" id="rating" name="rating" class="form-control" placeholder="2800" min="100"
-                            max="4000" reuqired>
+                        <input type="number" id="rating" name="rating" class="form-control" placeholder="2400" min="100"
+                            max="2500"
+                            oninput="if(this.value.length > 4) this.value = this.value.slice(0, 4); if(this.value > 2500) this.value = 2500;"
+                            required>
                     </div>
                 </div>
 
