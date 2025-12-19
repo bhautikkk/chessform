@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Change false to true to OPEN registration
     // ==========================================
     const isRegistrationOpen = false;
-    const eventId = 'event_2025_01'; // CHANGE THIS FOR NEW EVENTS
+    const eventId = 'event_test_reset_01'; // CHANGE THIS FOR NEW EVENTS
     // ==========================================
 
     const form = document.getElementById('chessForm');
