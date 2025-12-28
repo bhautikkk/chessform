@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Change true to false to CLOSE registration
     // Change false to true to OPEN registration
     // ==========================================
-    const isRegistrationOpen = true;
+    const isRegistrationOpen = false;
     const eventId = 'event_test_reset_01.004'; // CHANGE THIS FOR NEW EVENTS
     // ==========================================
 
