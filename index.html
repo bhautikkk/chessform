@@ -11,6 +11,12 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Font Awesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script type="text/javascript">
+        (function () {
+            emailjs.init("RigOHkJ8jBL9S7079");
+        })();
+    </script>
     <link rel="stylesheet" href="style.css">
 </head>
 
@@ -67,6 +73,19 @@
                 </div>
 
                 <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-envelope"></i>
+                        <input type="email" id="email" name="email" class="form-control"
+                            placeholder="magnus@example.com" required autocomplete="email">
+                    </div>
+                </div>
+
+                <input type="hidden" name="_subject" value="New Chess Registration">
+                <input type="hidden" name="_autoresponse"
+                    value="Thank you for registering for the Chess Bird community! We are excited to have you on board.">
+
+                <div class="form-group">
                     <label for="phone">Phone Number</label>
                     <div class="input-wrapper">
                         <i class="fas fa-phone"></i>
@@ -100,16 +119,11 @@
                 </button>
             </form>
 
-            <div class="whatsapp-link-container">
-                <p>Stay updated with our community</p>
-                <a href="https://chat.whatsapp.com/HEdNgxODxpLC5OeQvSsxXN" target="_blank" class="whatsapp-btn">
-                    <i class="fab fa-whatsapp"></i> Join WhatsApp Group
-                </a>
-            </div>
+
         </div>
     </div>
 
-    <script src="script.js?v=2"></script>
+    <script src="script.js?v=3"></script>
 </body>
 
 </html>

@@ -4,8 +4,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Change true to false to CLOSE registration
     // Change false to true to OPEN registration
     // ==========================================
-    const isRegistrationOpen = false;
-    const eventId = 'event_test_reset_01.07'; // CHANGE THIS FOR NEW EVENTS
+    const isRegistrationOpen = true;
+    const eventId = 'event_test_reset_01.004'; // CHANGE THIS FOR NEW EVENTS
     // ==========================================
 
     const form = document.getElementById('chessForm');
@@ -65,13 +65,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Prevent double submission and show loading state
     if (form) {
-        form.addEventListener('submit', function () {
+        form.addEventListener('submit', function (e) {
+            // No e.preventDefault() because we want FormSubmit to handle the data storage
+            // But we need to intercept to send EmailJS
+
             const btn = this.querySelector('.submit-btn');
             if (btn) {
                 btn.innerHTML = '<span>Submitting...</span> <i class="fas fa-spinner fa-spin"></i>';
                 btn.style.opacity = '0.8';
                 btn.style.pointerEvents = 'none';
             }
+
+            // Send EmailJS
+            const serviceID = 'service_nfjpyi6';
+            const templateID = 'template_q1boq13';
+
+            emailjs.sendForm(serviceID, templateID, this)
+                .then(() => {
+                    console.log('Email sent successfully!');
+                }, (err) => {
+                    console.error('Email sending failed:', err);
+                });
         });
     }
 
