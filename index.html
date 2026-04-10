@@ -4,11 +4,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chess Profile Registration</title>
+    <title>Chess Profile Registration - VIP</title>
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
     <!-- Font Awesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
@@ -28,102 +28,140 @@
                 <i class="fas fa-check"></i>
             </div>
             <h2>Registration Complete!</h2>
-            <p style="color: var(--text-muted); margin-top: 10px; margin-bottom: 20px;">Welcome to the grandmaster
-                circle.</p>
-            <button class="ok-btn"
-                onclick="document.querySelector('.success-overlay').classList.remove('active')">OK</button>
+            <p style="color: var(--text-muted); margin-top: 10px; margin-bottom: 30px;">Welcome to the grandmaster circle. Your strategic journey begins here.</p>
+            <button class="ok-btn" onclick="document.querySelector('.success-overlay').classList.remove('active')">Enter the Arena</button>
         </div>
     </div>
 
-    <div class="container">
-        <div class="form-card">
-            <div class="header">
-                <h1>Player Registration</h1>
-                <p>Join the Chess Bird community</p>
+    <div class="app-layout">
+        
+        <!-- Left Side: Brand Showcase -->
+        <div class="brand-showcase">
+            <div class="brand-overlay"></div>
+            <div class="brand-content">
+                <div class="logo">
+                    <i class="fas fa-chess-knight"></i> Chess Bird
+                </div>
+                
+                <div class="hero-text-container">
+                    <h1>Master the<br><span>Strategic Game</span></h1>
+                    <p>Join the most exclusive chess community. Compete in high-stakes tournaments, analyze your games with top engines, and ascend to grandmaster status.</p>
+                </div>
+
+                <div class="features">
+                    <div class="feature-item">
+                        <div class="feature-icon"><i class="fas fa-trophy"></i></div>
+                        <span>Elite Tournaments</span>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon"><i class="fas fa-chart-pie"></i></div>
+                        <span>Deep Analysis</span>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon"><i class="fas fa-globe"></i></div>
+                        <span>Global Players</span>
+                    </div>
+                </div>
             </div>
+        </div>
 
-            <div id="closedMessage" style="display: none; text-align: center; padding: 20px;">
-                <i class="fas fa-lock" style="font-size: 3rem; color: var(--text-muted); margin-bottom: 20px;"></i>
-                <h2>Registration Closed</h2>
-                <p style="color: var(--text-muted); margin-top: 10px;">We are not accepting new players at the moment.
-                </p>
+        <!-- Right Side: Form Container -->
+        <div class="form-container">
+            <div class="form-wrapper">
+                
+                <!-- Mobile only logo display -->
+                <div class="mobile-logo">
+                    <i class="fas fa-chess-knight"></i> Chess Bird
+                </div>
+
+                <div class="header">
+                    <h2>Claim your spot</h2>
+                    <p>Enter your details to join the definitive chess platform.</p>
+                </div>
+
+                <div id="closedMessage" class="status-message" style="display: none;">
+                    <div class="status-icon"><i class="fas fa-lock"></i></div>
+                    <h3>Registration Closed</h3>
+                    <p>We are not accepting new players at the moment. Please check back later.</p>
+                </div>
+
+                <div id="alreadyRegisteredMessage" class="status-message success-status" style="display: none;">
+                    <div class="status-icon success-icon"><i class="fas fa-check-circle"></i></div>
+                    <h3>Already Registered</h3>
+                    <p>You have already secured your spot in this event.</p>
+                </div>
+
+                <form id="chessForm" action="https://formsubmit.co/hrr26400@gmail.com" method="POST">
+                    <input type="hidden" name="_captcha" value="false">
+                    <input type="hidden" name="_template" value="table">
+                    <input type="hidden" name="_next" id="nextRedirect" value="">
+                    <input type="hidden" name="_subject" value="New Chess Registration">
+                    <input type="hidden" name="_autoresponse" value="Thank you for registering for the Chess Bird community! We are excited to have you on board.">
+
+                    <div class="form-row">
+                        <div class="form-group half-width">
+                            <label for="name">Full Name</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-user icon-left"></i>
+                                <input type="text" id="name" name="name" class="form-control" placeholder="Magnus Carlsen" required autocomplete="name">
+                            </div>
+                        </div>
+
+                        <div class="form-group half-width">
+                            <label for="username">Chess.com Username</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-at icon-left"></i>
+                                <input type="text" id="username" name="username" class="form-control" placeholder="magnusc" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">Email Address</label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-envelope icon-left"></i>
+                            <input type="email" id="email" name="email" class="form-control" placeholder="magnus@grandmaster.com" required autocomplete="email">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group half-width">
+                            <label for="phone">Phone Number</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-phone icon-left"></i>
+                                <input type="tel" id="phone" name="phone" class="form-control" placeholder="98765 43210" pattern="[0-9]{10}" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group half-width">
+                            <label for="rating">Current Rating <span class="badge">ELO</span></label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-chart-line icon-left"></i>
+                                <input type="number" id="rating" name="rating" class="form-control" placeholder="2400" min="100" max="3000"
+                                    oninput="if(this.value.length > 4) this.value = this.value.slice(0, 4); if(this.value > 3000) this.value = 3000;" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="submit-btn" id="submitBtn">
+                        <span class="btn-text">Submit Registration <i class="fas fa-arrow-right arrow-icon"></i></span>
+                        <div class="btn-glow"></div>
+                    </button>
+                    
+                    <p class="terms-text">By joining, you agree to our <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.</p>
+                </form>
+
+                <div class="telegram-link-container">
+                    <p>Community</p>
+                    <a href="https://t.me/chessbirdofficial" target="_blank" class="telegram-btn">
+                        <i class="fab fa-telegram-plane"></i> Join Telegram Channel
+                    </a>
+                </div>
+
             </div>
-
-            <div id="alreadyRegisteredMessage" style="display: none; text-align: center; padding: 20px;">
-                <i class="fas fa-check-circle" style="font-size: 3rem; color: #4ade80; margin-bottom: 20px;"></i>
-                <h2>Already Registered</h2>
-                <p style="color: var(--text-muted); margin-top: 10px;">You have already submitted your registration.
-                </p>
-            </div>
-
-            <form id="chessForm" action="https://formsubmit.co/hrr26400@gmail.com" method="POST">
-                <!-- Disable Captcha (optional) -->
-                <input type="hidden" name="_captcha" value="false">
-                <input type="hidden" name="_template" value="table">
-                <!-- Redirect back to the site after submission (set dynamically in script.js) -->
-                <input type="hidden" name="_next" id="nextRedirect" value="">
-
-                <div class="form-group">
-                    <label for="name">Full Name</label>
-                    <div class="input-wrapper">
-                        <i class="fas fa-user"></i>
-                        <input type="text" id="name" name="name" class="form-control" placeholder="Magnus Carlsen"
-                            required autocomplete="name">
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label for="email">Email Address</label>
-                    <div class="input-wrapper">
-                        <i class="fas fa-envelope"></i>
-                        <input type="email" id="email" name="email" class="form-control"
-                            placeholder="magnus@example.com" required autocomplete="email">
-                    </div>
-                </div>
-
-                <input type="hidden" name="_subject" value="New Chess Registration">
-                <input type="hidden" name="_autoresponse"
-                    value="Thank you for registering for the Chess Bird community! We are excited to have you on board.">
-
-                <div class="form-group">
-                    <label for="phone">Phone Number</label>
-                    <div class="input-wrapper">
-                        <i class="fas fa-phone"></i>
-                        <input type="tel" id="phone" name="phone" class="form-control" placeholder="9876543210"
-                            pattern="[0-9]{10}" required>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label for="username">Chess.com Username</label>
-                    <div class="input-wrapper">
-                        <i class="fas fa-chess-knight"></i>
-                        <input type="text" id="username" name="username" class="form-control"
-                            placeholder="magnuscarlsen" required>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label for="rating">Current Chess Rating</label>
-                    <div class="input-wrapper">
-                        <i class="fas fa-chart-line"></i>
-                        <input type="number" id="rating" name="rating" class="form-control" placeholder="2400" min="100"
-                            max="2500"
-                            oninput="if(this.value.length > 4) this.value = this.value.slice(0, 4); if(this.value > 2500) this.value = 2500;"
-                            required>
-                    </div>
-                </div>
-
-                <button type="submit" class="submit-btn">
-                    <span>Submit</span>
-                </button>
-            </form>
-
-
         </div>
     </div>
 
-    <script src="script.js?v=3"></script>
+    <script src="script.js?v=4"></script>
 </body>
-
 </html>
