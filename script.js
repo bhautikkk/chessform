@@ -96,6 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 })
                 .catch((err) => {
                     console.error('Email sending failed:', err);
+                    alert("EmailJS kaam nahi kar raha kyuki:\n\n" + JSON.stringify(err) + "\n\n(Aap iska photo khinch ke chat me bhej dein)");
                 })
                 .finally(() => {
                     // Safe fallback to FormSubmit via AJAX
