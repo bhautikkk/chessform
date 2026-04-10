@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Change false to true to OPEN registration
     // ==========================================
     const isRegistrationOpen = true;
-    const eventId = 'event_test_reset_0'; // CHANGE THIS FOR NEW EVENTS
+    const eventId = 'event_test_reset_04'; // CHANGE THIS FOR NEW EVENTS
     // ==========================================
 
     const form = document.getElementById('chessForm');
@@ -79,7 +79,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Send EmailJS
             const serviceID = 'service_nfjpyi6';
-            const templateID = 'asd1f08'; // Changed to match the user's new Auto-Reply template id
+            const templateID = 'template_udal0hk';
 
             const templateParams = {
                 name: document.getElementById('name').value,
