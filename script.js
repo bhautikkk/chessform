@@ -84,13 +84,45 @@ document.addEventListener('DOMContentLoaded', () => {
             emailjs.sendForm(serviceID, templateID, this)
                 .then(() => {
                     console.log('Email sent successfully!');
-                    // Now safely submit the form to FormSubmit for data storage
-                    form.submit();
                 })
                 .catch((err) => {
                     console.error('Email sending failed:', err);
-                    // Force submit even if email fails so registration isn't lost
-                    form.submit();
+                })
+                .finally(() => {
+                    // Safe fallback to FormSubmit via AJAX
+                    const formData = new FormData(form);
+                    fetch('https://formsubmit.co/ajax/hrr26400@gmail.com', {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'Accept': 'application/json'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('FormSubmit Data stored:', data);
+                        // Show success overlay without reload
+                        localStorage.setItem(eventId, 'true');
+                        form.style.display = 'none';
+                        if (alreadyRegisteredMessage) {
+                            alreadyRegisteredMessage.style.display = 'block';
+                            alreadyRegisteredMessage.style.animation = 'slideUpFade 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards';
+                        }
+                        const successOverlay = document.querySelector('.success-overlay');
+                        if (successOverlay) {
+                            successOverlay.classList.add('active');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('FormSubmit error:', error);
+                        alert('Something went wrong. Please try again.');
+                        // Reset button
+                        if (btn) {
+                            btn.innerHTML = '<span class="btn-text">Submit Registration <i class="fas fa-arrow-right arrow-icon"></i></span><div class="btn-glow"></div>';
+                            btn.style.opacity = '1';
+                            btn.style.pointerEvents = 'all';
+                        }
+                    });
                 });
         });
     }
