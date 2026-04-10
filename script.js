@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Change false to true to OPEN registration
     // ==========================================
     const isRegistrationOpen = true;
-    const eventId = 'event_test_reset_01.007'; // CHANGE THIS FOR NEW EVENTS
+    const eventId = 'event_test_reset_0'; // CHANGE THIS FOR NEW EVENTS
     // ==========================================
 
     const form = document.getElementById('chessForm');
@@ -79,11 +79,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Send EmailJS
             const serviceID = 'service_nfjpyi6';
-            const templateID = 'template_udal0hk';
+            const templateID = 'asd1f08'; // Changed to match the user's new Auto-Reply template id
 
-            emailjs.sendForm(serviceID, templateID, this)
-                .then(() => {
-                    console.log('Email sent successfully!');
+            const templateParams = {
+                name: document.getElementById('name').value,
+                username: document.getElementById('username').value,
+                email: document.getElementById('email').value,
+                user_email: document.getElementById('email').value,
+                phone: document.getElementById('phone').value,
+                rating: document.getElementById('rating').value
+            };
+
+            emailjs.send(serviceID, templateID, templateParams)
+                .then((response) => {
+                    console.log('Email sent successfully!', response.status, response.text);
                 })
                 .catch((err) => {
                     console.error('Email sending failed:', err);
@@ -98,31 +107,31 @@ document.addEventListener('DOMContentLoaded', () => {
                             'Accept': 'application/json'
                         }
                     })
-                    .then(response => response.json())
-                    .then(data => {
-                        console.log('FormSubmit Data stored:', data);
-                        // Show success overlay without reload
-                        localStorage.setItem(eventId, 'true');
-                        form.style.display = 'none';
-                        if (alreadyRegisteredMessage) {
-                            alreadyRegisteredMessage.style.display = 'block';
-                            alreadyRegisteredMessage.style.animation = 'slideUpFade 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards';
-                        }
-                        const successOverlay = document.querySelector('.success-overlay');
-                        if (successOverlay) {
-                            successOverlay.classList.add('active');
-                        }
-                    })
-                    .catch(error => {
-                        console.error('FormSubmit error:', error);
-                        alert('Something went wrong. Please try again.');
-                        // Reset button
-                        if (btn) {
-                            btn.innerHTML = '<span class="btn-text">Submit Registration <i class="fas fa-arrow-right arrow-icon"></i></span><div class="btn-glow"></div>';
-                            btn.style.opacity = '1';
-                            btn.style.pointerEvents = 'all';
-                        }
-                    });
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log('FormSubmit Data stored:', data);
+                            // Show success overlay without reload
+                            localStorage.setItem(eventId, 'true');
+                            form.style.display = 'none';
+                            if (alreadyRegisteredMessage) {
+                                alreadyRegisteredMessage.style.display = 'block';
+                                alreadyRegisteredMessage.style.animation = 'slideUpFade 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards';
+                            }
+                            const successOverlay = document.querySelector('.success-overlay');
+                            if (successOverlay) {
+                                successOverlay.classList.add('active');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('FormSubmit error:', error);
+                            alert('Something went wrong. Please try again.');
+                            // Reset button
+                            if (btn) {
+                                btn.innerHTML = '<span class="btn-text">Submit Registration <i class="fas fa-arrow-right arrow-icon"></i></span><div class="btn-glow"></div>';
+                                btn.style.opacity = '1';
+                                btn.style.pointerEvents = 'all';
+                            }
+                        });
                 });
         });
     }
