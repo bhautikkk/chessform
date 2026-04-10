@@ -63,15 +63,16 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Prevent double submission and show loading state
+    // Prevent double submission and ensure EmailJS sends before redirecting
     if (form) {
         form.addEventListener('submit', function (e) {
-            // No e.preventDefault() because we want FormSubmit to handle the data storage
-            // But we need to intercept to send EmailJS
+            // Prevent default to stop browser from redirecting before EmailJS finishes
+            e.preventDefault();
 
             const btn = this.querySelector('.submit-btn');
             if (btn) {
-                btn.innerHTML = '<span>Submitting...</span> <i class="fas fa-spinner fa-spin"></i>';
+                // Keep the button text formatting intact
+                btn.innerHTML = '<span class="btn-text">Submitting... <i class="fas fa-spinner fa-spin"></i></span><div class="btn-glow"></div>';
                 btn.style.opacity = '0.8';
                 btn.style.pointerEvents = 'none';
             }
@@ -83,8 +84,13 @@ document.addEventListener('DOMContentLoaded', () => {
             emailjs.sendForm(serviceID, templateID, this)
                 .then(() => {
                     console.log('Email sent successfully!');
-                }, (err) => {
+                    // Now safely submit the form to FormSubmit for data storage
+                    form.submit();
+                })
+                .catch((err) => {
                     console.error('Email sending failed:', err);
+                    // Force submit even if email fails so registration isn't lost
+                    form.submit();
                 });
         });
     }
