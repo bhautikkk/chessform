@@ -1,11 +1,11 @@
-document.addEventListener('DOMContentLoaded', () => {
+function initRegistrationApp() {
     // ==========================================
     // CONFIGURATION
     // Change true to false to CLOSE registration
     // Change false to true to OPEN registration
     // ==========================================
     const isRegistrationOpen = true;
-    const eventId = 'event_test_reset_04'; // CHANGE THIS FOR NEW EVENTS
+    const eventId = 'event_test_reset_05'; // CHANGE THIS FOR NEW EVENTS
     // ==========================================
 
     const form = document.getElementById('chessForm');
@@ -161,4 +161,10 @@ document.addEventListener('DOMContentLoaded', () => {
             // Manual close is now required via button, so we don't auto-close
         }
     }
-});
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initRegistrationApp);
+} else {
+    initRegistrationApp();
+}
