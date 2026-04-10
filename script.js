@@ -79,7 +79,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Send EmailJS
             const serviceID = 'service_nfjpyi6';
-            const templateID = 'template_q1boq13';
+            const templateID = 'template_udal0hk';
 
             emailjs.sendForm(serviceID, templateID, this)
                 .then(() => {
