@@ -95,43 +95,59 @@
         
         .card {
             width: 92%;
-            min-width: 320px;
             max-width: 380px;
             background: #ffffff;
             border-radius: 16px;
             padding: 24px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.06);
-            border: 1px solid #e5e7eb;
+            box-shadow: 
+                0 6px 16px rgba(0,0,0,0.04),
+                0 2px 6px rgba(0,0,0,0.03);
+            border: 1px solid #e8edf3;
+            position: relative;
             box-sizing: border-box;
         }
 
+        /* Accent */
+        .card::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 4px;
+            height: 100%;
+            border-radius: 16px 0 0 16px;
+            background: linear-gradient(#22c55e, #16a34a);
+        }
+
+        /* Header */
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 18px;
+            margin-bottom: 22px;
         }
 
-        .logo { font-weight: 600; font-size: 15px; color: #111827; }
-        .status { font-size: 11px; padding: 4px 10px; border-radius: 999px; background: #ecfdf5; color: #16a34a; font-weight: 500; }
+        .logo { font-size: 15px; font-weight: 600; color: #111827; letter-spacing: 0.2px; }
+        .status { font-size: 11px; padding: 4px 10px; border-radius: 999px; background: #ecfdf5; color: #15803d; font-weight: 500; }
 
-        .realname { font-size: 22px; font-weight: 600; color: #111827; }
-        .username { font-size: 13px; color: #6b7280; margin-top: 2px; }
+        /* Identity Block */
+        .identity { margin-bottom: 6px; }
+        .realname { font-size: 23px; font-weight: 600; color: #111827; letter-spacing: -0.2px; }
+        .username { font-size: 13px; color: #6b7280; margin-top: 3px; }
 
-        .divider { height: 1px; background: #e5e7eb; margin: 18px 0; }
+        .divider { height: 1px; background: #eef2f7; margin: 20px 0; }
 
-        .warning {
-            margin-top: 10px;
-            padding: 14px;
-            border-radius: 10px;
-            background: #fef2f2;
-            color: #dc2626;
-            font-size: 12.5px;
-            line-height: 1.6;
-            border: 1px solid #fecaca;
+        /* Notice Box */
+        .notice {
+            background: #fff7ed;
+            border: 1px solid #fed7aa;
+            border-radius: 12px;
+            padding: 16px;
         }
+        .notice-title { font-size: 12px; font-weight: 600; color: #9a3412; margin-bottom: 8px; letter-spacing: 0.2px; }
+        .notice-text { font-size: 13px; color: #7c2d12; line-height: 1.6; }
 
-        .footer { margin-top: 18px; font-size: 11px; color: #9ca3af; text-align: center; }
+        .footer { margin-top: 20px; font-size: 11px; color: #9ca3af; text-align: center; letter-spacing: 0.3px; }
     </style>
 </head>
 <body>
@@ -153,18 +169,23 @@
         
         <div class="card" id="passCard">
             <div class="header">
-                <div class="logo">♟ ChessBird</div>
+                <div class="logo">ChessBird</div>
                 <div class="status">Verified Player</div>
             </div>
 
-            <div class="realname" id="cardName">Player Name</div>
-            <div class="username" id="cardUsername">username123</div>
+            <div class="identity">
+                <div class="realname" id="cardName">Player Name</div>
+                <div class="username" id="cardUsername">username123</div>
+            </div>
 
             <div class="divider"></div>
 
-            <div class="warning">
-                यदि आप समय पर उपस्थित नहीं होते और आपका opponent आता है,
-                तो आपको हार मान लिया जाएगा और opponent अगले round में जाएगा।
+            <div class="notice">
+                <div class="notice-title">Important Notice</div>
+                <div class="notice-text">
+                    यदि आप समय पर उपस्थित नहीं होते और आपका opponent आता है,
+                    तो आपको हार मान लिया जाएगा और opponent अगले round में जाएगा।
+                </div>
             </div>
 
             <div class="footer">
