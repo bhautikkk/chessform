@@ -260,7 +260,7 @@
                 const mins = Math.floor(left / 60000);
                 const secs = Math.floor((left % 60000) / 1000);
 
-                errDiv.innerHTML = `<i>🔒</i> Bahut saare galat attempts! <br><b>${mins}m ${secs}s</b> baad dobara try karo.`;
+                errDiv.innerHTML = `<i>🔒</i> Too many failed attempts! <br>Try again in <b>${mins}m ${secs}s</b>.`;
                 errDiv.style.display = 'block';
                 btn.innerText = `Locked (${mins}:${String(secs).padStart(2,'0')})`;
 
@@ -290,7 +290,7 @@
             } else {
                 saveLockoutData(data);
                 const left = MAX_ATTEMPTS - data.count;
-                showError(`Galat naam ya phone. Sirf <b>${left}</b> attempt${left > 1 ? 's' : ''} baaki hain!`);
+                showError(`Incorrect name or phone. Only <b>${left}</b> attempt${left > 1 ? 's' : ''} remaining!`);
             }
         }
 
