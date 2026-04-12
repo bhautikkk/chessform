@@ -1,0 +1,45 @@
+// ═══════════════════════════════════════════════════════════════
+// ChessBird — Firestore Security Rules
+//
+// YEH RULES FIREBASE CONSOLE ME JAAKE DEPLOY KARNI HAIN:
+//   Firebase Console → Firestore → Rules → Paste → Publish
+// ═══════════════════════════════════════════════════════════════
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── HELPER: Check if the request comes from a logged-in admin ──
+    // Sirf woh log admin hain jo Firebase Auth se login hain.
+    // Agar koi bhi inspect karke ya console se try kare, Firebase
+    // server-side pe reject kar dega kyunki uske paas valid auth token nahi hoga.
+    function isAdmin() {
+      return request.auth != null;
+    }
+
+    // ── REGISTRATIONS COLLECTION ──────────────────────────────────
+    // - Write (create/update): Public users kar sakte hain (form submit ke liye)
+    // REGISTRATIONS: Public write + query (name+phone se pass dhundhna), sirf admin delete kar sakta hai
+    match /registrations/{docId} {
+      allow create: if true;
+      allow update: if true;
+      allow read: if true;      // get-pass ke liye zaroori (name+phone dono chahiye)
+      allow delete: if isAdmin();
+    }
+
+    // ── SETTINGS COLLECTION ──────────────────────────────────────
+    match /settings/{docId} {
+      // "global" doc (isPassEnabled) — public read karein get-pass.html ke liye
+      allow read: if docId == "global";
+      // counter doc — public write karein (Card ID generation ke liye)
+      allow write: if docId == "counter" || isAdmin();
+      // Baki sab settings sirf admin
+      allow write: if isAdmin();
+    }
+
+    // ── DEFAULT: Sab kuch deny ──────────────────────────────────
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

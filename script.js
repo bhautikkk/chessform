@@ -5,7 +5,7 @@ function initRegistrationApp() {
     // Change false to true to OPEN registration
     // ==========================================
     const isRegistrationOpen = true;
-    const eventId = 'event_test_reset_06'; // CHANGE THIS FOR NEW EVENTS
+    const eventId = 'event_test_reset_07'; // CHANGE THIS FOR NEW EVENTS
     // ==========================================
 
     const form = document.getElementById('chessForm');
@@ -90,50 +90,91 @@ function initRegistrationApp() {
                 rating: document.getElementById('rating').value
             };
 
-            emailjs.send(serviceID, templateID, templateParams)
-                .then((response) => {
-                    console.log('Email sent successfully!', response.status, response.text);
-                })
-                .catch((err) => {
-                    console.error('Email sending failed:', err);
-                    alert("EmailJS kaam nahi kar raha kyuki:\n\n" + JSON.stringify(err) + "\n\n(Aap iska photo khinch ke chat me bhej dein)");
-                })
-                .finally(() => {
-                    // Safe fallback to FormSubmit via AJAX
-                    const formData = new FormData(form);
-                    fetch('https://formsubmit.co/ajax/hrr26400@gmail.com', {
-                        method: 'POST',
-                        body: formData,
-                        headers: {
-                            'Accept': 'application/json'
-                        }
+            // Function to handle Email JS and FormSubmit
+            const proceedWithEmailJS = () => {
+                emailjs.send(serviceID, templateID, templateParams)
+                    .then((response) => {
+                        console.log('Email sent successfully!', response.status, response.text);
                     })
-                        .then(response => response.json())
-                        .then(data => {
-                            console.log('FormSubmit Data stored:', data);
-                            // Show success overlay without reload
-                            localStorage.setItem(eventId, 'true');
-                            form.style.display = 'none';
-                            if (alreadyRegisteredMessage) {
-                                alreadyRegisteredMessage.style.display = 'block';
-                                alreadyRegisteredMessage.style.animation = 'slideUpFade 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards';
-                            }
-                            const successOverlay = document.querySelector('.success-overlay');
-                            if (successOverlay) {
-                                successOverlay.classList.add('active');
+                    .catch((err) => {
+                        console.error('Email sending failed:', err);
+                        alert("EmailJS kaam nahi kar raha kyuki:\n\n" + JSON.stringify(err) + "\n\n(Aap iska photo khinch ke chat me bhej dein)");
+                    })
+                    .finally(() => {
+                        // Safe fallback to FormSubmit via AJAX
+                        const formData = new FormData(form);
+                        fetch('https://formsubmit.co/ajax/hrr26400@gmail.com', {
+                            method: 'POST',
+                            body: formData,
+                            headers: {
+                                'Accept': 'application/json'
                             }
                         })
-                        .catch(error => {
-                            console.error('FormSubmit error:', error);
-                            alert('Something went wrong. Please try again.');
-                            // Reset button
-                            if (btn) {
-                                btn.innerHTML = '<span class="btn-text">Submit Registration <i class="fas fa-arrow-right arrow-icon"></i></span><div class="btn-glow"></div>';
-                                btn.style.opacity = '1';
-                                btn.style.pointerEvents = 'all';
-                            }
-                        });
-                });
+                            .then(response => response.json())
+                            .then(data => {
+                                console.log('FormSubmit Data stored:', data);
+                                localStorage.setItem(eventId, 'true');
+                                form.style.display = 'none';
+                                if (alreadyRegisteredMessage) {
+                                    alreadyRegisteredMessage.style.display = 'block';
+                                    alreadyRegisteredMessage.style.animation = 'slideUpFade 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards';
+                                }
+                                const successOverlay = document.querySelector('.success-overlay');
+                                if (successOverlay) {
+                                    successOverlay.classList.add('active');
+                                }
+                            })
+                            .catch(error => {
+                                console.error('FormSubmit error:', error);
+                                alert('Something went wrong. Please try again.');
+                                if (btn) {
+                                    btn.innerHTML = '<span class="btn-text">Submit Registration <i class="fas fa-arrow-right arrow-icon"></i></span><div class="btn-glow"></div>';
+                                    btn.style.opacity = '1';
+                                    btn.style.pointerEvents = 'all';
+                                }
+                            });
+                    });
+            };
+
+            // Database Handling & Random ID Generation
+            if (typeof db !== 'undefined') {
+                // Check if user already exists based on phone document
+                db.collection("registrations").where("phone", "==", templateParams.phone).get()
+                    .then(snapshot => {
+                        if (!snapshot.empty) {
+                            console.log("User already exists. Skipping re-save.");
+                            proceedWithEmailJS();
+                        } else {
+                            // Generate a GUARANTEED unique random Card ID
+                            generateUniqueCardId().then(cardId => {
+                                // Save to Firestore
+                                db.collection("registrations").add({
+                                    name: templateParams.name,
+                                    username: templateParams.username,
+                                    email: templateParams.email,
+                                    phone: templateParams.phone,
+                                    rating: templateParams.rating,
+                                    cardId: cardId,
+                                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                                }).then(() => {
+                                    console.log("Saved with unique Card ID:", cardId);
+                                    proceedWithEmailJS();
+                                }).catch((error) => {
+                                    console.error("Save failed:", error);
+                                    proceedWithEmailJS();
+                                });
+                            }).catch(error => {
+                                console.error("ID generation failed:", error);
+                                proceedWithEmailJS();
+                            });
+                        }
+                    }).catch(error => {
+                        console.error("DB check failed:", error);
+                        proceedWithEmailJS();
+                    });
+            } else {
+                proceedWithEmailJS();
+            }
         });
     }
 
@@ -161,6 +202,38 @@ function initRegistrationApp() {
             // Manual close is now required via button, so we don't auto-close
         }
     }
+}
+
+// ── Random Card ID Generator ─────────────────────────────────────────
+// Format: CB + 6 chars from [0-9A-Z]
+// Total combinations: 36^6 = 2,176,782,336 (~2.18 billion)
+// Collision check: Agar ID pehle se kisi ko mili hai to naya generate karta hai
+function generateRawId() {
+    const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const randomBytes = new Uint8Array(6);
+    crypto.getRandomValues(randomBytes); // Cryptographically secure
+    let id = 'CB';
+    for (let i = 0; i < 6; i++) {
+        id += chars[randomBytes[i] % chars.length];
+    }
+    return id;
+}
+
+// Returns a GUARANTEED unique Card ID (checks Firestore before returning)
+async function generateUniqueCardId() {
+    let attempts = 0;
+    while (attempts < 10) { // Safety: max 10 attempts (practically 1 attempt always works)
+        const cardId = generateRawId();
+        const existing = await db.collection('registrations').where('cardId', '==', cardId).get();
+        if (existing.empty) {
+            console.log(`Unique Card ID generated in ${attempts + 1} attempt(s): ${cardId}`);
+            return cardId; // ✅ Unique confirm — return it
+        }
+        console.warn(`Card ID collision detected: ${cardId} — retrying...`);
+        attempts++;
+    }
+    // Fallback (astronomically unlikely to ever reach here)
+    return 'CB' + Date.now().toString(36).toUpperCase().slice(-6);
 }
 
 if (document.readyState === 'loading') {

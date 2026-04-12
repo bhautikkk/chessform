@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChessBird - Get Pass</title>
+    
+    <!-- Firebase SDK (Compat Version) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <!-- Custom Firebase Config -->
+    <script src="firebase-config.js"></script>
+    
+    <!-- html2canvas for downloading the pass as an image -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #f3f4f6;
+            font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            flex-direction: column;
+        }
+
+        /* Initial Form Phase */
+        .search-container {
+            width: 92%;
+            max-width: 380px;
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.06);
+            border: 1px solid #e5e7eb;
+            text-align: center;
+        }
+        .search-container h2 {
+            margin-top: 0;
+            font-size: 20px;
+            color: #111827;
+        }
+        .search-container p { color: #6b7280; font-size: 14px; margin-bottom: 20px; }
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+        .btn {
+            width: 100%;
+            padding: 12px;
+            background: #111827;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn:hover { background: #374151; }
+
+        .error-msg {
+            display: none;
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 8px;
+            background: #fef2f2;
+            color: #dc2626;
+            font-size: 13px;
+            border: 1px solid #fecaca;
+        }
+
+        /* Download Button */
+        #downloadBtn {
+            display: none;
+            margin-top: 20px;
+            background: #16a34a;
+        }
+        #downloadBtn:hover { background: #15803d; }
+
+        /* PASS CARD STYLES (From User) */
+        .card-wrapper {
+            display: none; /* Hidden until verified */
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .card {
+            width: 92%;
+            min-width: 320px;
+            max-width: 380px;
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.06);
+            border: 1px solid #e5e7eb;
+            box-sizing: border-box;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+        }
+
+        .logo { font-weight: 600; font-size: 15px; color: #111827; }
+        .status { font-size: 11px; padding: 4px 10px; border-radius: 999px; background: #ecfdf5; color: #16a34a; font-weight: 500; }
+
+        .realname { font-size: 22px; font-weight: 600; color: #111827; }
+        .username { font-size: 13px; color: #6b7280; margin-top: 2px; }
+
+        .divider { height: 1px; background: #e5e7eb; margin: 18px 0; }
+
+        .warning {
+            margin-top: 10px;
+            padding: 14px;
+            border-radius: 10px;
+            background: #fef2f2;
+            color: #dc2626;
+            font-size: 12.5px;
+            line-height: 1.6;
+            border: 1px solid #fecaca;
+        }
+
+        .footer { margin-top: 18px; font-size: 11px; color: #9ca3af; text-align: center; }
+    </style>
+</head>
+<body>
+
+    <!-- PHASE 1: Form to verify -->
+    <div class="search-container" id="searchPhase">
+        <h2>Download Your Pass</h2>
+        <p>Enter details used during registration to find your pass.</p>
+        
+        <input type="text" id="passName" class="form-input" placeholder="Full Name (e.g. Rahul Sharma)">
+        <input type="tel" id="passPhone" class="form-input" placeholder="Phone Number">
+        
+        <button class="btn" id="findBtn" onclick="findPass()">Get Pass</button>
+        <div class="error-msg" id="errorMsg"></div>
+    </div>
+
+    <!-- PHASE 2: Display the Card -->
+    <div class="card-wrapper" id="resultPhase">
+        
+        <div class="card" id="passCard">
+            <div class="header">
+                <div class="logo">♟ ChessBird</div>
+                <div class="status">Verified Player</div>
+            </div>
+
+            <div class="realname" id="cardName">Player Name</div>
+            <div class="username" id="cardUsername">username123</div>
+
+            <div class="divider"></div>
+
+            <div class="warning">
+                यदि आप समय पर उपस्थित नहीं होते और आपका opponent आता है,
+                तो आपको हार मान लिया जाएगा और opponent अगले round में जाएगा।
+            </div>
+
+            <div class="footer">
+                ChessBird Tournament System
+            </div>
+        </div>
+
+        <button class="btn" id="downloadBtn" onclick="downloadPass()">Download as Image</button>
+
+    </div>
+
+    <script>
+        let isFeatureEnabled = false;
+
+        // ── Constants ──────────────────────────────────────────────
+        const MAX_ATTEMPTS  = 3;          // Kitne galat attempts allowed hain
+        const LOCKOUT_MS    = 5 * 60 * 1000; // 5 minutes lockout
+        const STORAGE_KEY   = 'cb_pass_attempts';
+
+        // ── Check if admin has enabled the feature ─────────────────
+        if (typeof db !== 'undefined') {
+            db.collection('settings').doc('global').get().then((doc) => {
+                if (doc.exists) isFeatureEnabled = doc.data().isPassEnabled;
+            });
+        }
+
+        // ── On page load: check if already locked out ──────────────
+        window.addEventListener('load', () => {
+            checkLockout();
+        });
+
+        function getLockoutData() {
+            try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || { count: 0, lockedUntil: 0 }; }
+            catch { return { count: 0, lockedUntil: 0 }; }
+        }
+
+        function saveLockoutData(data) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        }
+
+        let countdownTimer = null;
+
+        function checkLockout() {
+            const data = getLockoutData();
+            const now  = Date.now();
+
+            if (data.lockedUntil > now) {
+                startLockoutUI(data.lockedUntil - now);
+                return true; // Still locked
+            }
+
+            // Lockout expired — reset attempts
+            if (data.lockedUntil > 0) {
+                saveLockoutData({ count: 0, lockedUntil: 0 });
+            }
+            return false;
+        }
+
+        function startLockoutUI(remainingMs) {
+            const btn = document.getElementById('findBtn');
+            const errDiv = document.getElementById('errorMsg');
+            document.getElementById('passName').disabled  = true;
+            document.getElementById('passPhone').disabled = true;
+            btn.disabled = true;
+
+            if (countdownTimer) clearInterval(countdownTimer);
+
+            function updateDisplay() {
+                const data = getLockoutData();
+                const left = Math.max(0, data.lockedUntil - Date.now());
+                const mins = Math.floor(left / 60000);
+                const secs = Math.floor((left % 60000) / 1000);
+
+                errDiv.innerHTML = `<i>🔒</i> Bahut saare galat attempts! <br><b>${mins}m ${secs}s</b> baad dobara try karo.`;
+                errDiv.style.display = 'block';
+                btn.innerText = `Locked (${mins}:${String(secs).padStart(2,'0')})`;
+
+                if (left <= 0) {
+                    clearInterval(countdownTimer);
+                    document.getElementById('passName').disabled  = false;
+                    document.getElementById('passPhone').disabled = false;
+                    btn.disabled = false;
+                    btn.innerText = 'Get Pass';
+                    errDiv.style.display = 'none';
+                    saveLockoutData({ count: 0, lockedUntil: 0 });
+                }
+            }
+
+            updateDisplay();
+            countdownTimer = setInterval(updateDisplay, 1000);
+        }
+
+        function recordFailedAttempt() {
+            const data = getLockoutData();
+            data.count += 1;
+
+            if (data.count >= MAX_ATTEMPTS) {
+                data.lockedUntil = Date.now() + LOCKOUT_MS;
+                saveLockoutData(data);
+                startLockoutUI(LOCKOUT_MS);
+            } else {
+                saveLockoutData(data);
+                const left = MAX_ATTEMPTS - data.count;
+                showError(`Galat naam ya phone. Sirf <b>${left}</b> attempt${left > 1 ? 's' : ''} baaki hain!`);
+            }
+        }
+
+        function showError(msg) {
+            const errDiv = document.getElementById('errorMsg');
+            errDiv.innerHTML = msg;
+            errDiv.style.display = 'block';
+            const btn = document.getElementById('findBtn');
+            if (!btn.disabled) btn.innerText = 'Get Pass';
+        }
+
+        function findPass() {
+            // Check lockout first
+            if (checkLockout()) return;
+
+            const name  = document.getElementById('passName').value.trim();
+            const phone = document.getElementById('passPhone').value.trim();
+
+            if (!name || !phone) return showError('Please enter both Name and Phone.');
+
+            if (!isFeatureEnabled) {
+                return showError('Pass generation is currently disabled by Admin.');
+            }
+
+            if (typeof db === 'undefined') {
+                return showError('Firebase database is not connected.');
+            }
+
+            document.getElementById('findBtn').innerText = 'Searching...';
+
+            // Query by both name AND phone — dono sahi hone chahiye
+            db.collection('registrations')
+              .where('phone', '==', phone)
+              .where('name', '==', name)
+              .get()
+              .then((snapshot) => {
+                  if (snapshot.empty) {
+                      recordFailedAttempt(); // ← Wrong = attempt count badho
+                  } else {
+                      // ✅ Success — reset attempts
+                      saveLockoutData({ count: 0, lockedUntil: 0 });
+
+                      const userData = snapshot.docs[0].data();
+
+                      // Hide search, show pass card
+                      document.getElementById('searchPhase').style.display = 'none';
+                      document.getElementById('resultPhase').style.display  = 'flex';
+                      document.getElementById('downloadBtn').style.display  = 'block';
+
+                      // Fill card
+                      document.getElementById('cardName').innerText     = userData.name;
+                      document.getElementById('cardUsername').innerText = 'ID: ' + (userData.cardId || 'CB000');
+                  }
+              })
+              .catch((error) => {
+                  showError('Database Error: ' + error.message);
+                  document.getElementById('findBtn').innerText = 'Get Pass';
+              });
+        }
+
+        // Convert Card to Image and Download
+        function downloadPass() {
+            const cardElement = document.getElementById('passCard');
+            const btn = document.getElementById('downloadBtn');
+            btn.innerText = 'Downloading...';
+
+            html2canvas(cardElement, { scale: 2 }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'ChessBird_Pass.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                btn.innerText = 'Download as Image';
+            });
+        }
+    </script>
+</body>
+</html>

@@ -12,7 +12,9 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap"
+        rel="stylesheet">
     <!-- Font Awesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
@@ -22,6 +24,12 @@
         })();
     </script>
     <link rel="stylesheet" href="style.css">
+
+    <!-- Firebase SDK (Compat Version) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <!-- Custom Firebase Config -->
+    <script src="firebase-config.js"></script>
 </head>
 
 <body>
@@ -32,18 +40,21 @@
                 <i class="fas fa-check"></i>
             </div>
             <h2>Registration Complete!</h2>
-            <p style="color: var(--text-muted); margin-top: 10px; margin-bottom: 30px;">Welcome to the grandmaster circle. Your strategic journey begins here.</p>
-            
-            <a href="https://t.me/chessbirdofficial" target="_blank" class="telegram-btn" style="margin-bottom: 15px; background: #24a1de; color: white;">
+            <p style="color: var(--text-muted); margin-top: 10px; margin-bottom: 30px;">Welcome to the grandmaster
+                circle. Your strategic journey begins here.</p>
+
+            <a href="https://t.me/chessbirdofficial" target="_blank" class="telegram-btn"
+                style="margin-bottom: 15px; background: #24a1de; color: white;">
                 <i class="fab fa-telegram-plane"></i> Join Telegram Now
             </a>
-            
-            <button class="ok-btn" onclick="document.querySelector('.success-overlay').classList.remove('active')">Close</button>
+
+            <button class="ok-btn"
+                onclick="document.querySelector('.success-overlay').classList.remove('active')">Close</button>
         </div>
     </div>
 
     <div class="app-layout">
-        
+
         <!-- Left Side: Brand Showcase -->
         <div class="brand-showcase">
             <div class="brand-overlay"></div>
@@ -51,10 +62,11 @@
                 <div class="logo">
                     <i class="fas fa-chess-knight"></i> Chess Bird
                 </div>
-                
+
                 <div class="hero-text-container">
                     <h1>Master the<br><span>Strategic Game</span></h1>
-                    <p>Join the most exclusive chess community. Compete in high-stakes tournaments, analyze your games with top engines, and ascend to grandmaster status.</p>
+                    <p>Join the most exclusive chess community. Compete in high-stakes tournaments, analyze your games
+                        with top engines, and ascend to grandmaster status.</p>
                 </div>
 
                 <div class="features">
@@ -77,7 +89,7 @@
         <!-- Right Side: Form Container -->
         <div class="form-container">
             <div class="form-wrapper">
-                
+
                 <!-- Mobile only logo display -->
                 <div class="mobile-logo">
                     <i class="fas fa-chess-knight"></i> Chess Bird
@@ -105,14 +117,16 @@
                     <input type="hidden" name="_template" value="table">
                     <input type="hidden" name="_next" id="nextRedirect" value="">
                     <input type="hidden" name="_subject" value="New Chess Registration">
-                    <input type="hidden" name="_autoresponse" value="Thank you for registering for the Chess Bird community! We are excited to have you on board.">
+                    <input type="hidden" name="_autoresponse"
+                        value="Thank you for registering for the Chess Bird community! We are excited to have you on board.">
 
                     <div class="form-row">
                         <div class="form-group half-width">
                             <label for="name">Full Name</label>
                             <div class="input-wrapper">
                                 <i class="fas fa-user icon-left"></i>
-                                <input type="text" id="name" name="name" class="form-control" placeholder="Magnus Carlsen" required autocomplete="name">
+                                <input type="text" id="name" name="name" class="form-control"
+                                    placeholder="Magnus Carlsen" required autocomplete="name">
                             </div>
                         </div>
 
@@ -120,7 +134,8 @@
                             <label for="username">Chess.com Username</label>
                             <div class="input-wrapper">
                                 <i class="fas fa-at icon-left"></i>
-                                <input type="text" id="username" name="username" class="form-control" placeholder="magnusc" required>
+                                <input type="text" id="username" name="username" class="form-control"
+                                    placeholder="magnusc" required>
                             </div>
                         </div>
                     </div>
@@ -129,7 +144,8 @@
                         <label for="email">Email Address</label>
                         <div class="input-wrapper">
                             <i class="fas fa-envelope icon-left"></i>
-                            <input type="email" id="email" name="email" class="form-control" placeholder="magnus@grandmaster.com" required autocomplete="email">
+                            <input type="email" id="email" name="email" class="form-control"
+                                placeholder="magnus@grandmaster.com" required autocomplete="email">
                         </div>
                     </div>
 
@@ -138,7 +154,8 @@
                             <label for="phone">Phone Number</label>
                             <div class="input-wrapper">
                                 <i class="fas fa-phone icon-left"></i>
-                                <input type="tel" id="phone" name="phone" class="form-control" placeholder="98765 43210" pattern="[0-9]{10}" required>
+                                <input type="tel" id="phone" name="phone" class="form-control" placeholder="98765 43210"
+                                    pattern="[0-9]{10}" required>
                             </div>
                         </div>
 
@@ -146,8 +163,10 @@
                             <label for="rating">Current Rating <span class="badge">ELO</span></label>
                             <div class="input-wrapper">
                                 <i class="fas fa-chart-line icon-left"></i>
-                                <input type="number" id="rating" name="rating" class="form-control" placeholder="2400" min="100" max="3000"
-                                    oninput="if(this.value.length > 4) this.value = this.value.slice(0, 4); if(this.value > 3000) this.value = 3000;" required>
+                                <input type="number" id="rating" name="rating" class="form-control" placeholder="2400"
+                                    min="100" max="3000"
+                                    oninput="if(this.value.length > 4) this.value = this.value.slice(0, 4); if(this.value > 3000) this.value = 3000;"
+                                    required>
                             </div>
                         </div>
                     </div>
@@ -156,8 +175,9 @@
                         <span class="btn-text">Submit Registration <i class="fas fa-arrow-right arrow-icon"></i></span>
                         <div class="btn-glow"></div>
                     </button>
-                    
-                    <p class="terms-text">By joining, you agree to our <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.</p>
+
+                    <p class="terms-text">By joining, you agree to our <a href="#">Terms of Service</a> and <a
+                            href="#">Privacy Policy</a>.</p>
                 </form>
 
                 <div class="telegram-link-container">
@@ -178,4 +198,5 @@
         document.body.appendChild(script);
     </script>
 </body>
+
 </html>
