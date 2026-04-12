@@ -5,7 +5,7 @@ function initRegistrationApp() {
     // Change false to true to OPEN registration
     // ==========================================
     const isRegistrationOpen = true;
-    const eventId = 'event_test_reset_07'; // CHANGE THIS FOR NEW EVENTS
+    const eventId = 'event_test_reset_08'; // CHANGE THIS FOR NEW EVENTS
     // ==========================================
 
     const form = document.getElementById('chessForm');
@@ -205,24 +205,18 @@ function initRegistrationApp() {
 }
 
 // ── Random Card ID Generator ─────────────────────────────────────────
-// Format: CB + 6 chars from [0-9A-Z]
-// Total combinations: 36^6 = 2,176,782,336 (~2.18 billion)
+// Format: CB + 3 random digits from [0-9]
+// Total combinations: 10^3 = 1000
 // Collision check: Agar ID pehle se kisi ko mili hai to naya generate karta hai
 function generateRawId() {
-    const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    const randomBytes = new Uint8Array(6);
-    crypto.getRandomValues(randomBytes); // Cryptographically secure
-    let id = 'CB';
-    for (let i = 0; i < 6; i++) {
-        id += chars[randomBytes[i] % chars.length];
-    }
-    return id;
+    const randomNum = Math.floor(Math.random() * 1000);
+    return 'CB' + randomNum.toString().padStart(3, '0');
 }
 
 // Returns a GUARANTEED unique Card ID (checks Firestore before returning)
 async function generateUniqueCardId() {
     let attempts = 0;
-    while (attempts < 10) { // Safety: max 10 attempts (practically 1 attempt always works)
+    while (attempts < 10) { // Safety: max 10 attempts
         const cardId = generateRawId();
         const existing = await db.collection('registrations').where('cardId', '==', cardId).get();
         if (existing.empty) {
@@ -232,8 +226,9 @@ async function generateUniqueCardId() {
         console.warn(`Card ID collision detected: ${cardId} — retrying...`);
         attempts++;
     }
-    // Fallback (astronomically unlikely to ever reach here)
-    return 'CB' + Date.now().toString(36).toUpperCase().slice(-6);
+    // Fallback if too many collisions (unlikely unless very full)
+    const fallbackNum = Math.floor(Math.random() * 1000);
+    return 'CB' + fallbackNum.toString().padStart(3, '0');
 }
 
 if (document.readyState === 'loading') {
