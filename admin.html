@@ -438,7 +438,7 @@
                 <div class="toggle-row">
                     <div class="toggle-info">
                         <h3><i class="fas fa-id-card" style="color:var(--gold); margin-right:8px;"></i> Enable "Get Pass" Feature</h3>
-                        <p>Agar ON hai, to users apna tournament pass download kar sakte hain.</p>
+                        <p>If enabled, users can download their valid tournament passes.</p>
                     </div>
                     <label class="switch">
                         <input type="checkbox" id="passToggle" onchange="togglePass()">
@@ -458,14 +458,14 @@
             <!-- ⚠️ New Tournament Reset -->
             <div class="danger-box">
                 <div class="section-title"><i class="fas fa-rotate-right"></i> &nbsp;New Tournament Setup</div>
-                <p style="font-size:13px; color:var(--muted); margin-top:4px;">Naya tournament shuru karne ke liye purana data saaf karo. Yeh action undo nahi ho sakta.</p>
+                <p style="font-size:13px; color:var(--muted); margin-top:4px;">Clear old data to start a new tournament. This action cannot be undone.</p>
 
                 <div class="reset-grid">
                     <button class="danger-btn" id="deleteRegBtn" onclick="confirmReset('registrations')">
-                        <i class="fas fa-trash-can"></i> Sabki Registrations Delete Karo
+                        <i class="fas fa-trash-can"></i> Delete All Registrations
                     </button>
                     <button class="danger-btn" id="resetCounterBtn" onclick="confirmReset('counter')">
-                        <i class="fas fa-arrow-rotate-left"></i> Card ID Counter Reset Karo
+                        <i class="fas fa-arrow-rotate-left"></i> Reset Card ID Counter
                     </button>
                 </div>
 
@@ -473,7 +473,7 @@
                 <div class="event-id-row">
                     <div>
                         <span style="color:var(--text); font-weight:600;"><i class="fas fa-key" style="color:var(--gold);"></i> &nbsp;Event ID (script.js)</span><br>
-                        <span>Yeh change karo taaki purane users dobara register kar sakein</span>
+                        <span>Change this to allow past users to register again</span>
                     </div>
                     <span class="event-id-val" id="currentEventId">Loading...</span>
                 </div>
@@ -487,10 +487,10 @@
         <div class="modal-box">
             <i class="fas fa-triangle-exclamation"></i>
             <h3 id="modalTitle">Are you sure?</h3>
-            <p id="modalDesc">Yeh action permanent hai.</p>
+            <p id="modalDesc">This action is permanent.</p>
             <div class="modal-btns">
                 <button class="modal-cancel" onclick="closeModal()">Cancel</button>
-                <button class="modal-confirm" id="modalConfirmBtn">Haan, Karo</button>
+                <button class="modal-confirm" id="modalConfirmBtn">Yes, Do it</button>
             </div>
         </div>
     </div>
@@ -585,7 +585,7 @@
                 list.innerHTML = '';
 
                 if (snapshot.empty) {
-                    list.innerHTML = '<div class="empty-msg">Koi registration nahi mili.</div>';
+                    list.innerHTML = '<div class="empty-msg">No registrations found.</div>';
                     return;
                 }
 
@@ -622,7 +622,7 @@
                     document.getElementById('currentEventId').textContent = match[1];
                 }
             }).catch(() => {
-                document.getElementById('currentEventId').textContent = 'script.js padh nahi saka';
+                document.getElementById('currentEventId').textContent = 'Could not read script.js';
             });
 
         // ─── Confirm Modal Logic ─────────────────────────────────────
@@ -632,11 +632,11 @@
             _pendingAction = type;
             const modal = document.getElementById('confirmModal');
             if (type === 'registrations') {
-                document.getElementById('modalTitle').textContent = 'Saari Registrations Delete Karein?';
-                document.getElementById('modalDesc').textContent = 'Database se sabke naam, phone, email — sab permanently delete ho jaayega. Undo nahi ho sakta!';
+                document.getElementById('modalTitle').textContent = 'Delete All Registrations?';
+                document.getElementById('modalDesc').textContent = 'All player data (names, phones, emails) will be permanently deleted. This cannot be undone!';
             } else if (type === 'counter') {
-                document.getElementById('modalTitle').textContent = 'Card ID Counter Reset Karein?';
-                document.getElementById('modalDesc').textContent = 'Counter 0 ho jaayega. Agli registration CB001 se shuru ho. Registrations delete nahi hongi.';
+                document.getElementById('modalTitle').textContent = 'Reset Card ID Counter?';
+                document.getElementById('modalDesc').textContent = 'Counter will reset to 0. Next registration will start from CB001. Current registrations are NOT deleted.';
             }
             modal.classList.add('active');
             document.getElementById('modalConfirmBtn').onclick = executeReset;
@@ -666,9 +666,9 @@
             try {
                 const snapshot = await db.collection('registrations').get();
                 if (snapshot.empty) {
-                    alert('Koi registration nahi mili delete karne ke liye.');
+                    alert('No registrations found to delete.');
                     btn.disabled = false;
-                    btn.innerHTML = '<i class="fas fa-trash-can"></i> Sabki Registrations Delete Karo';
+                    btn.innerHTML = '<i class="fas fa-trash-can"></i> Delete All Registrations';
                     return;
                 }
 
@@ -694,12 +694,12 @@
                     btn.disabled = false;
                     btn.style.color = '';
                     btn.style.borderColor = '';
-                    btn.innerHTML = '<i class="fas fa-trash-can"></i> Sabki Registrations Delete Karo';
+                    btn.innerHTML = '<i class="fas fa-trash-can"></i> Delete All Registrations';
                 }, 3000);
             } catch(e) {
                 alert('Error: ' + e.message);
                 btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-trash-can"></i> Sabki Registrations Delete Karo';
+                btn.innerHTML = '<i class="fas fa-trash-can"></i> Delete All Registrations';
             }
         }
 
@@ -717,12 +717,12 @@
                     btn.disabled = false;
                     btn.style.color = '';
                     btn.style.borderColor = '';
-                    btn.innerHTML = '<i class="fas fa-arrow-rotate-left"></i> Card ID Counter Reset Karo';
+                    btn.innerHTML = '<i class="fas fa-arrow-rotate-left"></i> Reset Card ID Counter';
                 }, 3000);
             } catch(e) {
                 alert('Error: ' + e.message);
                 btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-arrow-rotate-left"></i> Card ID Counter Reset Karo';
+                btn.innerHTML = '<i class="fas fa-arrow-rotate-left"></i> Reset Card ID Counter';
             }
         }
 
