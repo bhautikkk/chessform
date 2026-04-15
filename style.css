@@ -567,6 +567,298 @@ html {
     transform: translateY(0);
 }
 
+/* ─── Urgency Banner ────────────────────────────────── */
+.urgency-banner {
+    background: linear-gradient(90deg, #7c2d12, #92400e, #7c2d12);
+    background-size: 200% 100%;
+    animation: bannerShift 4s linear infinite;
+    text-align: center;
+    padding: 10px 20px;
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: #fde68a;
+    letter-spacing: 0.3px;
+    position: relative;
+    z-index: 100;
+}
+
+@keyframes bannerShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+.urgency-inner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+}
+
+.urgency-dot {
+    width: 8px;
+    height: 8px;
+    background: #fde68a;
+    border-radius: 50%;
+    display: inline-block;
+    animation: blink 1.2s ease-in-out infinite;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.2; }
+}
+
+/* ─── Live Counter ──────────────────────────────────── */
+.live-counter {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(16, 185, 129, 0.08);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    border-radius: 100px;
+    padding: 8px 18px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #10b981;
+    margin-bottom: 30px;
+    width: fit-content;
+}
+
+.live-pulse {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #10b981;
+    position: relative;
+    flex-shrink: 0;
+}
+
+.live-pulse::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    border: 2px solid rgba(16, 185, 129, 0.5);
+    animation: livePing 1.5s ease-out infinite;
+}
+
+@keyframes livePing {
+    0% { transform: scale(0.8); opacity: 1; }
+    100% { transform: scale(2); opacity: 0; }
+}
+
+/* ─── Stats Strip ───────────────────────────────────── */
+.stats-strip {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 16px;
+    padding: 18px 24px;
+    margin: 24px 0 20px;
+    max-width: 420px;
+}
+
+.stat-item {
+    flex: 1;
+    text-align: center;
+}
+
+.stat-number {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--primary);
+    line-height: 1.2;
+    margin-bottom: 4px;
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.stat-divider {
+    width: 1px;
+    height: 36px;
+    background: rgba(255, 255, 255, 0.08);
+    flex-shrink: 0;
+}
+
+/* ─── How it Works ──────────────────────────────────── */
+.how-it-works {
+    max-width: 420px;
+    margin-bottom: 24px;
+}
+
+.hiw-title {
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-secondary);
+    margin-bottom: 14px;
+}
+
+.hiw-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    margin-bottom: 12px;
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    transition: border-color 0.3s ease;
+}
+
+.hiw-step:hover {
+    border-color: rgba(245, 158, 11, 0.2);
+}
+
+.hiw-num {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: #03050a;
+    font-weight: 800;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+.hiw-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.hiw-text strong {
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.hiw-text span {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+
+/* ─── Trust Badges ──────────────────────────────────── */
+.trust-badges {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+.trust-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(16, 185, 129, 0.08);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    color: #10b981;
+    padding: 6px 14px;
+    border-radius: 100px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.trust-badge i {
+    font-size: 0.75rem;
+}
+
+/* ─── Form Progress Bar ─────────────────────────────── */
+.form-progress-container {
+    margin-bottom: 28px;
+}
+
+.form-progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+}
+
+#progressPercent {
+    color: var(--primary);
+    transition: all 0.3s ease;
+}
+
+.form-progress-track {
+    height: 5px;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 100px;
+    overflow: hidden;
+}
+
+.form-progress-bar {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #10b981, #f59e0b);
+    border-radius: 100px;
+    transition: width 0.5s var(--ease-out-expo);
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
+}
+
+/* ─── Field Validation Checkmark ───────────────────── */
+.input-wrapper .field-check {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1rem;
+    color: #10b981;
+    opacity: 0;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    pointer-events: none;
+}
+
+.input-wrapper.is-valid .field-check {
+    opacity: 1;
+    transform: translateY(-50%) scale(1.1);
+}
+
+.input-wrapper.is-valid .form-control {
+    border-color: rgba(16, 185, 129, 0.4);
+}
+
+.input-wrapper.is-invalid .form-control {
+    border-color: rgba(239, 68, 68, 0.5);
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+/* ─── Security Assurance ────────────────────────────── */
+.security-assurance {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    margin-top: 14px;
+    margin-bottom: 4px;
+}
+
+.security-assurance i {
+    color: #10b981;
+    font-size: 0.85rem;
+}
+
 /* ==========================================================================
    MOBILE & RESPONSIVE PERFECTION
    ========================================================================== */
@@ -629,8 +921,12 @@ html {
         margin: 0 auto;
     }
     
-    .features {
-        display: none; /* Hide features on mobile to save space */
+    .features, .testimonials, .stats-strip, .how-it-works {
+        display: none;
+    }
+
+    .live-counter {
+        margin: 0 auto 20px auto; /* Center on mobile */
     }
     
     /* The Form Panel -> Frosted Glass Floating Card */

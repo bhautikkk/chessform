@@ -52,16 +52,55 @@ function initRegistrationApp() {
         btn.style.animation = `slideUpFade 0.5s ease forwards ${0.3 + (formGroups.length * 0.1)}s`;
     }
 
+    // ── Add checkmark icons to all input wrappers ──
+    document.querySelectorAll('.input-wrapper').forEach(wrapper => {
+        const check = document.createElement('i');
+        check.className = 'fas fa-check-circle field-check';
+        wrapper.appendChild(check);
+    });
+
     const inputs = document.querySelectorAll('.form-control');
-    // Input focus effects for better UX
+    const totalFields = inputs.length;
+
+    // ── Progress Bar Update ──
+    function updateProgress() {
+        let validCount = 0;
+        inputs.forEach(input => {
+            if (input.value.trim() !== '' && input.checkValidity()) validCount++;
+        });
+        const percent = Math.round((validCount / totalFields) * 100);
+        const bar = document.getElementById('formProgressBar');
+        const label = document.getElementById('progressPercent');
+        if (bar) bar.style.width = percent + '%';
+        if (label) label.textContent = percent + '%';
+    }
+
+    // ── Real-Time Field Validation ──
     inputs.forEach(input => {
         input.addEventListener('focus', () => {
             input.parentElement.parentElement.classList.add('focused');
         });
         input.addEventListener('blur', () => {
             input.parentElement.parentElement.classList.remove('focused');
+            const wrapper = input.closest('.input-wrapper');
+            if (input.value.trim() !== '') {
+                if (input.checkValidity()) {
+                    wrapper.classList.add('is-valid');
+                    wrapper.classList.remove('is-invalid');
+                } else {
+                    wrapper.classList.add('is-invalid');
+                    wrapper.classList.remove('is-valid');
+                }
+            } else {
+                wrapper.classList.remove('is-valid', 'is-invalid');
+            }
         });
+        input.addEventListener('input', updateProgress);
     });
+
+
+
+
 
     // Prevent double submission and ensure EmailJS sends before redirecting
     if (form) {

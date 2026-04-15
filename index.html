@@ -8,7 +8,8 @@
     <meta http-equiv="Expires" content="0">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chess Profile Registration - VIP</title>
+    <title>Chess Bird - Join the Elite Chess Community</title>
+    <meta name="description" content="Register now to join Chess Bird — India's most exclusive chess community. Compete in tournaments, improve your rating, and connect with top players.">
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -23,6 +24,7 @@
             emailjs.init("RigOHkJ8jBL9S7079");
         })();
     </script>
+    <link rel="icon" href="data:,">
     <link rel="stylesheet" href="style.css">
 
     <!-- Firebase SDK (Compat Version) -->
@@ -53,6 +55,15 @@
         </div>
     </div>
 
+    <!-- Urgency Top Banner -->
+    <div class="urgency-banner">
+        <div class="urgency-inner">
+            <span class="urgency-dot"></span>
+            <span>🔥 Registration is <strong>LIVE</strong> — Limited spots available for this season!</span>
+            <span class="urgency-dot"></span>
+        </div>
+    </div>
+
     <div class="app-layout">
 
         <!-- Left Side: Brand Showcase -->
@@ -64,9 +75,52 @@
                 </div>
 
                 <div class="hero-text-container">
-                    <h1>Master the<br><span>Strategic Game</span></h1>
-                    <p>Join the most exclusive chess community. Compete in high-stakes tournaments, analyze your games
-                        with top engines, and ascend to grandmaster status.</p>
+                    <h1>Secure Your<br><span>Spot & Win!</span></h1>
+                    <p>Register on Chess Bird, compete in exclusive tournaments, and take home real prize money. Don't miss your chance — limited spots available!</p>
+                </div>
+
+                <!-- Stats Strip -->
+                <div class="stats-strip">
+                    <div class="stat-item">
+                        <div class="stat-number">🎯</div>
+                        <div class="stat-label">Online Tournaments</div>
+                    </div>
+                    <div class="stat-divider"></div>
+                    <div class="stat-item">
+                        <div class="stat-number">🏆</div>
+                        <div class="stat-label">Cash Prizes</div>
+                    </div>
+                    <div class="stat-divider"></div>
+                    <div class="stat-item">
+                        <div class="stat-number"><i class="fab fa-telegram-plane"></i></div>
+                        <div class="stat-label">Active Community</div>
+                    </div>
+                </div>
+
+                <!-- How it Works -->
+                <div class="how-it-works">
+                    <div class="hiw-title">How it works</div>
+                    <div class="hiw-step">
+                        <div class="hiw-num">1</div>
+                        <div class="hiw-text">
+                            <strong>Fill the form</strong>
+                            <span>Enter your Chess.com username & details</span>
+                        </div>
+                    </div>
+                    <div class="hiw-step">
+                        <div class="hiw-num">2</div>
+                        <div class="hiw-text">
+                            <strong>Join Telegram Group</strong>
+                            <span>Get tournament schedule & updates instantly</span>
+                        </div>
+                    </div>
+                    <div class="hiw-step">
+                        <div class="hiw-num">3</div>
+                        <div class="hiw-text">
+                            <strong>Play & Win Prizes</strong>
+                            <span>Compete, climb the leaderboard & earn rewards</span>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="features">
@@ -95,9 +149,33 @@
                     <i class="fas fa-chess-knight"></i> Chess Bird
                 </div>
 
+                <!-- Trust Badges -->
+                <div class="trust-badges">
+                    <div class="trust-badge">
+                        <i class="fas fa-trophy"></i> Official Tournament
+                    </div>
+                    <div class="trust-badge">
+                        <i class="fas fa-lock"></i> No Spam
+                    </div>
+                    <div class="trust-badge">
+                        <i class="fas fa-bolt"></i> Instant Confirmation
+                    </div>
+                </div>
+
                 <div class="header">
-                    <h2>Claim your spot</h2>
-                    <p>Enter your details to join the definitive chess platform.</p>
+                    <h2>Claim your spot 🏆</h2>
+                    <p>Fill in your details & <strong>start competing for real prizes</strong> — takes less than a minute! 🚀</p>
+                </div>
+
+                <!-- Progress Bar -->
+                <div class="form-progress-container">
+                    <div class="form-progress-label">
+                        <span>Form Progress</span>
+                        <span id="progressPercent">0%</span>
+                    </div>
+                    <div class="form-progress-track">
+                        <div class="form-progress-bar" id="formProgressBar"></div>
+                    </div>
                 </div>
 
                 <div id="closedMessage" class="status-message" style="display: none;">
@@ -172,9 +250,15 @@
                     </div>
 
                     <button type="submit" class="submit-btn" id="submitBtn">
-                        <span class="btn-text">Submit Registration <i class="fas fa-arrow-right arrow-icon"></i></span>
+                        <span class="btn-text">Register Now &amp; Secure Your Spot <i class="fas fa-arrow-right arrow-icon"></i></span>
                         <div class="btn-glow"></div>
                     </button>
+
+                    <!-- Security Assurance -->
+                    <div class="security-assurance">
+                        <i class="fas fa-shield-alt"></i>
+                        <span>Your data is safe &amp; secure.</span>
+                    </div>
 
                     <p class="terms-text">By joining, you agree to our <a href="#">Terms of Service</a> and <a
                             href="#">Privacy Policy</a>.</p>
