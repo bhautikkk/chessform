@@ -1,11 +1,11 @@
 function initRegistrationApp() {
     // ==========================================
     // CONFIGURATION
-    // Change true to false to CLOSE registration
-    // Change false to true to OPEN registration
+    // Registration open/close is now controlled from Admin Panel
+    // No need to change code — toggle it from admin.html
     // ==========================================
-    const isRegistrationOpen = true;
-    const eventId = 'event_test_reset_08'; // CHANGE THIS FOR NEW EVENTS
+    // eventId is now loaded dynamically from Firestore!
+    let currentEventId = 'event_default';
     // ==========================================
 
     const form = document.getElementById('chessForm');
@@ -19,24 +19,64 @@ function initRegistrationApp() {
         nextRedirect.value = window.location.href.split('?')[0] + '?success=true';
     }
 
-    // 1. Check if registration is globally closed
-    if (!isRegistrationOpen) {
-        if (form) form.style.display = 'none';
-        if (closedMessage) {
-            closedMessage.style.display = 'block';
-            closedMessage.style.animation = 'slideUpFade 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards';
-        }
-        return; // Stop further script execution
-    }
+    // ── Hide form initially while we check registration status ──
+    if (form) form.style.display = 'none';
 
-    // 2. Check if user is already registered for this specific event
-    if (localStorage.getItem(eventId) === 'true') {
-        if (form) form.style.display = 'none';
-        if (alreadyRegisteredMessage) {
-            alreadyRegisteredMessage.style.display = 'block';
-            alreadyRegisteredMessage.style.animation = 'slideUpFade 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards';
-        }
-        return; // Stop further script execution
+    // Flag to ensure we process ?success=true only once
+    let successParamProcessed = false;
+
+    // 1. Check registration status and eventId from Firestore (Admin Panel controls this)
+    if (typeof db !== 'undefined') {
+        db.collection('settings').doc('global').onSnapshot((doc) => {
+            const isRegistrationOpen = doc.exists ? (doc.data().isRegistrationOpen || false) : false;
+            currentEventId = doc.exists ? (doc.data().eventId || 'event_default') : 'event_default';
+
+            if (!isRegistrationOpen) {
+                // Registration is CLOSED
+                if (form) form.style.display = 'none';
+                if (alreadyRegisteredMessage) alreadyRegisteredMessage.style.display = 'none';
+                if (closedMessage) {
+                    closedMessage.style.display = 'block';
+                    closedMessage.style.animation = 'slideUpFade 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards';
+                }
+            } else {
+                // Registration is OPEN — check if already registered
+                if (closedMessage) closedMessage.style.display = 'none';
+
+                // Handle ?success=true with the correct eventId
+                const urlParams = new URLSearchParams(window.location.search);
+                if (urlParams.get('success') === 'true' && !successParamProcessed) {
+                    localStorage.setItem(currentEventId, 'true');
+                    successParamProcessed = true;
+                    
+                    if (form) form.style.display = 'none';
+                    if (alreadyRegisteredMessage) {
+                        alreadyRegisteredMessage.style.display = 'block';
+                        alreadyRegisteredMessage.style.animation = 'slideUpFade 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards';
+                    }
+                    const successOverlay = document.querySelector('.success-overlay');
+                    if (successOverlay) {
+                        successOverlay.classList.add('active');
+                        window.history.replaceState({}, document.title, window.location.pathname);
+                    }
+                    return; // Done processing
+                }
+
+                if (localStorage.getItem(currentEventId) === 'true') {
+                    if (form) form.style.display = 'none';
+                    if (alreadyRegisteredMessage) {
+                        alreadyRegisteredMessage.style.display = 'block';
+                        alreadyRegisteredMessage.style.animation = 'slideUpFade 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards';
+                    }
+                } else {
+                    if (alreadyRegisteredMessage) alreadyRegisteredMessage.style.display = 'none';
+                    if (form) form.style.display = 'block';
+                }
+            }
+        });
+    } else {
+        // Firestore not available — fallback: show form (open by default)
+        if (form) form.style.display = 'block';
     }
 
     // Add staggered animation delay to form groups
@@ -62,19 +102,6 @@ function initRegistrationApp() {
     const inputs = document.querySelectorAll('.form-control');
     const totalFields = inputs.length;
 
-    // ── Progress Bar Update ──
-    function updateProgress() {
-        let validCount = 0;
-        inputs.forEach(input => {
-            if (input.value.trim() !== '' && input.checkValidity()) validCount++;
-        });
-        const percent = Math.round((validCount / totalFields) * 100);
-        const bar = document.getElementById('formProgressBar');
-        const label = document.getElementById('progressPercent');
-        if (bar) bar.style.width = percent + '%';
-        if (label) label.textContent = percent + '%';
-    }
-
     // ── Real-Time Field Validation ──
     inputs.forEach(input => {
         input.addEventListener('focus', () => {
@@ -82,6 +109,10 @@ function initRegistrationApp() {
         });
         input.addEventListener('blur', () => {
             input.parentElement.parentElement.classList.remove('focused');
+            
+            // Skip basic validation for username, as it uses advanced API validation
+            if (input.id === 'username') return;
+
             const wrapper = input.closest('.input-wrapper');
             if (input.value.trim() !== '') {
                 if (input.checkValidity()) {
@@ -95,8 +126,88 @@ function initRegistrationApp() {
                 wrapper.classList.remove('is-valid', 'is-invalid');
             }
         });
-        input.addEventListener('input', updateProgress);
     });
+
+    // ── Auto-Fetch Chess.com Data on Username Input (Live Typing with Debounce) ──
+    const usernameInput = document.getElementById('username');
+    const ratingInput = document.getElementById('rating');
+    let typingTimer;
+    const typingInterval = 800; // Wait 800ms after user stops typing to trigger API
+
+    if (usernameInput && ratingInput) {
+        usernameInput.addEventListener('input', () => {
+            clearTimeout(typingTimer);
+            const username = usernameInput.value.trim();
+            const userWrapper = usernameInput.closest('.input-wrapper');
+            const userIcon = userWrapper.querySelector('.icon-left');
+            const rightCheckIcon = userWrapper.querySelector('.field-check');
+            const ratingWrapper = ratingInput.closest('.input-wrapper');
+
+            // 1. Immediately wipe previous rating data since username changed
+            ratingInput.value = '';
+            ratingWrapper.classList.remove('is-valid', 'is-invalid');
+
+            if (!username) {
+                userWrapper.classList.remove('is-invalid', 'is-valid', 'is-loading');
+                // Don't touch userIcon, let it stay @
+                if (rightCheckIcon) rightCheckIcon.className = 'fa-solid fa-circle-check field-check';
+                return;
+            }
+
+            // Immediately show spinner class on the RIGHT side while user is typing/waiting
+            userWrapper.classList.remove('is-invalid', 'is-valid');
+            userWrapper.classList.add('is-loading');
+            if (rightCheckIcon) rightCheckIcon.className = 'fa-solid fa-spinner fa-spin field-check';
+
+            typingTimer = setTimeout(async () => {
+                try {
+                    // 2. Check if user exists
+                    const userRes = await fetch(`https://api.chess.com/pub/player/${username}`);
+                    
+                    userWrapper.classList.remove('is-loading'); // Stop loading state
+
+                    if (!userRes.ok) {
+                        userWrapper.classList.add('is-invalid');
+                        if (rightCheckIcon) rightCheckIcon.className = 'fa-solid fa-circle-xmark field-check'; // Right Icon Error
+                        return; // Stop here, no rating to fetch
+                    }
+
+                    // 3. User exists, fetch stats for auto-filling rating
+                    userWrapper.classList.add('is-valid');
+                    if (rightCheckIcon) rightCheckIcon.className = 'fa-solid fa-circle-check field-check'; // Right Icon Success
+
+                    const statsRes = await fetch(`https://api.chess.com/pub/player/${username}/stats`);
+                    if (statsRes.ok) {
+                        const stats = await statsRes.json();
+                        let bestRating = 1200; // default fallback
+
+                        // Prefer Rapid, then Blitz, then Bullet
+                        if (stats.chess_rapid && stats.chess_rapid.last) {
+                            bestRating = stats.chess_rapid.last.rating;
+                        } else if (stats.chess_blitz && stats.chess_blitz.last) {
+                            bestRating = stats.chess_blitz.last.rating;
+                        } else if (stats.chess_bullet && stats.chess_bullet.last) {
+                            bestRating = stats.chess_bullet.last.rating;
+                        }
+
+                        // Auto-fill rating
+                        ratingInput.value = bestRating;
+                        ratingWrapper.classList.add('is-valid');
+                        ratingWrapper.classList.remove('is-invalid');
+                        
+                        // Flash success glow
+                        ratingInput.style.transition = 'box-shadow 0.3s, background 0.3s';
+                        ratingInput.style.background = '#ecfdf5';
+                        setTimeout(() => { ratingInput.style.background = ''; }, 600);
+                    }
+                } catch (err) {
+                    // In case of complete network failure (not 404)
+                    console.warn("Chess.com API fetch failed", err);
+                    userIcon.className = 'fas fa-at icon-left'; 
+                }
+            }, typingInterval);
+        });
+    }
 
 
 
@@ -104,11 +215,14 @@ function initRegistrationApp() {
 
     // Prevent double submission and ensure EmailJS sends before redirecting
     if (form) {
-        form.addEventListener('submit', function (e) {
+        form.addEventListener('submit', async function (e) {
             // Prevent default to stop browser from redirecting before EmailJS finishes
             e.preventDefault();
 
             const btn = this.querySelector('.submit-btn');
+            const usernameInput = document.getElementById('username');
+            const originalBtnHtml = btn ? btn.innerHTML : '';
+            
             if (btn) {
                 // Keep the button text formatting intact
                 btn.innerHTML = '<span class="btn-text">Submitting... <i class="fas fa-spinner fa-spin"></i></span><div class="btn-glow"></div>';
@@ -152,7 +266,7 @@ function initRegistrationApp() {
                             .then(response => response.json())
                             .then(data => {
                                 console.log('FormSubmit Data stored:', data);
-                                localStorage.setItem(eventId, 'true');
+                                localStorage.setItem(currentEventId, 'true');
                                 form.style.display = 'none';
                                 if (alreadyRegisteredMessage) {
                                     alreadyRegisteredMessage.style.display = 'block';
@@ -167,7 +281,7 @@ function initRegistrationApp() {
                                 console.error('FormSubmit error:', error);
                                 alert('Something went wrong. Please try again.');
                                 if (btn) {
-                                    btn.innerHTML = '<span class="btn-text">Submit Registration <i class="fas fa-arrow-right arrow-icon"></i></span><div class="btn-glow"></div>';
+                                    btn.innerHTML = '<span class="btn-text">Register Now <i class="fas fa-arrow-right arrow-icon"></i></span><div class="btn-glow"></div>';
                                     btn.style.opacity = '1';
                                     btn.style.pointerEvents = 'all';
                                 }
@@ -178,16 +292,17 @@ function initRegistrationApp() {
             // Database Handling & Random ID Generation
             if (typeof db !== 'undefined') {
                 // Check if user already exists based on phone document
-                db.collection("registrations").where("phone", "==", templateParams.phone).get()
-                    .then(snapshot => {
-                        if (!snapshot.empty) {
+                const userPhone = templateParams.phone;
+                db.collection("registrations").doc(userPhone).get()
+                    .then(docSnap => {
+                        if (docSnap.exists) {
                             console.log("User already exists. Skipping re-save.");
                             proceedWithEmailJS();
                         } else {
                             // Generate a GUARANTEED unique random Card ID
                             generateUniqueCardId().then(cardId => {
-                                // Save to Firestore
-                                db.collection("registrations").add({
+                                // Save to Firestore using phone as docId securely
+                                db.collection("registrations").doc(userPhone).set({
                                     name: templateParams.name,
                                     username: templateParams.username,
                                     email: templateParams.email,
@@ -217,30 +332,6 @@ function initRegistrationApp() {
         });
     }
 
-    // Check for success query parameter
-    // Check for success query parameter
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('success') === 'true') {
-        // Mark user as registered for this event
-        localStorage.setItem(eventId, 'true');
-
-        // Hide form and show already registered message (so it's there when overlay closes)
-        if (form) form.style.display = 'none';
-        if (alreadyRegisteredMessage) {
-            alreadyRegisteredMessage.style.display = 'block';
-            alreadyRegisteredMessage.style.animation = 'slideUpFade 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards';
-        }
-
-        const successOverlay = document.querySelector('.success-overlay');
-        if (successOverlay) {
-            successOverlay.classList.add('active');
-
-            // Optional: Clean up the URL
-            window.history.replaceState({}, document.title, window.location.pathname);
-
-            // Manual close is now required via button, so we don't auto-close
-        }
-    }
 }
 
 // ── Random Card ID Generator ─────────────────────────────────────────
@@ -252,13 +343,15 @@ function generateRawId() {
     return 'CB' + randomNum.toString().padStart(3, '0');
 }
 
-// Returns a GUARANTEED unique Card ID (checks Firestore before returning)
+// Returns a GUARANTEED unique Card ID securely using used_cards check
 async function generateUniqueCardId() {
     let attempts = 0;
     while (attempts < 10) { // Safety: max 10 attempts
         const cardId = generateRawId();
-        const existing = await db.collection('registrations').where('cardId', '==', cardId).get();
-        if (existing.empty) {
+        const existing = await db.collection('used_cards').doc(cardId).get();
+        if (!existing.exists) {
+            // Reserve it immediately
+            await db.collection('used_cards').doc(cardId).set({ used: true, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
             console.log(`Unique Card ID generated in ${attempts + 1} attempt(s): ${cardId}`);
             return cardId; // ✅ Unique confirm — return it
         }

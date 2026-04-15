@@ -55,12 +55,11 @@
         </div>
     </div>
 
-    <!-- Urgency Top Banner -->
+    <!-- Premium Top Banner -->
     <div class="urgency-banner">
         <div class="urgency-inner">
-            <span class="urgency-dot"></span>
-            <span>🔥 Registration is <strong>LIVE</strong> — Limited spots available for this season!</span>
-            <span class="urgency-dot"></span>
+            <div class="pulse-ring"></div>
+            <span><strong style="color: var(--primary);">Registrations Open</strong> — Join India's Most Exclusive Chess Community</span>
         </div>
     </div>
 
@@ -167,16 +166,6 @@
                     <p>Fill in your details & <strong>start competing for real prizes</strong> — takes less than a minute! 🚀</p>
                 </div>
 
-                <!-- Progress Bar -->
-                <div class="form-progress-container">
-                    <div class="form-progress-label">
-                        <span>Form Progress</span>
-                        <span id="progressPercent">0%</span>
-                    </div>
-                    <div class="form-progress-track">
-                        <div class="form-progress-bar" id="formProgressBar"></div>
-                    </div>
-                </div>
 
                 <div id="closedMessage" class="status-message" style="display: none;">
                     <div class="status-icon"><i class="fas fa-lock"></i></div>
@@ -232,8 +221,8 @@
                             <label for="phone">Phone Number</label>
                             <div class="input-wrapper">
                                 <i class="fas fa-phone icon-left"></i>
-                                <input type="tel" id="phone" name="phone" class="form-control" placeholder="98765 43210"
-                                    pattern="[0-9]{10}" required>
+                                <input type="tel" id="phone" name="phone" class="form-control" placeholder="9876543210"
+                                    pattern="[6-9][0-9]{9}" title="Please enter a valid 10-digit Indian mobile number starting with 6-9." required>
                             </div>
                         </div>
 
@@ -241,16 +230,14 @@
                             <label for="rating">Current Rating <span class="badge">ELO</span></label>
                             <div class="input-wrapper">
                                 <i class="fas fa-chart-line icon-left"></i>
-                                <input type="number" id="rating" name="rating" class="form-control" placeholder="2400"
-                                    min="100" max="3000"
-                                    oninput="if(this.value.length > 4) this.value = this.value.slice(0, 4); if(this.value > 3000) this.value = 3000;"
-                                    required>
+                                <input type="number" id="rating" name="rating" class="form-control" placeholder="1200"
+                                    min="100" max="4000" oninput="if(this.value.length > 4) this.value = this.value.slice(0, 4);" required>
                             </div>
                         </div>
                     </div>
 
                     <button type="submit" class="submit-btn" id="submitBtn">
-                        <span class="btn-text">Register Now &amp; Secure Your Spot <i class="fas fa-arrow-right arrow-icon"></i></span>
+                        <span class="btn-text">Register Now <i class="fas fa-arrow-right arrow-icon"></i></span>
                         <div class="btn-glow"></div>
                     </button>
 

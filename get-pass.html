@@ -321,28 +321,29 @@
 
             document.getElementById('findBtn').innerText = 'Searching...';
 
-            // Query by both name AND phone — dono sahi hone chahiye
-            db.collection('registrations')
-              .where('phone', '==', phone)
-              .where('name', '==', name)
-              .get()
-              .then((snapshot) => {
-                  if (snapshot.empty) {
-                      recordFailedAttempt(); // ← Wrong = attempt count badho
+            // Secure Query using Phone as Document ID
+            db.collection('registrations').doc(phone).get()
+              .then((docSnap) => {
+                  if (!docSnap.exists) {
+                      recordFailedAttempt(); // Phone not found
                   } else {
-                      // ✅ Success — reset attempts
-                      saveLockoutData({ count: 0, lockedUntil: 0 });
+                      const userData = docSnap.data();
+                      // Securely verify name locally since we can't query lists
+                      if (userData.name && userData.name.toLowerCase().trim() === name.toLowerCase().trim()) {
+                          // ✅ Success — reset attempts
+                          saveLockoutData({ count: 0, lockedUntil: 0 });
 
-                      const userData = snapshot.docs[0].data();
+                          // Hide search, show pass card
+                          document.getElementById('searchPhase').style.display = 'none';
+                          document.getElementById('resultPhase').style.display  = 'flex';
+                          document.getElementById('downloadBtn').style.display  = 'block';
 
-                      // Hide search, show pass card
-                      document.getElementById('searchPhase').style.display = 'none';
-                      document.getElementById('resultPhase').style.display  = 'flex';
-                      document.getElementById('downloadBtn').style.display  = 'block';
-
-                      // Fill card
-                      document.getElementById('cardName').innerText     = userData.name;
-                      document.getElementById('cardUsername').innerText = 'ID: ' + (userData.cardId || 'CB000');
+                          // Fill card
+                          document.getElementById('cardName').innerText     = userData.name;
+                          document.getElementById('cardUsername').innerText = 'ID: ' + (userData.cardId || 'CB000');
+                      } else {
+                          recordFailedAttempt(); // Name mismatch
+                      }
                   }
               })
               .catch((error) => {

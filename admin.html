@@ -433,6 +433,21 @@
 
         <div class="panel-body">
 
+            <!-- Registration Open/Close Toggle -->
+            <div class="card-box">
+                <div class="toggle-row">
+                    <div class="toggle-info">
+                        <h3><i class="fas fa-door-open" style="color:var(--gold); margin-right:8px;"></i> Registration Open</h3>
+                        <p>If enabled, users can register. If disabled, the form will show "Registration Closed".</p>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="regToggle" onchange="toggleRegistration()">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div id="regToggleStatus" style="margin-top:10px; font-size:12px; color:var(--muted);"></div>
+            </div>
+
             <!-- Pass Feature Toggle -->
             <div class="card-box">
                 <div class="toggle-row">
@@ -469,13 +484,24 @@
                     </button>
                 </div>
 
-                <!-- EventID Change Reminder -->
-                <div class="event-id-row">
-                    <div>
-                        <span style="color:var(--text); font-weight:600;"><i class="fas fa-key" style="color:var(--gold);"></i> &nbsp;Event ID (script.js)</span><br>
-                        <span>Change this to allow past users to register again</span>
+                <!-- EventID Control -->
+                <div class="event-id-row" style="flex-direction:column; align-items:stretch;">
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:12px;">
+                        <div>
+                            <span style="color:var(--text); font-weight:600;"><i class="fas fa-key" style="color:var(--gold);"></i> &nbsp;Event ID</span><br>
+                            <span style="font-size:12px;">Change this for a new tournament so past users can register again</span>
+                        </div>
                     </div>
-                    <span class="event-id-val" id="currentEventId">Loading...</span>
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        <input type="text" id="eventIdInput" placeholder="e.g. tournament_april_2026" 
+                            style="flex:1; padding:10px 14px; background:#111113; border:1px solid var(--border); border-radius:8px; color:var(--text); font-family:monospace; font-size:14px; outline:none; transition: border-color 0.2s;"
+                            onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'"
+                            onkeydown="if(event.key==='Enter') saveEventId()">
+                        <button class="login-btn" onclick="saveEventId()" id="saveEventIdBtn" style="width:auto; padding:10px 20px; font-size:13px;">
+                            <i class="fas fa-save"></i> Save
+                        </button>
+                    </div>
+                    <div id="eventIdStatus" style="margin-top:8px; font-size:12px; color:var(--muted);"></div>
                 </div>
             </div>
 
@@ -567,12 +593,33 @@
         function loadAdminData() {
             if (typeof db === 'undefined') return;
 
-            // 1. Pass toggle
+            // 1. Settings toggles (pass + registration)
             db.collection('settings').doc('global').onSnapshot((doc) => {
                 if (doc.exists) {
-                    document.getElementById('passToggle').checked = doc.data().isPassEnabled;
+                    const data = doc.data();
+                    document.getElementById('passToggle').checked = data.isPassEnabled || false;
+                    document.getElementById('regToggle').checked = data.isRegistrationOpen || false;
+                    // Show registration status hint
+                    const statusEl = document.getElementById('regToggleStatus');
+                    if (data.isRegistrationOpen) {
+                        statusEl.innerHTML = '<i class="fas fa-circle" style="color:var(--success); font-size:8px;"></i> Registration is currently <strong style="color:var(--success);">OPEN</strong>';
+                    } else {
+                        statusEl.innerHTML = '<i class="fas fa-circle" style="color:var(--danger); font-size:8px;"></i> Registration is currently <strong style="color:var(--danger);">CLOSED</strong>';
+                    }
+                    // Show Event ID
+                    const eventIdInput = document.getElementById('eventIdInput');
+                    const currentEventId = data.eventId || '';
+                    if (eventIdInput && eventIdInput !== document.activeElement) {
+                        eventIdInput.value = currentEventId;
+                    }
+                    const eventIdStatus = document.getElementById('eventIdStatus');
+                    if (currentEventId) {
+                        eventIdStatus.innerHTML = 'Current: <strong style="color:var(--gold);">' + escHtml(currentEventId) + '</strong>';
+                    } else {
+                        eventIdStatus.innerHTML = '<span style="color:var(--danger);">⚠ No Event ID set — registration won\'t work properly!</span>';
+                    }
                 } else {
-                    db.collection('settings').doc('global').set({ isPassEnabled: false });
+                    db.collection('settings').doc('global').set({ isPassEnabled: false, isRegistrationOpen: false, eventId: 'event_default' });
                 }
             });
 
@@ -612,18 +659,49 @@
               .catch(e => alert('Error: ' + e.message));
         }
 
-        // ─── Load current Event ID from script.js hint ───────────────
-        // (Just shows a static reminder — admin has to change it manually)
-        fetch('script.js')
-            .then(r => r.text())
-            .then(text => {
-                const match = text.match(/const eventId\s*=\s*'([^']+)'/);
-                if (match) {
-                    document.getElementById('currentEventId').textContent = match[1];
-                }
-            }).catch(() => {
-                document.getElementById('currentEventId').textContent = 'Could not read script.js';
-            });
+        // ─── Toggle Registration Open/Close ─────────────────────────
+        function toggleRegistration() {
+            const isOpen = document.getElementById('regToggle').checked;
+            db.collection('settings').doc('global')
+              .update({ isRegistrationOpen: isOpen })
+              .then(() => {
+                  console.log('Registration status updated:', isOpen ? 'OPEN' : 'CLOSED');
+              })
+              .catch(e => alert('Error: ' + e.message));
+        }
+
+        // ─── Save Event ID ───────────────────────────────────────────
+        function saveEventId() {
+            const newId = document.getElementById('eventIdInput').value.trim();
+            const btn = document.getElementById('saveEventIdBtn');
+            const statusEl = document.getElementById('eventIdStatus');
+
+            if (!newId) {
+                statusEl.innerHTML = '<span style="color:var(--danger);">Please enter a valid Event ID!</span>';
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span>';
+
+            db.collection('settings').doc('global')
+              .update({ eventId: newId })
+              .then(() => {
+                  btn.innerHTML = '<i class="fas fa-check"></i> Saved!';
+                  btn.style.background = 'var(--success)';
+                  statusEl.innerHTML = 'Current: <strong style="color:var(--gold);">' + escHtml(newId) + '</strong> — <span style="color:var(--success);">Updated!</span>';
+                  setTimeout(() => {
+                      btn.disabled = false;
+                      btn.style.background = '';
+                      btn.innerHTML = '<i class="fas fa-save"></i> Save';
+                  }, 2000);
+              })
+              .catch(e => {
+                  alert('Error: ' + e.message);
+                  btn.disabled = false;
+                  btn.innerHTML = '<i class="fas fa-save"></i> Save';
+              });
+        }
 
         // ─── Confirm Modal Logic ─────────────────────────────────────
         let _pendingAction = null;

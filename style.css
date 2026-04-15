@@ -567,46 +567,56 @@ html {
     transform: translateY(0);
 }
 
-/* ─── Urgency Banner ────────────────────────────────── */
+/* ─── Premium Top Banner ────────────────────────────────── */
 .urgency-banner {
-    background: linear-gradient(90deg, #7c2d12, #92400e, #7c2d12);
-    background-size: 200% 100%;
-    animation: bannerShift 4s linear infinite;
+    background: rgba(3, 5, 10, 0.8);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     text-align: center;
-    padding: 10px 20px;
-    font-size: 0.88rem;
+    padding: 12px 20px;
+    font-size: 0.85rem;
     font-weight: 500;
-    color: #fde68a;
-    letter-spacing: 0.3px;
+    color: var(--text-primary);
+    letter-spacing: 0.5px;
     position: relative;
     z-index: 100;
-}
-
-@keyframes bannerShift {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
+    display: flex;
+    justify-content: center;
 }
 
 .urgency-inner {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 16px;
+    gap: 12px;
 }
 
-.urgency-dot {
+.pulse-ring {
     width: 8px;
     height: 8px;
-    background: #fde68a;
+    background-color: #10b981;
     border-radius: 50%;
-    display: inline-block;
-    animation: blink 1.2s ease-in-out infinite;
+    position: relative;
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+    flex-shrink: 0;
 }
 
-@keyframes blink {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.2; }
+.pulse-ring::before {
+    content: '';
+    position: absolute;
+    left: -4px;
+    top: -4px;
+    width: 16px;
+    height: 16px;
+    background-color: rgba(16, 185, 129, 0.4);
+    border-radius: 50%;
+    animation: pulseAnim 2s infinite ease-in-out;
+}
+
+@keyframes pulseAnim {
+    0% { transform: scale(0.8); opacity: 1; }
+    100% { transform: scale(2.5); opacity: 0; }
 }
 
 /* ─── Live Counter ──────────────────────────────────── */
@@ -830,6 +840,19 @@ html {
 
 .input-wrapper.is-valid .field-check {
     opacity: 1;
+    color: #10b981;
+    transform: translateY(-50%) scale(1.1);
+}
+
+.input-wrapper.is-loading .field-check {
+    opacity: 1;
+    color: #f59e0b; /* Orange for loading state */
+    transform: translateY(-50%) scale(1.1);
+}
+
+.input-wrapper.is-invalid .field-check {
+    opacity: 1;
+    color: #ef4444; /* Red color for error */
     transform: translateY(-50%) scale(1.1);
 }
 

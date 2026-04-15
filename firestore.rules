@@ -10,30 +10,37 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     // ── HELPER: Check if the request comes from a logged-in admin ──
-    // Sirf woh log admin hain jo Firebase Auth se login hain.
-    // Agar koi bhi inspect karke ya console se try kare, Firebase
-    // server-side pe reject kar dega kyunki uske paas valid auth token nahi hoga.
     function isAdmin() {
       return request.auth != null;
     }
 
     // ── REGISTRATIONS COLLECTION ──────────────────────────────────
-    // - Write (create/update): Public users kar sakte hain (form submit ke liye)
-    // REGISTRATIONS: Public write + query (name+phone se pass dhundhna), sirf admin delete kar sakta hai
     match /registrations/{docId} {
+      // ✅ Public can ONLY CREATE their own registration
       allow create: if true;
-      allow update: if true;
-      allow read: if true;      // get-pass ke liye zaroori (name+phone dono chahiye)
+      // 🚫 NO PUBLIC UPDATES - Stops hackers from altering someone else's data
+      allow update: if false; 
+      // 🚫 NO PUBLIC DELETING
       allow delete: if isAdmin();
+      
+      // ✅ Allow GET (reading a specific registration IF you know the exact phone number)
+      // 🚫 DENY LIST (nobody can download the whole database from inspect element)
+      allow get: if true;
+      allow list: if isAdmin();
+    }
+
+    // ── USED CARDS COLLECTION (For duplicate checking safely) ───
+    match /used_cards/{docId} {
+      // ✅ Public can check if a Card ID exists, and reserve it
+      allow get, create: if true;
+      allow list, update, delete: if isAdmin();
     }
 
     // ── SETTINGS COLLECTION ──────────────────────────────────────
     match /settings/{docId} {
-      // "global" doc (isPassEnabled) — public read karein get-pass.html ke liye
+      // "global" doc — public read karein toggles ke liye
       allow read: if docId == "global";
-      // counter doc — public write karein (Card ID generation ke liye)
-      allow write: if docId == "counter" || isAdmin();
-      // Baki sab settings sirf admin
+      // Baki sab settings sirf admin create/edit/delete kar sakta hai
       allow write: if isAdmin();
     }
 
