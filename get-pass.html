@@ -3,8 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ChessBird - Get Pass</title>
+    <title>ChessBird - Download Pass</title>
     
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
     <!-- Firebase SDK (Compat Version) -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -12,189 +19,344 @@
     <!-- Custom Firebase Config -->
     <script src="firebase-config.js"></script>
     
-    <!-- html2canvas for downloading the pass as an image -->
+    <!-- JS Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
     <style>
+        :root {
+            --bg: #0d0d0f;
+            --card: #18181b;
+            --border: #2a2a2e;
+            --gold: #c6a87c;
+            --gold-hover: #d4bc96;
+            --text: #f4f4f5;
+            --muted: #71717a;
+            --danger: #ef4444;
+            --success: #22c55e;
+        }
+
         body {
             margin: 0;
             padding: 0;
-            background: #f3f4f6;
-            font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
             flex-direction: column;
+            background-image: radial-gradient(circle at 50% -20%, #2a2a2e, #0d0d0f 60%);
         }
 
         /* Initial Form Phase */
         .search-container {
             width: 92%;
-            max-width: 380px;
-            background: #ffffff;
+            max-width: 400px;
+            background: var(--card);
             border-radius: 16px;
-            padding: 24px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.06);
-            border: 1px solid #e5e7eb;
+            padding: 32px 24px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            border: 1px solid var(--border);
             text-align: center;
+            animation: fadeIn 0.5s ease;
         }
+        
+        .logo-icon {
+            font-size: 32px;
+            color: var(--gold);
+            margin-bottom: 12px;
+        }
+
         .search-container h2 {
             margin-top: 0;
-            font-size: 20px;
-            color: #111827;
+            font-size: 22px;
+            font-family: 'Playfair Display', serif;
+            color: var(--text);
         }
-        .search-container p { color: #6b7280; font-size: 14px; margin-bottom: 20px; }
-        .form-input {
-            width: 100%;
-            padding: 12px;
-            margin-bottom: 15px;
-            border: 1px solid #d1d5db;
-            border-radius: 8px;
-            box-sizing: border-box;
+        .search-container p { color: var(--muted); font-size: 13px; margin-bottom: 24px; }
+        
+        .input-group {
+            position: relative;
+            margin-bottom: 16px;
+        }
+        .input-group i {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--muted);
             font-size: 14px;
         }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 14px 12px 40px;
+            background: #111113;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            box-sizing: border-box;
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            transition: border-color 0.2s;
+            outline: none;
+        }
+        .form-input:focus {
+            border-color: var(--gold);
+        }
+
         .btn {
             width: 100%;
-            padding: 12px;
-            background: #111827;
-            color: white;
+            padding: 14px;
+            background: var(--gold);
+            color: #111;
             border: none;
             border-radius: 8px;
-            font-weight: 600;
+            font-weight: 700;
+            font-size: 15px;
             cursor: pointer;
-            transition: 0.2s;
+            transition: background 0.2s;
+            font-family: 'Inter', sans-serif;
+            margin-top: 8px;
         }
-        .btn:hover { background: #374151; }
+        .btn:hover { background: var(--gold-hover); }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
         .error-msg {
             display: none;
             margin-top: 15px;
             padding: 12px;
             border-radius: 8px;
-            background: #fef2f2;
-            color: #dc2626;
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
             font-size: 13px;
-            border: 1px solid #fecaca;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            animation: fadeIn 0.3s ease;
         }
 
         /* Download Button */
         #downloadBtn {
             display: none;
-            margin-top: 20px;
-            background: #16a34a;
+            margin-top: 24px;
+            background: var(--text);
+            color: var(--bg);
+            width: 100%;
+            max-width: 380px;
         }
-        #downloadBtn:hover { background: #15803d; }
+        #downloadBtn:hover { background: #e4e4e7; }
+        
+        /* New Register Button */
+        .register-link {
+            display: block;
+            margin-top: 20px;
+            font-size: 13px;
+            color: var(--muted);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .register-link:hover { color: var(--gold); }
 
-        /* PASS CARD STYLES (From User) */
+        /* PASS CARD STYLES */
         .card-wrapper {
             display: none; /* Hidden until verified */
             flex-direction: column;
             align-items: center;
+            width: 100%;
+            animation: slideUp 0.5s ease;
         }
         
-        .card {
+        /* The Card itself to be downloaded */
+        .ticket {
             width: 92%;
             max-width: 380px;
-            background: #ffffff;
+            background: #111113;
             border-radius: 16px;
-            padding: 24px;
-            box-shadow: 
-                0 6px 16px rgba(0,0,0,0.04),
-                0 2px 6px rgba(0,0,0,0.03);
-            border: 1px solid #e8edf3;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            border: 1px solid var(--border);
             position: relative;
-            box-sizing: border-box;
+            overflow: hidden;
         }
 
-        /* Accent */
-        .card::before {
+        /* Gold Gradient Accent */
+        .ticket::before {
             content: "";
             position: absolute;
             left: 0;
             top: 0;
-            width: 4px;
-            height: 100%;
-            border-radius: 16px 0 0 16px;
-            background: linear-gradient(#22c55e, #16a34a);
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, #c6a87c, #f4d093);
         }
 
-        /* Header */
-        .header {
+        .ticket-inner {
+            padding: 30px 24px 24px;
+        }
+
+        .ticket-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 24px;
+        }
+
+        .brand-col { display: flex; flex-direction: column; }
+        .brand-title { font-family: 'Playfair Display', serif; font-size: 20px; color: var(--gold); }
+        .brand-sub { font-size: 11px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-top: 2px; }
+
+        .status-badge {
+            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            background: rgba(198, 168, 124, 0.15);
+            color: var(--gold);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .ticket-body {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 22px;
+            margin-bottom: 24px;
         }
 
-        .logo { font-size: 15px; font-weight: 600; color: #111827; letter-spacing: 0.2px; }
-        .status { font-size: 11px; padding: 4px 10px; border-radius: 999px; background: #ecfdf5; color: #15803d; font-weight: 500; }
+        .player-info { display: flex; flex-direction: column; gap: 4px; }
+        .player-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+        .player-name { font-size: 24px; font-weight: 700; color: var(--text); letter-spacing: -0.5px; word-break: break-word; }
+        .player-chess-id { font-size: 14px; color: #a1a1aa; display: flex; align-items: center; gap: 6px; }
 
-        /* Identity Block */
-        .identity { margin-bottom: 6px; }
-        .realname { font-size: 23px; font-weight: 600; color: #111827; letter-spacing: -0.2px; }
-        .username { font-size: 13px; color: #6b7280; margin-top: 3px; }
-
-        .divider { height: 1px; background: #eef2f7; margin: 20px 0; }
-
-        /* Notice Box */
-        .notice {
-            background: #fff7ed;
-            border: 1px solid #fed7aa;
-            border-radius: 12px;
-            padding: 16px;
+        .qr-wrapper {
+            background: #fff;
+            padding: 8px;
+            border-radius: 8px;
+            width: 80px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        .notice-title { font-size: 12px; font-weight: 600; color: #9a3412; margin-bottom: 8px; letter-spacing: 0.2px; }
-        .notice-text { font-size: 13px; color: #7c2d12; line-height: 1.6; }
 
-        .footer { margin-top: 20px; font-size: 11px; color: #9ca3af; text-align: center; letter-spacing: 0.3px; }
+        .ticket-divider {
+            height: 1px;
+            background: var(--border);
+            margin: 0 -24px 20px;
+            position: relative;
+        }
+        
+        /* Cutout circles for divider */
+        .ticket-divider::before, .ticket-divider::after {
+            content: '';
+            position: absolute;
+            top: -8px;
+            width: 16px;
+            height: 16px;
+            background: var(--bg);
+            border-radius: 50%;
+            border: 1px solid var(--border);
+        }
+        .ticket-divider::before { left: -8px; border-left-color: transparent; border-top-color: transparent; border-bottom-color: transparent; }
+        .ticket-divider::after { right: -8px; border-right-color: transparent; border-top-color: transparent; border-bottom-color: transparent; }
+
+        .ticket-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .detail-box { display: flex; flex-direction: column; gap: 4px; }
+        .detail-val { font-size: 15px; color: var(--text); font-weight: 500; font-family: monospace; }
+        .detail-val.gold { color: var(--gold); }
+
+        .ticket-footer {
+            background: rgba(198, 168, 124, 0.05);
+            margin: 0 -24px -24px;
+            padding: 16px 24px;
+            text-align: center;
+            font-size: 11px;
+            color: var(--muted);
+            border-top: 1px solid var(--border);
+        }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
     <!-- PHASE 1: Form to verify -->
     <div class="search-container" id="searchPhase">
+        <i class="fas fa-ticket-alt logo-icon"></i>
         <h2>Download Your Pass</h2>
-        <p>Enter details used during registration to find your pass.</p>
+        <p>Enter details used during registration to find your premium tournament pass.</p>
         
-        <input type="text" id="passName" class="form-input" placeholder="Full Name (e.g. Rahul Sharma)">
-        <input type="tel" id="passPhone" class="form-input" placeholder="Phone Number">
+        <div class="input-group">
+            <i class="fas fa-user"></i>
+            <input type="text" id="passName" class="form-input" placeholder="Full Name (e.g. Rahul Sharma)">
+        </div>
         
-        <button class="btn" id="findBtn" onclick="findPass()">Get Pass</button>
+        <div class="input-group">
+            <i class="fas fa-phone"></i>
+            <input type="tel" id="passPhone" class="form-input" placeholder="Registered Phone Number">
+        </div>
+        
+        <button class="btn" id="findBtn" onclick="findPass()">Find My Pass</button>
         <div class="error-msg" id="errorMsg"></div>
+        
+
     </div>
 
     <!-- PHASE 2: Display the Card -->
     <div class="card-wrapper" id="resultPhase">
         
-        <div class="card" id="passCard">
-            <div class="header">
-                <div class="logo">ChessBird</div>
-                <div class="status">Verified Player</div>
-            </div>
-
-            <div class="identity">
-                <div class="realname" id="cardName">Player Name</div>
-                <div class="username" id="cardUsername">username123</div>
-            </div>
-
-            <div class="divider"></div>
-
-            <div class="notice">
-                <div class="notice-title">Important Notice</div>
-                <div class="notice-text">
-                    If you do not join on time while your opponent is present,
-                    you will be declared defeated and your opponent will automatically
-                    advance to the next round.
+        <!-- Ticket to download -->
+        <div class="ticket" id="passCard">
+            <div class="ticket-inner">
+                
+                <div class="ticket-header">
+                    <div class="brand-col">
+                        <div class="brand-title">ChessBird</div>
+                        <div class="brand-sub">Elite Tournament</div>
+                    </div>
+                    <div class="status-badge"><i class="fas fa-check-circle"></i> Verified</div>
                 </div>
-            </div>
 
-            <div class="footer">
-                ChessBird Tournament System
+                <div class="ticket-body">
+                    <div class="player-info">
+                        <div class="player-label">Participant</div>
+                        <div class="player-name" id="cardName">Player Name</div>
+                        <div class="player-chess-id"><i class="fas fa-chess-pawn"></i> <span id="cardUsername">username</span></div>
+                    </div>
+                    <div class="qr-wrapper" id="qrcode">
+                        <!-- QR Code will be injected here -->
+                    </div>
+                </div>
+
+                <div class="ticket-divider"></div>
+
+                <div class="ticket-details">
+                    <div class="detail-box">
+                        <span class="player-label">Entry ID</span>
+                        <span class="detail-val gold" id="cardId">#CB000</span>
+                    </div>
+                    <div class="detail-box">
+                        <span class="player-label">Rating Category</span>
+                        <span class="detail-val" id="cardRating">1200 ELO</span>
+                    </div>
+                </div>
+
+                <div class="ticket-footer">
+                    Present this pass (or Entry ID) digitally before the match. Do not share your Entry ID publicly.
+                </div>
+
             </div>
         </div>
 
-        <button class="btn" id="downloadBtn" onclick="downloadPass()">Download as Image</button>
+        <button class="btn" id="downloadBtn" onclick="downloadPass()"><i class="fas fa-file-pdf"></i> Save as PDF</button>
 
     </div>
 
@@ -202,7 +364,7 @@
         let isFeatureEnabled = false;
 
         // ── Constants ──────────────────────────────────────────────
-        const MAX_ATTEMPTS  = 3;          // Kitne galat attempts allowed hain
+        const MAX_ATTEMPTS  = 5;          // increased attempts for easier use
         const LOCKOUT_MS    = 5 * 60 * 1000; // 5 minutes lockout
         const STORAGE_KEY   = 'cb_pass_attempts';
 
@@ -260,16 +422,16 @@
                 const mins = Math.floor(left / 60000);
                 const secs = Math.floor((left % 60000) / 1000);
 
-                errDiv.innerHTML = `<i>🔒</i> Too many failed attempts! <br>Try again in <b>${mins}m ${secs}s</b>.`;
+                errDiv.innerHTML = `<i class="fas fa-lock"></i> Too many failed attempts! <br>Try again in <b>${mins}m ${secs}s</b>.`;
                 errDiv.style.display = 'block';
-                btn.innerText = `Locked (${mins}:${String(secs).padStart(2,'0')})`;
+                btn.innerHTML = `Locked (${mins}:${String(secs).padStart(2,'0')})`;
 
                 if (left <= 0) {
                     clearInterval(countdownTimer);
                     document.getElementById('passName').disabled  = false;
                     document.getElementById('passPhone').disabled = false;
                     btn.disabled = false;
-                    btn.innerText = 'Get Pass';
+                    btn.innerText = 'Find My Pass';
                     errDiv.style.display = 'none';
                     saveLockoutData({ count: 0, lockedUntil: 0 });
                 }
@@ -290,7 +452,7 @@
             } else {
                 saveLockoutData(data);
                 const left = MAX_ATTEMPTS - data.count;
-                showError(`Incorrect name or phone. Only <b>${left}</b> attempt${left > 1 ? 's' : ''} remaining!`);
+                showError(`<i class="fas fa-exclamation-circle"></i> Incorrect name or phone. <b>${left}</b> attempt${left > 1 ? 's' : ''} remaining!`);
             }
         }
 
@@ -299,7 +461,7 @@
             errDiv.innerHTML = msg;
             errDiv.style.display = 'block';
             const btn = document.getElementById('findBtn');
-            if (!btn.disabled) btn.innerText = 'Get Pass';
+            if (!btn.disabled) btn.innerHTML = 'Find My Pass';
         }
 
         function findPass() {
@@ -309,26 +471,27 @@
             const name  = document.getElementById('passName').value.trim();
             const phone = document.getElementById('passPhone').value.trim();
 
-            if (!name || !phone) return showError('Please enter both Name and Phone.');
+            if (!name || !phone) return showError('<i class="fas fa-exclamation-circle"></i> Please enter both Name and Phone.');
 
             if (!isFeatureEnabled) {
-                return showError('Pass generation is currently disabled by Admin.');
+                return showError('<i class="fas fa-clock"></i> Pass generation is currently disabled by Admin.');
             }
 
             if (typeof db === 'undefined') {
-                return showError('Firebase database is not connected.');
+                return showError('<i class="fas fa-wifi"></i> Check your internet connection.');
             }
 
-            document.getElementById('findBtn').innerText = 'Searching...';
+            const btn = document.getElementById('findBtn');
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Searching...';
 
-            // Secure Query using Phone as Document ID
+            // Secure locally (phone is document ID)
             db.collection('registrations').doc(phone).get()
               .then((docSnap) => {
                   if (!docSnap.exists) {
                       recordFailedAttempt(); // Phone not found
                   } else {
                       const userData = docSnap.data();
-                      // Securely verify name locally since we can't query lists
+                      // Securely verify name locally since we can't query lists directly by name in standard rules without indexing
                       if (userData.name && userData.name.toLowerCase().trim() === name.toLowerCase().trim()) {
                           // ✅ Success — reset attempts
                           saveLockoutData({ count: 0, lockedUntil: 0 });
@@ -340,7 +503,21 @@
 
                           // Fill card
                           document.getElementById('cardName').innerText     = userData.name;
-                          document.getElementById('cardUsername').innerText = 'ID: ' + (userData.cardId || 'CB000');
+                          document.getElementById('cardUsername').innerText = '@' + (userData.username || 'unknown');
+                          document.getElementById('cardId').innerText = '#' + (userData.cardId || 'CB000');
+                          document.getElementById('cardRating').innerText = (userData.rating || '-') + ' ELO';
+                          
+                          // Generate QR Code containing Card ID
+                          document.getElementById('qrcode').innerHTML = ''; // clear previous
+                          new QRCode(document.getElementById("qrcode"), {
+                              text: `ChessBird Verified: ${userData.cardId || phone}`,
+                              width: 80,
+                              height: 80,
+                              colorDark : "#111113",
+                              colorLight : "#ffffff",
+                              correctLevel : QRCode.CorrectLevel.M
+                          });
+                          
                       } else {
                           recordFailedAttempt(); // Name mismatch
                       }
@@ -348,23 +525,57 @@
               })
               .catch((error) => {
                   showError('Database Error: ' + error.message);
-                  document.getElementById('findBtn').innerText = 'Get Pass';
+                  btn.innerHTML = 'Find My Pass';
               });
         }
 
-        // Convert Card to Image and Download
+        // Convert Card to PDF and Download
         function downloadPass() {
             const cardElement = document.getElementById('passCard');
             const btn = document.getElementById('downloadBtn');
-            btn.innerText = 'Downloading...';
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating PDF...';
+            btn.disabled = true;
 
-            html2canvas(cardElement, { scale: 2 }).then(canvas => {
-                const link = document.createElement('a');
-                link.download = 'ChessBird_Pass.png';
-                link.href = canvas.toDataURL('image/png');
-                link.click();
-                btn.innerText = 'Download as Image';
-            });
+            // Wait for QR code to fully render before capturing
+            setTimeout(() => {
+                html2canvas(cardElement, {
+                    scale: 3, // High resolution capture
+                    backgroundColor: '#111113',
+                    useCORS: true
+                }).then(canvas => {
+                    const { jsPDF } = window.jspdf;
+
+                    const imgData  = canvas.toDataURL('image/png');
+                    const imgW     = canvas.width;
+                    const imgH     = canvas.height;
+
+                    // Convert px to mm (96 DPI → 1px = 0.2646 mm)
+                    const pdfW = (imgW / 3) * 0.2646;  // divide by scale=3
+                    const pdfH = (imgH / 3) * 0.2646;
+
+                    // Create PDF exactly the size of the card
+                    const pdf = new jsPDF({
+                        orientation: pdfW > pdfH ? 'landscape' : 'portrait',
+                        unit: 'mm',
+                        format: [pdfW, pdfH]
+                    });
+
+                    pdf.addImage(imgData, 'PNG', 0, 0, pdfW, pdfH);
+                    const cardId = document.getElementById('cardId').innerText.replace('#', '');
+                    pdf.save(`ChessBird_Pass_${cardId}.pdf`);
+
+                    btn.innerHTML = '<i class="fas fa-check"></i> PDF Downloaded!';
+                    setTimeout(() => {
+                        btn.disabled = false;
+                        btn.innerHTML = originalText;
+                    }, 2000);
+                }).catch(err => {
+                    alert('Error generating PDF: ' + err.message);
+                    btn.disabled = false;
+                    btn.innerHTML = originalText;
+                });
+            }, 300);
         }
     </script>
 </body>
