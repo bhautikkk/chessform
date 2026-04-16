@@ -504,7 +504,7 @@
                           // Fill card
                           document.getElementById('cardName').innerText     = userData.name;
                           document.getElementById('cardUsername').innerText = '@' + (userData.username || 'unknown');
-                          document.getElementById('cardId').innerText = '#' + (userData.cardId || 'CB000');
+                          document.getElementById('cardId').innerText = userData.cardId || 'CB000';
                           document.getElementById('cardRating').innerText = (userData.rating || '-') + ' ELO';
                           
                           // Generate QR Code containing Card ID
