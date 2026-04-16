@@ -16,8 +16,11 @@ service cloud.firestore {
 
     // ── REGISTRATIONS COLLECTION ──────────────────────────────────
     match /registrations/{docId} {
-      // ✅ Public can ONLY CREATE their own registration
-      allow create: if true;
+      // ✅ Public can ONLY CREATE their own registration IF paymentId looks valid
+      allow create: if request.resource.data.keys().hasAll(['paymentId']) 
+                    && request.resource.data.paymentId is string 
+                    && request.resource.data.paymentId.matches('^pay_.*')
+                    && request.resource.data.paymentId.size() > 10;
       // 🚫 NO PUBLIC UPDATES - Stops hackers from altering someone else's data
       allow update: if false; 
       // 🚫 NO PUBLIC DELETING

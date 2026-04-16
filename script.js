@@ -290,44 +290,119 @@ function initRegistrationApp() {
             };
 
             // Database Handling & Random ID Generation
-            if (typeof db !== 'undefined') {
-                // Check if user already exists based on phone document
-                const userPhone = templateParams.phone;
-                db.collection("registrations").doc(userPhone).get()
-                    .then(docSnap => {
-                        if (docSnap.exists) {
-                            console.log("User already exists. Skipping re-save.");
-                            proceedWithEmailJS();
-                        } else {
-                            // Generate a GUARANTEED unique random Card ID
-                            generateUniqueCardId().then(cardId => {
-                                // Save to Firestore using phone as docId securely
-                                db.collection("registrations").doc(userPhone).set({
-                                    name: templateParams.name,
-                                    username: templateParams.username,
-                                    email: templateParams.email,
-                                    phone: templateParams.phone,
-                                    rating: templateParams.rating,
-                                    cardId: cardId,
-                                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                                }).then(() => {
-                                    console.log("Saved with unique Card ID:", cardId);
-                                    proceedWithEmailJS();
-                                }).catch((error) => {
-                                    console.error("Save failed:", error);
+            const handleFinalSave = (paymentId) => {
+                if (typeof db !== 'undefined') {
+                    // Check if user already exists based on phone document
+                    const userPhone = templateParams.phone;
+                    db.collection("registrations").doc(userPhone).get()
+                        .then(docSnap => {
+                            if (docSnap.exists) {
+                                console.log("User already exists. Skipping re-save.");
+                                proceedWithEmailJS();
+                            } else {
+                                // Generate a GUARANTEED unique random Card ID
+                                generateUniqueCardId().then(cardId => {
+                                    // Save to Firestore using phone as docId securely
+                                    db.collection("registrations").doc(userPhone).set({
+                                        name: templateParams.name,
+                                        username: templateParams.username,
+                                        email: templateParams.email,
+                                        phone: templateParams.phone,
+                                        rating: templateParams.rating,
+                                        paymentId: paymentId || 'Not provided',
+                                        cardId: cardId,
+                                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                                    }).then(() => {
+                                        console.log("Saved with unique Card ID:", cardId);
+                                        proceedWithEmailJS();
+                                    }).catch((error) => {
+                                        console.error("Save failed:", error);
+                                        proceedWithEmailJS();
+                                    });
+                                }).catch(error => {
+                                    console.error("ID generation failed:", error);
                                     proceedWithEmailJS();
                                 });
-                            }).catch(error => {
-                                console.error("ID generation failed:", error);
-                                proceedWithEmailJS();
-                            });
+                            }
+                        }).catch(error => {
+                            console.error("DB check failed:", error);
+                            proceedWithEmailJS();
+                        });
+                } else {
+                    proceedWithEmailJS();
+                }
+            };
+
+            // Razorpay Integration
+            const options = {
+                "key": "rzp_test_SdF2J3WDCQa5Ko", // The user's test key
+                "amount": 2900, // ₹29 in paise
+                "currency": "INR",
+                "name": "Chess Bird",
+                "description": "Tournament Registration Fee",
+                "handler": function (response){
+                    // Payment successful
+                    console.log("Payment Successful!", response.razorpay_payment_id);
+                    // Keep button loading state
+                    if (btn) {
+                        btn.innerHTML = '<span class="btn-text">Verifying... <i class="fas fa-spinner fa-spin"></i></span><div class="btn-glow"></div>';
+                    }
+                    handleFinalSave(response.razorpay_payment_id);
+                },
+                "prefill": {
+                    "name": templateParams.name,
+                    "email": templateParams.email,
+                    "contact": templateParams.phone
+                },
+                "theme": {
+                    "color": "#c6a87c"
+                },
+                "modal": {
+                    "ondismiss": function() {
+                        if (btn) {
+                            btn.innerHTML = '<span class="btn-text">Pay ₹29 & Register <i class="fas fa-arrow-right arrow-icon"></i></span><div class="btn-glow"></div>';
+                            btn.style.opacity = '1';
+                            btn.style.pointerEvents = 'all';
                         }
-                    }).catch(error => {
-                        console.error("DB check failed:", error);
-                        proceedWithEmailJS();
-                    });
+                    }
+                }
+            };
+            
+            if (typeof Razorpay !== 'undefined') {
+                const rzp = new Razorpay(options);
+                rzp.on('payment.failed', function (response){
+                    alert("Payment Failed. Reason: " + response.error.description);
+                    if (btn) {
+                        btn.innerHTML = '<span class="btn-text">Pay ₹29 & Register <i class="fas fa-arrow-right arrow-icon"></i></span><div class="btn-glow"></div>';
+                        btn.style.opacity = '1';
+                        btn.style.pointerEvents = 'all';
+                    }
+                });
+
+                // Check if already registered before opening payment
+                if (typeof db !== 'undefined') {
+                    const userPhone = templateParams.phone;
+                    db.collection("registrations").doc(userPhone).get()
+                        .then(docSnap => {
+                            if (docSnap.exists) {
+                                alert("You are already registered!");
+                                if (btn) {
+                                    btn.innerHTML = '<span class="btn-text">Pay ₹29 & Register <i class="fas fa-arrow-right arrow-icon"></i></span><div class="btn-glow"></div>';
+                                    btn.style.opacity = '1';
+                                    btn.style.pointerEvents = 'all';
+                                }
+                            } else {
+                                rzp.open();
+                            }
+                        }).catch(e => {
+                            console.error("Checking registration failed", e);
+                            rzp.open(); // Fallback open
+                        });
+                } else {
+                    rzp.open();
+                }
             } else {
-                proceedWithEmailJS();
+                 alert("Razorpay is not loaded properly.");
             }
         });
     }

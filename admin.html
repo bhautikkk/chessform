@@ -381,6 +381,24 @@
 
         #loginScreen { animation: fadeIn 0.4s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Mobile Responsiveness */
+        @media (max-width: 600px) {
+            #adminPanel { padding: 20px 10px; }
+            .login-card { padding: 30px 20px; width: 92%; }
+            .panel-header { flex-direction: column; align-items: flex-start; gap: 16px; margin-bottom: 20px; }
+            .panel-header > div { width: 100%; justify-content: space-between; }
+            .card-box, .danger-box { padding: 18px 16px; }
+            .toggle-row { flex-direction: column; align-items: flex-start; gap: 12px; }
+            .switch { align-self: flex-start; margin-top: 4px; }
+            .reg-item { flex-direction: column; align-items: flex-start; padding: 16px 14px; gap: 10px; }
+            .reg-item > div:last-child { align-items: flex-start; justify-content: flex-start; flex-direction: row; flex-wrap: wrap; gap: 10px; width: 100%; margin-top: 4px; }
+            .event-id-row > div:nth-child(2) { width: 100%; flex-direction: column; align-items: stretch; }
+            .event-id-row input { width: 100%; }
+            .event-id-row button { width: 100% !important; }
+            .reset-grid { flex-direction: column; align-items: stretch; }
+            .danger-btn { width: 100%; justify-content: center; }
+        }
     </style>
 </head>
 <body>
@@ -645,7 +663,10 @@
                                 <span>@${escHtml(d.username || '—')} &nbsp;|&nbsp; ${escHtml(d.phone || '—')} &nbsp;|&nbsp; Rating: ${escHtml(String(d.rating || '—'))}</span>
                                 <span style="color:#a1a1aa;">${escHtml(d.email || '—')}</span>
                             </div>
-                            <span class="reg-id">${escHtml(d.cardId || 'No ID')}</span>
+                            <div style="display:flex; flex-direction:column; align-items:flex-end; gap:5px;">
+                                <span class="reg-id">${escHtml(d.cardId || 'No ID')}</span>
+                                ${d.paymentId ? `<span style="font-size:11px; color:var(--success); background:rgba(34,197,94,0.1); padding:2px 6px; border-radius:4px;"><i class="fas fa-check-circle"></i> ${escHtml(d.paymentId)}</span>` : ''}
+                            </div>
                         </div>`;
                 });
               });
