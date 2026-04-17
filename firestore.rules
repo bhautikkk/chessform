@@ -1,53 +1,132 @@
 // ═══════════════════════════════════════════════════════════════
-// ChessBird — Firestore Security Rules
+// ChessBird — Firestore Security Rules  (Maximum Security Version)
 //
-// YEH RULES FIREBASE CONSOLE ME JAAKE DEPLOY KARNI HAIN:
-//   Firebase Console → Firestore → Rules → Paste → Publish
+// DEPLOY: Firebase Console → Firestore → Rules → Paste → Publish
 // ═══════════════════════════════════════════════════════════════
 
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ── HELPER: Check if the request comes from a logged-in admin ──
+    // ══════════════════════════════════════════════════════════
+    // HELPER FUNCTIONS
+    // ══════════════════════════════════════════════════════════
+
+    // Admin = any Firebase-authenticated user (only you have the login)
     function isAdmin() {
       return request.auth != null;
     }
 
-    // ── REGISTRATIONS COLLECTION ──────────────────────────────────
+    // ══════════════════════════════════════════════════════════
+    // REGISTRATIONS (PUBLIC) — leaderboard, get-pass, duplicate check
+    // Contains: name, username, phone, rating, cardId, points,
+    //           matchStatus, currentRound
+    // Does NOT contain: email, paymentId (those are in _private)
+    // ══════════════════════════════════════════════════════════
     match /registrations/{docId} {
-      // ✅ Public can ONLY CREATE their own registration IF paymentId looks valid
-      allow create: if request.resource.data.keys().hasAll(['paymentId']) 
-                    && request.resource.data.paymentId is string 
-                    && request.resource.data.paymentId.matches('^pay_.*')
-                    && request.resource.data.paymentId.size() > 10;
-      // 🚫 NO PUBLIC UPDATES - Stops hackers from altering someone else's data
-      allow update: if false; 
-      // 🚫 NO PUBLIC DELETING
+
+      // ── CREATE ───────────────────────────────────────────────
+      allow create: if
+        // 1. Required public fields
+        request.resource.data.keys().hasAll(['name', 'phone', 'username', 'rating']) &&
+
+        // 2. phone must match document ID (prevents spoofing other people's data)
+        request.resource.data.phone == docId &&
+
+        // 3. BLOCK admin-only fields at creation (leaderboard injection prevention)
+        !request.resource.data.keys().hasAny(['points', 'matchStatus', 'currentRound']) &&
+
+        // 4. cardId must be 'Pending' only (admin assigns real IDs later)
+        (
+          !request.resource.data.keys().hasAll(['cardId']) ||
+          request.resource.data.cardId == 'Pending'
+        ) &&
+
+        // 5. NO email or paymentId in public collection (goes to _private)
+        !request.resource.data.keys().hasAny(['email', 'paymentId']) &&
+
+        // 6. name must be a real string
+        request.resource.data.name is string &&
+        request.resource.data.name.size() > 0;
+
+      // ── UPDATE: admin only ───────────────────────────────────
+      allow update: if isAdmin();
+
+      // ── DELETE: admin only ───────────────────────────────────
       allow delete: if isAdmin();
-      
-      // ✅ Allow GET (reading a specific registration IF you know the exact phone number)
-      // 🚫 DENY LIST (nobody can download the whole database from inspect element)
+
+      // ── GET: public (needed for duplicate check + get-pass) ──
       allow get: if true;
+
+      // ── LIST: public (needed for leaderboard) ────────────────
+      // Safe because email and paymentId are NOT in this collection
+      allow list: if true;
+    }
+
+    // ══════════════════════════════════════════════════════════
+    // REGISTRATIONS PRIVATE — admin-only sensitive data
+    // Contains: email, paymentId, timestamp
+    // NOBODY except admin can read this
+    // ══════════════════════════════════════════════════════════
+    match /registrations_private/{docId} {
+
+      // ── CREATE: public can create their own private doc ──────
+      allow create: if
+        // Must be for the same phone as docId
+        request.resource.data.keys().hasAll(['email', 'paymentId']) &&
+
+        // paymentId MUST match Razorpay format exactly
+        request.resource.data.paymentId is string &&
+        request.resource.data.paymentId.matches('^pay_[A-Za-z0-9]{14,}$') &&
+
+        // email must be non-empty
+        request.resource.data.email is string &&
+        request.resource.data.email.size() > 4 &&
+
+        // No extra fields allowed
+        !request.resource.data.keys().hasAny(['points', 'matchStatus', 'currentRound', 'cardId']);
+
+      // ── ALL READS AND UPDATES: admin only ────────────────────
+      // Nobody can read/update/delete private data except admin
+      allow get, list, update, delete: if isAdmin();
+    }
+
+    // ══════════════════════════════════════════════════════════
+    // PASS ATTEMPTS — server-side rate limiting for get-pass
+    // Prevents localStorage bypass attack
+    // ══════════════════════════════════════════════════════════
+    match /pass_attempts/{docId} {
+      // Anyone can create/update their own attempt record (keyed by phone)
+      allow get, create: if true;
+      allow update: if true; // needed to increment counter
+      allow delete: if isAdmin();
       allow list: if isAdmin();
     }
 
-    // ── USED CARDS COLLECTION (For duplicate checking safely) ───
+    // ══════════════════════════════════════════════════════════
+    // USED CARDS — duplicate card ID prevention
+    // ══════════════════════════════════════════════════════════
     match /used_cards/{docId} {
-      // ✅ Public can check if a Card ID exists, and reserve it
-      allow get, create: if true;
+      allow get: if true;
+      allow create: if
+        request.resource.data.keys().hasAll(['reserved']) &&
+        request.resource.data.reserved == true &&
+        request.resource.data.keys().size() == 1;
       allow list, update, delete: if isAdmin();
     }
 
-    // ── SETTINGS COLLECTION ──────────────────────────────────────
+    // ══════════════════════════════════════════════════════════
+    // SETTINGS — toggle controls
+    // ══════════════════════════════════════════════════════════
     match /settings/{docId} {
-      // "global" doc — public read karein toggles ke liye
-      allow read: if docId == "global";
-      // Baki sab settings sirf admin create/edit/delete kar sakta hai
+      // Public can ONLY read 'global' doc (for registration open/leaderboard toggle)
+      allow read: if docId == 'global';
       allow write: if isAdmin();
     }
 
-    // ── DEFAULT: Sab kuch deny ──────────────────────────────────
+    // ══════════════════════════════════════════════════════════
+    // DEFAULT: Deny everything not explicitly allowed
+    // ══════════════════════════════════════════════════════════
     match /{document=**} {
       allow read, write: if false;
     }

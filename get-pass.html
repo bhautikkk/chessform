@@ -364,9 +364,8 @@
         let isFeatureEnabled = false;
 
         // ── Constants ──────────────────────────────────────────────
-        const MAX_ATTEMPTS  = 5;          // increased attempts for easier use
+        const MAX_ATTEMPTS  = 5;
         const LOCKOUT_MS    = 5 * 60 * 1000; // 5 minutes lockout
-        const STORAGE_KEY   = 'cb_pass_attempts';
 
         // ── Check if admin has enabled the feature ─────────────────
         if (typeof db !== 'undefined') {
@@ -375,65 +374,33 @@
             });
         }
 
-        // ── On page load: check if already locked out ──────────────
-        window.addEventListener('load', () => {
-            checkLockout();
-        });
-
-        function getLockoutData() {
-            try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || { count: 0, lockedUntil: 0 }; }
-            catch { return { count: 0, lockedUntil: 0 }; }
-        }
-
-        function saveLockoutData(data) {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-        }
-
         let countdownTimer = null;
 
-        function checkLockout() {
-            const data = getLockoutData();
-            const now  = Date.now();
-
-            if (data.lockedUntil > now) {
-                startLockoutUI(data.lockedUntil - now);
-                return true; // Still locked
-            }
-
-            // Lockout expired — reset attempts
-            if (data.lockedUntil > 0) {
-                saveLockoutData({ count: 0, lockedUntil: 0 });
-            }
-            return false;
-        }
-
-        function startLockoutUI(remainingMs) {
+        function startLockoutUI(remainingMs, phone) {
             const btn = document.getElementById('findBtn');
             const errDiv = document.getElementById('errorMsg');
-            document.getElementById('passName').disabled  = true;
-            document.getElementById('passPhone').disabled = true;
             btn.disabled = true;
 
             if (countdownTimer) clearInterval(countdownTimer);
 
+            const unlockTime = Date.now() + remainingMs;
+
             function updateDisplay() {
-                const data = getLockoutData();
-                const left = Math.max(0, data.lockedUntil - Date.now());
+                const left = Math.max(0, unlockTime - Date.now());
                 const mins = Math.floor(left / 60000);
                 const secs = Math.floor((left % 60000) / 1000);
 
-                errDiv.innerHTML = `<i class="fas fa-lock"></i> Too many failed attempts! <br>Try again in <b>${mins}m ${secs}s</b>.`;
+                errDiv.innerHTML = `<i class="fas fa-lock"></i> Too many failed attempts for this number! <br>Try again in <b>${mins}m ${secs}s</b>.`;
                 errDiv.style.display = 'block';
                 btn.innerHTML = `Locked (${mins}:${String(secs).padStart(2,'0')})`;
 
                 if (left <= 0) {
                     clearInterval(countdownTimer);
-                    document.getElementById('passName').disabled  = false;
-                    document.getElementById('passPhone').disabled = false;
                     btn.disabled = false;
                     btn.innerText = 'Find My Pass';
                     errDiv.style.display = 'none';
-                    saveLockoutData({ count: 0, lockedUntil: 0 });
+                    // Reset server-side lockout when timer ends
+                    db.collection('pass_attempts').doc(phone).set({ count: 0, lockedUntil: 0 });
                 }
             }
 
@@ -441,18 +408,25 @@
             countdownTimer = setInterval(updateDisplay, 1000);
         }
 
-        function recordFailedAttempt() {
-            const data = getLockoutData();
-            data.count += 1;
-
-            if (data.count >= MAX_ATTEMPTS) {
-                data.lockedUntil = Date.now() + LOCKOUT_MS;
-                saveLockoutData(data);
-                startLockoutUI(LOCKOUT_MS);
-            } else {
-                saveLockoutData(data);
-                const left = MAX_ATTEMPTS - data.count;
-                showError(`<i class="fas fa-exclamation-circle"></i> Incorrect name or phone. <b>${left}</b> attempt${left > 1 ? 's' : ''} remaining!`);
+        async function recordFailedAttempt(phone) {
+            const ref = db.collection('pass_attempts').doc(phone);
+            try {
+                const doc = await ref.get();
+                let data = doc.exists ? doc.data() : { count: 0, lockedUntil: 0 };
+                
+                data.count += 1;
+                if (data.count >= MAX_ATTEMPTS) {
+                    data.lockedUntil = Date.now() + LOCKOUT_MS;
+                    await ref.set(data);
+                    startLockoutUI(LOCKOUT_MS, phone);
+                } else {
+                    await ref.set(data);
+                    const left = MAX_ATTEMPTS - data.count;
+                    showError(`<i class="fas fa-exclamation-circle"></i> Incorrect name. <b>${left}</b> attempt${left > 1 ? 's' : ''} remaining!`);
+                }
+            } catch (e) {
+                console.error("Rate limit error", e);
+                showError("Something went wrong. Please try again.");
             }
         }
 
@@ -464,10 +438,7 @@
             if (!btn.disabled) btn.innerHTML = 'Find My Pass';
         }
 
-        function findPass() {
-            // Check lockout first
-            if (checkLockout()) return;
-
+        async function findPass() {
             const name  = document.getElementById('passName').value.trim();
             const phone = document.getElementById('passPhone').value.trim();
 
@@ -484,49 +455,59 @@
             const btn = document.getElementById('findBtn');
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Searching...';
 
-            // Secure locally (phone is document ID)
-            db.collection('registrations').doc(phone).get()
-              .then((docSnap) => {
-                  if (!docSnap.exists) {
-                      recordFailedAttempt(); // Phone not found
-                  } else {
-                      const userData = docSnap.data();
-                      // Securely verify name locally since we can't query lists directly by name in standard rules without indexing
-                      if (userData.name && userData.name.toLowerCase().trim() === name.toLowerCase().trim()) {
-                          // ✅ Success — reset attempts
-                          saveLockoutData({ count: 0, lockedUntil: 0 });
+            try {
+                // SERVER-SIDE LOCKOUT CHECK FIRST
+                const attemptDoc = await db.collection('pass_attempts').doc(phone).get();
+                if (attemptDoc.exists) {
+                    const data = attemptDoc.data();
+                    if (data.lockedUntil > Date.now()) {
+                        startLockoutUI(data.lockedUntil - Date.now(), phone);
+                        return;
+                    }
+                }
 
-                          // Hide search, show pass card
-                          document.getElementById('searchPhase').style.display = 'none';
-                          document.getElementById('resultPhase').style.display  = 'flex';
-                          document.getElementById('downloadBtn').style.display  = 'block';
+                // Verify registration
+                const docSnap = await db.collection('registrations').doc(phone).get();
+                
+                if (!docSnap.exists) {
+                    await recordFailedAttempt(phone);
+                } else {
+                    const userData = docSnap.data();
+                    // Securely verify name locally since we can't query lists directly by name in standard rules without indexing
+                    if (userData.name && userData.name.toLowerCase().trim() === name.toLowerCase().trim()) {
+                        // ✅ Success — reset server-side attempts
+                        await db.collection('pass_attempts').doc(phone).set({ count: 0, lockedUntil: 0 });
 
-                          // Fill card
-                          document.getElementById('cardName').innerText     = userData.name;
-                          document.getElementById('cardUsername').innerText = '@' + (userData.username || 'unknown');
-                          document.getElementById('cardId').innerText = userData.cardId || 'CB000';
-                          document.getElementById('cardRating').innerText = (userData.rating || '-') + ' ELO';
-                          
-                          // Generate QR Code containing Card ID
-                          document.getElementById('qrcode').innerHTML = ''; // clear previous
-                          new QRCode(document.getElementById("qrcode"), {
-                              text: `ChessBird Verified: ${userData.cardId || phone}`,
-                              width: 80,
-                              height: 80,
-                              colorDark : "#111113",
-                              colorLight : "#ffffff",
-                              correctLevel : QRCode.CorrectLevel.M
-                          });
-                          
-                      } else {
-                          recordFailedAttempt(); // Name mismatch
-                      }
-                  }
-              })
-              .catch((error) => {
-                  showError('Database Error: ' + error.message);
-                  btn.innerHTML = 'Find My Pass';
-              });
+                        // Hide search, show pass card
+                        document.getElementById('searchPhase').style.display = 'none';
+                        document.getElementById('resultPhase').style.display  = 'flex';
+                        document.getElementById('downloadBtn').style.display  = 'block';
+
+                        // Fill card
+                        document.getElementById('cardName').innerText     = userData.name;
+                        document.getElementById('cardUsername').innerText = '@' + (userData.username || 'unknown');
+                        document.getElementById('cardId').innerText = userData.cardId || 'CB000';
+                        document.getElementById('cardRating').innerText = (userData.rating || '-') + ' ELO';
+                        
+                        // Generate QR Code containing Card ID
+                        document.getElementById('qrcode').innerHTML = ''; // clear previous
+                        new QRCode(document.getElementById("qrcode"), {
+                            text: `ChessBird Verified: ${userData.cardId || phone}`,
+                            width: 80,
+                            height: 80,
+                            colorDark : "#111113",
+                            colorLight : "#ffffff",
+                            correctLevel : QRCode.CorrectLevel.M
+                        });
+                        
+                    } else {
+                        await recordFailedAttempt(phone); // Name mismatch
+                    }
+                }
+            } catch (error) {
+                showError('Database Error: ' + error.message);
+                btn.innerHTML = 'Find My Pass';
+            }
         }
 
         // Convert Card to PDF and Download

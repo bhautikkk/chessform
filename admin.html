@@ -410,6 +410,66 @@
         #loginScreen { animation: fadeIn 0.4s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 
+        /* ── TOAST NOTIFICATIONS ── */
+        #toastContainer {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+        }
+        .toast {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 18px;
+            border-radius: 12px;
+            background: #1e1e22;
+            border: 1px solid #2a2a2e;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04);
+            min-width: 280px;
+            max-width: 360px;
+            pointer-events: all;
+            animation: toastSlideIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            position: relative;
+            overflow: hidden;
+        }
+        .toast::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0;
+            height: 3px;
+            width: 100%;
+            background: currentColor;
+            opacity: 0.25;
+            transform-origin: left;
+            animation: toastProgress var(--duration, 3s) linear forwards;
+        }
+        .toast.toast-success { border-left: 3px solid var(--success); color: var(--success); }
+        .toast.toast-error   { border-left: 3px solid var(--danger);  color: var(--danger); }
+        .toast.toast-info    { border-left: 3px solid var(--gold);    color: var(--gold); }
+        .toast-icon { font-size: 18px; flex-shrink: 0; }
+        .toast-body { flex: 1; }
+        .toast-title { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 2px; }
+        .toast-msg   { font-size: 12px; color: var(--muted); line-height: 1.4; }
+        .toast-close {
+            background: none; border: none; color: var(--muted); cursor: pointer;
+            font-size: 14px; padding: 2px 4px; flex-shrink: 0;
+            transition: color 0.2s;
+        }
+        .toast-close:hover { color: var(--text); }
+        .toast.toast-hide { animation: toastSlideOut 0.3s ease forwards; }
+        @keyframes toastSlideIn  { from { opacity: 0; transform: translateX(60px) scale(0.95); } to { opacity: 1; transform: translateX(0) scale(1); } }
+        @keyframes toastSlideOut { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(60px); } }
+        @keyframes toastProgress { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+        @media (max-width: 480px) {
+            #toastContainer { top: 12px; right: 12px; left: 12px; }
+            .toast { min-width: unset; }
+        }
+
         /* Mobile Responsiveness */
         @media (max-width: 600px) {
             #adminPanel { padding: 20px 10px; }
@@ -430,6 +490,8 @@
     </style>
 </head>
 <body>
+    <!-- Toast Container -->
+    <div id="toastContainer"></div>
 
     <!-- ══════════════════════════════════
          SCREEN 1: LOGIN (always starts here)
@@ -508,15 +570,58 @@
                 </div>
             </div>
 
+            <!-- Leaderboard Feature Toggle -->
+            <div class="card-box">
+                <div class="toggle-row">
+                    <div class="toggle-info">
+                        <h3><i class="fas fa-trophy" style="color:var(--gold); margin-right:8px;"></i> Enable Public Leaderboard</h3>
+                        <p>If enabled, players can see the live standings at /leaderboard.html</p>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="leaderboardToggle" onchange="toggleLeaderboard()">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+
             <!-- Registrations -->
             <div class="card-box">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:12px;">
                     <div class="section-title" style="margin-bottom:0;"><i class="fas fa-users"></i> &nbsp;Recent Registrations</div>
-                    <button class="action-btn" onclick="exportToPDF()" id="exportPdfBtn" style="color:#ef4444; border-color:#ef4444; background:rgba(239,68,68,0.1);">
-                        <i class="fas fa-file-pdf"></i> Export PDF
-                    </button>
+                    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                        <button class="action-btn" onclick="generatePendingIds()" id="generateIdsBtn" style="color:#22c55e; border-color:#22c55e; background:rgba(34,197,94,0.1);">
+                            <i class="fas fa-id-card"></i> Generate IDs
+                        </button>
+                        <button class="action-btn" onclick="exportToPDF()" id="exportPdfBtn" style="color:#ef4444; border-color:#ef4444; background:rgba(239,68,68,0.1);">
+                            <i class="fas fa-file-pdf"></i> Export PDF
+                        </button>
+                    </div>
                 </div>
                 <div class="reg-list" id="userList">
+                    <div class="empty-msg"><span class="spinner"></span></div>
+                </div>
+            </div>
+
+            <!-- Tournament Manager -->
+            <div class="card-box" id="tournamentManagerBox">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:12px;">
+                    <div class="section-title" style="margin-bottom:0;"><i class="fas fa-medal"></i> &nbsp;Tournament Manager</div>
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        <span style="font-size:13px; color:var(--muted);">Select Round:</span>
+                        <select id="roundSelector" onchange="renderTournamentManager()" style="padding:6px 12px; background:#111113; border:1px solid var(--border); border-radius:8px; color:var(--text); outline:none;">
+                            <option value="1">Round 1</option>
+                            <option value="2">Round 2</option>
+                            <option value="3">Round 3</option>
+                            <option value="4">Round 4</option>
+                            <option value="5">Round 5</option>
+                            <option value="6">Round 6</option>
+                            <option value="7">Round 7</option>
+                            <option value="8">Round 8</option>
+                        </select>
+                    </div>
+                </div>
+                <p style="font-size:13px; color:var(--muted); margin-bottom:16px;">Assign Won/Draw/Lose to players. Only <b>Won</b> or <b>Draw</b> advances a player to the next round.</p>
+                <div class="reg-list" id="tournamentList">
                     <div class="empty-msg"><span class="spinner"></span></div>
                 </div>
             </div>
@@ -573,11 +678,37 @@
     </div>
 
     <script>
+        // ─── Toast Notification System ───────────────────────────────
+        function showToast(type, title, message, duration = 3500) {
+            const container = document.getElementById('toastContainer');
+            const icons = { success: 'fa-circle-check', error: 'fa-circle-xmark', info: 'fa-circle-info' };
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.style.setProperty('--duration', (duration / 1000) + 's');
+            toast.innerHTML = `
+                <i class="fas ${icons[type] || icons.info} toast-icon"></i>
+                <div class="toast-body">
+                    <div class="toast-title">${title}</div>
+                    ${message ? `<div class="toast-msg">${message}</div>` : ''}
+                </div>
+                <button class="toast-close" onclick="dismissToast(this.parentElement)"><i class="fas fa-xmark"></i></button>
+            `;
+            container.appendChild(toast);
+            const timer = setTimeout(() => dismissToast(toast), duration);
+            toast._timer = timer;
+        }
+        function dismissToast(toast) {
+            if (!toast || toast._dismissed) return;
+            toast._dismissed = true;
+            clearTimeout(toast._timer);
+            toast.classList.add('toast-hide');
+            setTimeout(() => toast.remove(), 300);
+        }
+
         // ─── Firebase refs ───────────────────────────────────────────
         const auth = firebase.auth();
 
         // ─── Auth State Listener — SINGLE source of truth ───────────
-        // This runs on page load and on every auth change.
         // The admin panel is NEVER shown until Firebase confirms login.
         auth.onAuthStateChanged((user) => {
             if (user) {
@@ -649,6 +780,7 @@
                 if (doc.exists) {
                     const data = doc.data();
                     document.getElementById('passToggle').checked = data.isPassEnabled || false;
+                    document.getElementById('leaderboardToggle').checked = data.isLeaderboardOpen || false;
                     document.getElementById('regToggle').checked = data.isRegistrationOpen || false;
                     // Show registration status hint
                     const statusEl = document.getElementById('regToggleStatus');
@@ -670,25 +802,46 @@
                         eventIdStatus.innerHTML = '<span style="color:var(--danger);">⚠ No Event ID set — registration won\'t work properly!</span>';
                     }
                 } else {
-                    db.collection('settings').doc('global').set({ isPassEnabled: false, isRegistrationOpen: false, eventId: 'event_default' });
+                    db.collection('settings').doc('global').set({ isPassEnabled: false, isRegistrationOpen: false, isLeaderboardOpen: false, eventId: 'event_default' });
                 }
             });
 
-            // 2. Registrations list (realtime)
-            db.collection('registrations')
-              .orderBy('timestamp', 'desc')
-              .limit(50)
-              .onSnapshot((snapshot) => {
+            // 2. Registrations list (realtime merged from public and private)
+            let publicPlayers = {};
+            let privatePlayers = {};
+
+            function renderMergedPlayers() {
                 const list = document.getElementById('userList');
                 list.innerHTML = '';
-
-                if (snapshot.empty) {
+                
+                const docIds = new Set([...Object.keys(publicPlayers), ...Object.keys(privatePlayers)]);
+                
+                if (docIds.size === 0) {
                     list.innerHTML = '<div class="empty-msg">No registrations found.</div>';
+                    window.allPlayersRaw = [];
+                    renderTournamentManager();
                     return;
                 }
 
-                snapshot.forEach((docSnap) => {
-                    const d = docSnap.data();
+                let mergedArray = [];
+                docIds.forEach(id => {
+                    mergedArray.push({
+                        docId: id,
+                        ...(publicPlayers[id] || {}),
+                        ...(privatePlayers[id] || {})
+                    });
+                });
+
+                // Sort by timestamp desc (timestamp is now in private collection)
+                mergedArray.sort((a, b) => {
+                    const tA = a.timestamp ? (a.timestamp.seconds || 0) : 0;
+                    const tB = b.timestamp ? (b.timestamp.seconds || 0) : 0;
+                    return tB - tA;
+                });
+
+                window.allPlayersRaw = mergedArray;
+
+                mergedArray.forEach((d) => {
                     list.innerHTML += `
                         <div class="reg-item">
                             <div class="reg-left">
@@ -702,7 +855,21 @@
                             </div>
                         </div>`;
                 });
-              });
+                
+                renderTournamentManager();
+            }
+
+            db.collection('registrations').onSnapshot((snapshot) => {
+                publicPlayers = {};
+                snapshot.forEach(doc => publicPlayers[doc.id] = doc.data());
+                renderMergedPlayers();
+            });
+
+            db.collection('registrations_private').onSnapshot((snapshot) => {
+                privatePlayers = {};
+                snapshot.forEach(doc => privatePlayers[doc.id] = doc.data());
+                renderMergedPlayers();
+            });
         }
 
         // ─── Toggle Pass Feature ────────────────────────────────────
@@ -710,7 +877,15 @@
             const isEnabled = document.getElementById('passToggle').checked;
             db.collection('settings').doc('global')
               .update({ isPassEnabled: isEnabled })
-              .catch(e => alert('Error: ' + e.message));
+              .catch(e => showToast('error', 'Update Failed', e.message));
+        }
+
+        // ─── Toggle Public Leaderboard ──────────────────────────────
+        function toggleLeaderboard() {
+            const isEnabled = document.getElementById('leaderboardToggle').checked;
+            db.collection('settings').doc('global')
+              .update({ isLeaderboardOpen: isEnabled })
+              .catch(e => showToast('error', 'Update Failed', e.message));
         }
 
         // ─── Toggle Registration Open/Close ─────────────────────────
@@ -719,9 +894,133 @@
             db.collection('settings').doc('global')
               .update({ isRegistrationOpen: isOpen })
               .then(() => {
-                  console.log('Registration status updated:', isOpen ? 'OPEN' : 'CLOSED');
+                  showToast('success', isOpen ? 'Registration Opened' : 'Registration Closed', isOpen ? 'Players can now register.' : 'Form is now hidden from public.');
               })
-              .catch(e => alert('Error: ' + e.message));
+              .catch(e => showToast('error', 'Update Failed', e.message));
+        }
+
+        // ─── Tournament Manager Logic ─────────────────────────────────
+        function renderTournamentManager() {
+            const list = document.getElementById('tournamentList');
+            if (!list) return;
+
+            const selectedRound = parseInt(document.getElementById('roundSelector').value) || 1;
+            list.innerHTML = '';
+
+            const players = window.allPlayersRaw || [];
+            if (players.length === 0) {
+                list.innerHTML = '<div class="empty-msg">No players found.</div>';
+                return;
+            }
+
+            // Filter players who have REACHED the selectedRound
+            let validPlayers = players.filter(p => {
+                const pRound = p.currentRound || 1;
+                return pRound >= selectedRound;
+            });
+
+            // Sort by points (highest first), then rating
+            validPlayers.sort((a, b) => {
+                const ptsA = parseFloat(a.points) || 0;
+                const ptsB = parseFloat(b.points) || 0;
+                if (ptsB !== ptsA) return ptsB - ptsA;
+                return (parseInt(b.rating) || 0) - (parseInt(a.rating) || 0);
+            });
+
+            if (validPlayers.length === 0) {
+                list.innerHTML = '<div class="empty-msg">No players have reached this round yet.</div>';
+                return;
+            }
+
+            validPlayers.forEach((d, index) => {
+                const matchStatusMap = d.matchStatus || {};
+                const currentStatus = matchStatusMap[selectedRound] || 'playing';
+                const totalPts = parseFloat(d.points) || 0;
+
+                let actBtns = '';
+                if (currentStatus === 'playing') {
+                    actBtns = `
+                        <button class="action-btn" style="color:#10b981; border-color:#10b981; padding:4px 8px; font-size:11px;" onclick="updateMatchStatus('${d.docId}', ${selectedRound}, 'won')">Won</button>
+                        <button class="action-btn" style="color:#f59e0b; border-color:#f59e0b; padding:4px 8px; font-size:11px;" onclick="updateMatchStatus('${d.docId}', ${selectedRound}, 'draw')">Draw</button>
+                        <button class="action-btn" style="color:#ef4444; border-color:#ef4444; padding:4px 8px; font-size:11px;" onclick="updateMatchStatus('${d.docId}', ${selectedRound}, 'lose')">Lose</button>
+                    `;
+                } else {
+                    let stColor = currentStatus === 'won' ? '#10b981' : (currentStatus === 'draw' ? '#f59e0b' : '#ef4444');
+                    actBtns = `
+                        <span style="font-size:12px; font-weight:bold; color:${stColor}; margin-right:10px; text-transform:uppercase;">${currentStatus}</span>
+                        <button class="action-btn" style="color:#a1a1aa; border-color:#a1a1aa; padding:4px 8px; font-size:11px;" onclick="updateMatchStatus('${d.docId}', ${selectedRound}, 'reset')">Undo</button>
+                    `;
+                }
+
+                list.innerHTML += `
+                    <div class="reg-item">
+                        <div class="reg-left" style="display:flex; align-items:center; gap:12px;">
+                            <span style="font-size:14px; color:var(--muted); font-weight:bold; width:20px;">#${index+1}</span>
+                            <div>
+                                <strong>${escHtml(d.name || '—')}</strong>
+                                <span style="font-size:12px; color:var(--muted);">Rating: ${escHtml(String(d.rating || '—'))} &nbsp;|&nbsp; Total Pts: <strong style="color:var(--gold);">${totalPts}</strong></span>
+                            </div>
+                        </div>
+                        <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+                            ${actBtns}
+                        </div>
+                    </div>`;
+            });
+        }
+
+        async function updateMatchStatus(docId, round, newStatus) {
+            const p = window.allPlayersRaw.find(x => x.docId === docId);
+            if (!p) return;
+
+            // 1. Deep clone to avoid mutating local state prematurely
+            let matchStatusMap = JSON.parse(JSON.stringify(p.matchStatus || {}));
+            
+            // 2. Apply the change
+            if (newStatus === 'reset') {
+                delete matchStatusMap[round];
+            } else {
+                matchStatusMap[round] = newStatus;
+            }
+
+            // 3. Recalculate Points and Round from scratch (Robust approach)
+            let newPts = 0;
+            let newCurrentRound = 1; 
+
+            let maxRoundPlayed = 0;
+            for (const rStr in matchStatusMap) {
+                const rNum = parseInt(rStr);
+                const status = matchStatusMap[rStr];
+                
+                if (status === 'won') newPts += 1;
+                if (status === 'draw') newPts += 0.5;
+                
+                if (rNum > maxRoundPlayed) maxRoundPlayed = rNum;
+            }
+
+            // Determine current round based on progression history
+            for (let i = 1; i <= maxRoundPlayed; i++) {
+                const status = matchStatusMap[i];
+                if (status === 'won' || status === 'draw') {
+                    newCurrentRound = i + 1; // Advance to next round
+                } else if (status === 'lose') {
+                    newCurrentRound = i;     // Stuck at this round
+                    break; 
+                } else {
+                    newCurrentRound = i;     // Missing result, can't advance past this
+                    break;
+                }
+            }
+
+            try {
+                await db.collection('registrations').doc(docId).update({
+                    points: newPts,
+                    matchStatus: matchStatusMap,
+                    currentRound: newCurrentRound
+                });
+            } catch (err) {
+                showToast('error', 'Update Error', err.message);
+                console.error(err);
+            }
         }
 
         // ─── Save Event ID ───────────────────────────────────────────
@@ -751,7 +1050,7 @@
                   }, 2000);
               })
               .catch(e => {
-                  alert('Error: ' + e.message);
+                  showToast('error', 'Save Failed', e.message);
                   btn.disabled = false;
                   btn.innerHTML = '<i class="fas fa-save"></i> Save';
               });
@@ -796,9 +1095,11 @@
             btn.innerHTML = '<span class="spinner"></span> Deleting...';
 
             try {
-                const snapshot = await db.collection('registrations').get();
-                if (snapshot.empty) {
-                    alert('No registrations found to delete.');
+                const snapshotPub = await db.collection('registrations').get();
+                const snapshotPriv = await db.collection('registrations_private').get();
+                
+                if (snapshotPub.empty && snapshotPriv.empty) {
+                    showToast('info', 'Nothing to Delete', 'No registrations found.');
                     btn.disabled = false;
                     btn.innerHTML = '<i class="fas fa-trash-can"></i> Delete All Registrations';
                     return;
@@ -808,18 +1109,22 @@
                 const batches = [];
                 let batch = db.batch();
                 let count = 0;
-                snapshot.forEach(doc => {
+                
+                snapshotPub.forEach(doc => {
                     batch.delete(doc.ref);
                     count++;
-                    if (count % 499 === 0) {
-                        batches.push(batch.commit());
-                        batch = db.batch();
-                    }
+                    if (count % 499 === 0) { batches.push(batch.commit()); batch = db.batch(); }
                 });
+                snapshotPriv.forEach(doc => {
+                    batch.delete(doc.ref);
+                    count++;
+                    if (count % 499 === 0) { batches.push(batch.commit()); batch = db.batch(); }
+                });
+                
                 batches.push(batch.commit());
                 await Promise.all(batches);
 
-                btn.innerHTML = '<i class="fas fa-check"></i> ' + snapshot.size + ' records deleted!';
+                btn.innerHTML = '<i class="fas fa-check"></i> All records deleted!';
                 btn.style.color = 'var(--success)';
                 btn.style.borderColor = 'var(--success)';
                 setTimeout(() => {
@@ -829,7 +1134,7 @@
                     btn.innerHTML = '<i class="fas fa-trash-can"></i> Delete All Registrations';
                 }, 3000);
             } catch(e) {
-                alert('Error: ' + e.message);
+                showToast('error', 'Delete Failed', e.message);
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fas fa-trash-can"></i> Delete All Registrations';
             }
@@ -852,7 +1157,7 @@
                     btn.innerHTML = '<i class="fas fa-arrow-rotate-left"></i> Reset Card ID Counter';
                 }, 3000);
             } catch(e) {
-                alert('Error: ' + e.message);
+                showToast('error', 'Reset Failed', e.message);
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fas fa-arrow-rotate-left"></i> Reset Card ID Counter';
             }
@@ -868,10 +1173,9 @@
             btn.innerHTML = '<span class="spinner" style="width:14px; height:14px; border-width:2px; margin-right:5px; border-top-color:currentColor;"></span> PDF...';
 
             try {
-                // Fetch ALL registrations for export
-                const snapshot = await db.collection('registrations').orderBy('timestamp', 'asc').get();
-                if (snapshot.empty) {
-                    alert('No registrations found to export.');
+                const exportData = window.allPlayersRaw || [];
+                if (exportData.length === 0) {
+                    showToast('info', 'Nothing to Export', 'No registrations found.');
                     btn.disabled = false;
                     btn.innerHTML = originalText;
                     return;
@@ -885,13 +1189,13 @@
                 doc.text('ChessBird Registration Report', 14, 22);
                 doc.setFontSize(11);
                 doc.setTextColor(100);
-                doc.text(`Total Players: ${snapshot.size}`, 14, 30);
+                doc.text(`Total Players: ${exportData.length}`, 14, 30);
 
                 const tableColumn = ["Card ID", "Name", "Chess Username", "Phone", "Email", "Rating", "Payment ID", "Date"];
                 const tableRows = [];
 
-                snapshot.forEach(docSnap => {
-                    const d = docSnap.data();
+                // exportData is already merged and sorted desc. We might want asc for export, let's just reverse it.
+                [...exportData].reverse().forEach(d => {
                     let dateStr = '';
                     if (d.timestamp && d.timestamp.toDate) {
                         dateStr = d.timestamp.toDate().toLocaleDateString();
@@ -930,7 +1234,89 @@
 
             } catch (error) {
                 console.error("Error exporting PDF:", error);
-                alert('Error exporting PDF: ' + error.message);
+                showToast('error', 'Export Failed', error.message);
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        }
+
+        // ─── Generate Pending IDs (Random Unique 3-digit) ────────────
+        async function generatePendingIds() {
+            const btn = document.getElementById('generateIdsBtn');
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner" style="width:14px; height:14px; border-width:2px; margin-right:5px; border-top-color:currentColor;"></span> Processing...';
+
+            try {
+                // Step 1: Read ALL registrations
+                let snapshot;
+                try {
+                    snapshot = await db.collection('registrations').orderBy('timestamp', 'asc').get();
+                } catch (e) {
+                    throw new Error("Failed at reading registrations: " + e.message);
+                }
+
+                // Step 2: Collect already-used IDs (so no duplicates)
+                const usedIds = new Set();
+                const pendingDocs = [];
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    if (data.cardId && data.cardId !== 'Pending' && data.cardId !== 'No ID') {
+                        usedIds.add(data.cardId);
+                    } else {
+                        pendingDocs.push(doc);
+                    }
+                });
+
+                if (pendingDocs.length === 0) {
+                    showToast('info', 'All IDs Assigned', 'No pending registrations found.');
+                    btn.disabled = false;
+                    btn.innerHTML = originalText;
+                    return;
+                }
+
+                // Step 3: Generate unique random 3-digit IDs (100–999)
+                function getRandomId() {
+                    const num = Math.floor(Math.random() * 900) + 100; // 100 to 999
+                    return 'CB' + num;
+                }
+
+                let generatedCount = 0;
+                for (const doc of pendingDocs) {
+                    // Keep trying until we get an unused ID
+                    let cardId;
+                    let attempts = 0;
+                    do {
+                        cardId = getRandomId();
+                        attempts++;
+                        if (attempts > 900) throw new Error('Not enough unique IDs available (900 exhausted).');
+                    } while (usedIds.has(cardId));
+
+                    usedIds.add(cardId); // Reserve it immediately for next iteration
+
+                    try {
+                        await doc.ref.update({ cardId: cardId });
+                    } catch (err) {
+                        console.warn("Update failed, trying set merge...", err);
+                        try {
+                            await doc.ref.set({ cardId: cardId }, { merge: true });
+                        } catch (err2) {
+                            throw new Error("Doc write failed for " + doc.id + ": " + err2.message);
+                        }
+                    }
+                    generatedCount++;
+                }
+
+                showToast('success', 'IDs Generated! 🎉', `Successfully assigned unique IDs to ${generatedCount} player${generatedCount > 1 ? 's' : ''}.`);
+                btn.innerHTML = '<i class="fas fa-check"></i> Done';
+                setTimeout(() => {
+                    btn.disabled = false;
+                    btn.innerHTML = originalText;
+                }, 3000);
+
+            } catch (error) {
+                console.error("Detailed Error:", error);
+                showToast('error', 'Generation Failed', error.message);
                 btn.disabled = false;
                 btn.innerHTML = originalText;
             }

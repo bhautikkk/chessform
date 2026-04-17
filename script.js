@@ -131,8 +131,55 @@ function initRegistrationApp() {
     // ── Auto-Fetch Chess.com Data on Username Input (Live Typing with Debounce) ──
     const usernameInput = document.getElementById('username');
     const ratingInput = document.getElementById('rating');
+    const noChessAccountBtn = document.getElementById('noChessAccount');
     let typingTimer;
     const typingInterval = 800; // Wait 800ms after user stops typing to trigger API
+
+    if (noChessAccountBtn && usernameInput && ratingInput) {
+        noChessAccountBtn.addEventListener('change', (e) => {
+            const userWrapper = usernameInput.closest('.input-wrapper');
+            const ratingWrapper = ratingInput.closest('.input-wrapper');
+            const rightCheckIcon = userWrapper.querySelector('.field-check');
+
+            if (e.target.checked) {
+                // "Disabled" state
+                usernameInput.value = 'No Account';
+                usernameInput.readOnly = true;
+                usernameInput.style.opacity = '0.5';
+                usernameInput.style.pointerEvents = 'none';
+                
+                ratingInput.value = '1200';
+                ratingInput.readOnly = true;
+                ratingInput.style.opacity = '0.5';
+                ratingInput.style.pointerEvents = 'none';
+
+                // Visual updates
+                userWrapper.classList.remove('is-invalid', 'is-loading');
+                userWrapper.classList.add('is-valid');
+                const errText = document.getElementById('usernameError');
+                if (errText) errText.style.display = 'none';
+                if (rightCheckIcon) rightCheckIcon.className = 'fa-solid fa-circle-check field-check';
+                ratingWrapper.classList.remove('is-invalid');
+                ratingWrapper.classList.add('is-valid');
+            } else {
+                // Enabled state
+                usernameInput.value = '';
+                usernameInput.readOnly = false;
+                usernameInput.style.opacity = '1';
+                usernameInput.style.pointerEvents = 'auto';
+                
+                ratingInput.value = '';
+                ratingInput.style.opacity = '1';
+
+                // Visual reset
+                userWrapper.classList.remove('is-valid', 'is-invalid', 'is-loading');
+                const errText = document.getElementById('usernameError');
+                if (errText) errText.style.display = 'none';
+                if (rightCheckIcon) rightCheckIcon.className = 'fa-solid fa-circle-check field-check';
+                ratingWrapper.classList.remove('is-valid', 'is-invalid');
+            }
+        });
+    }
 
     if (usernameInput && ratingInput) {
         usernameInput.addEventListener('input', () => {
@@ -149,6 +196,8 @@ function initRegistrationApp() {
 
             if (!username) {
                 userWrapper.classList.remove('is-invalid', 'is-valid', 'is-loading');
+                const errText = document.getElementById('usernameError');
+                if (errText) errText.style.display = 'none';
                 // Don't touch userIcon, let it stay @
                 if (rightCheckIcon) rightCheckIcon.className = 'fa-solid fa-circle-check field-check';
                 return;
@@ -157,6 +206,8 @@ function initRegistrationApp() {
             // Immediately show spinner class on the RIGHT side while user is typing/waiting
             userWrapper.classList.remove('is-invalid', 'is-valid');
             userWrapper.classList.add('is-loading');
+            const errText = document.getElementById('usernameError');
+            if (errText) errText.style.display = 'none';
             if (rightCheckIcon) rightCheckIcon.className = 'fa-solid fa-spinner fa-spin field-check';
 
             typingTimer = setTimeout(async () => {
@@ -169,11 +220,15 @@ function initRegistrationApp() {
                     if (!userRes.ok) {
                         userWrapper.classList.add('is-invalid');
                         if (rightCheckIcon) rightCheckIcon.className = 'fa-solid fa-circle-xmark field-check'; // Right Icon Error
+                        const errText = document.getElementById('usernameError');
+                        if (errText) errText.style.display = 'block';
                         return; // Stop here, no rating to fetch
                     }
 
                     // 3. User exists, fetch stats for auto-filling rating
                     userWrapper.classList.add('is-valid');
+                    const errText = document.getElementById('usernameError');
+                    if (errText) errText.style.display = 'none';
                     if (rightCheckIcon) rightCheckIcon.className = 'fa-solid fa-circle-check field-check'; // Right Icon Success
 
                     const statsRes = await fetch(`https://api.chess.com/pub/player/${username}/stats`);
@@ -219,8 +274,15 @@ function initRegistrationApp() {
             // Prevent default to stop browser from redirecting before EmailJS finishes
             e.preventDefault();
 
-            const btn = this.querySelector('.submit-btn');
+            // Prevent submission if username is invalid or still loading API
             const usernameInput = document.getElementById('username');
+            const userWrapper = usernameInput ? usernameInput.closest('.input-wrapper') : null;
+            if (userWrapper && (userWrapper.classList.contains('is-invalid') || userWrapper.classList.contains('is-loading'))) {
+                alert("Please enter a valid Chess.com username, or check 'I don't have an account'.");
+                return;
+            }
+
+            const btn = this.querySelector('.submit-btn');
             const originalBtnHtml = btn ? btn.innerHTML : '';
             
             if (btn) {
@@ -289,10 +351,18 @@ function initRegistrationApp() {
                     });
             };
 
-            // Database Handling & Random ID Generation
+            // Database Handling — SECURITY HARDENED
             const handleFinalSave = (paymentId) => {
+                // 🔒 SECURITY: Validate paymentId format before writing
+                // Must match Razorpay format: pay_ + 14+ alphanumeric chars
+                // This matches our Firestore rule — if client sends wrong format, write will fail anyway
+                if (!paymentId || !/^pay_[A-Za-z0-9]{14,}$/.test(paymentId)) {
+                    console.error("Invalid paymentId format. Aborting save.", paymentId);
+                    proceedWithEmailJS(); // Still send confirmation email
+                    return;
+                }
+
                 if (typeof db !== 'undefined') {
-                    // Check if user already exists based on phone document
                     const userPhone = templateParams.phone;
                     db.collection("registrations").doc(userPhone).get()
                         .then(docSnap => {
@@ -300,27 +370,35 @@ function initRegistrationApp() {
                                 console.log("User already exists. Skipping re-save.");
                                 proceedWithEmailJS();
                             } else {
-                                // Generate a GUARANTEED unique random Card ID
-                                generateUniqueCardId().then(cardId => {
-                                    // Save to Firestore using phone as docId securely
-                                    db.collection("registrations").doc(userPhone).set({
-                                        name: templateParams.name,
-                                        username: templateParams.username,
-                                        email: templateParams.email,
-                                        phone: templateParams.phone,
-                                        rating: templateParams.rating,
-                                        paymentId: paymentId || 'Not provided',
-                                        cardId: cardId,
-                                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                                    }).then(() => {
-                                        console.log("Saved with unique Card ID:", cardId);
-                                        proceedWithEmailJS();
-                                    }).catch((error) => {
-                                        console.error("Save failed:", error);
-                                        proceedWithEmailJS();
-                                    });
-                                }).catch(error => {
-                                    console.error("ID generation failed:", error);
+                                // 🔒 SECURITY: Only write EXPLICITLY whitelisted fields
+                                // 🔒 SECURITY: Split data into PUBLIC and PRIVATE collections
+                                // Public (for leaderboard/get-pass)
+                                const publicData = {
+                                    name:      String(templateParams.name  || '').trim().substring(0, 100),
+                                    username:  String(templateParams.username || '').trim().substring(0, 50),
+                                    phone:     String(templateParams.phone || '').trim(),
+                                    rating:    parseInt(templateParams.rating, 10) || 1200,
+                                    cardId:    'Pending'
+                                };
+
+                                // Private (admin only)
+                                const privateData = {
+                                    email:     String(templateParams.email || '').trim().substring(0, 200),
+                                    paymentId: paymentId,
+                                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                                };
+
+                                // Write to both collections simultaneously
+                                Promise.all([
+                                    db.collection("registrations").doc(userPhone).set(publicData),
+                                    db.collection("registrations_private").doc(userPhone).set(privateData)
+                                ])
+                                .then(() => {
+                                    console.log("Registration saved securely (Split).");
+                                    proceedWithEmailJS();
+                                })
+                                .catch((error) => {
+                                    console.error("Save failed:", error);
                                     proceedWithEmailJS();
                                 });
                             }
@@ -409,34 +487,7 @@ function initRegistrationApp() {
 
 }
 
-// ── Random Card ID Generator ─────────────────────────────────────────
-// Format: CB + 3 random digits from [0-9]
-// Total combinations: 10^3 = 1000
-// Collision check: Agar ID pehle se kisi ko mili hai to naya generate karta hai
-function generateRawId() {
-    const randomNum = Math.floor(Math.random() * 1000);
-    return 'CB' + randomNum.toString().padStart(3, '0');
-}
 
-// Returns a GUARANTEED unique Card ID securely using used_cards check
-async function generateUniqueCardId() {
-    let attempts = 0;
-    while (attempts < 10) { // Safety: max 10 attempts
-        const cardId = generateRawId();
-        const existing = await db.collection('used_cards').doc(cardId).get();
-        if (!existing.exists) {
-            // Reserve it immediately
-            await db.collection('used_cards').doc(cardId).set({ used: true, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
-            console.log(`Unique Card ID generated in ${attempts + 1} attempt(s): ${cardId}`);
-            return cardId; // ✅ Unique confirm — return it
-        }
-        console.warn(`Card ID collision detected: ${cardId} — retrying...`);
-        attempts++;
-    }
-    // Fallback if too many collisions (unlikely unless very full)
-    const fallbackNum = Math.floor(Math.random() * 1000);
-    return 'CB' + fallbackNum.toString().padStart(3, '0');
-}
 
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initRegistrationApp);
