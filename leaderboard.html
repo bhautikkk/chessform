@@ -19,143 +19,283 @@
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         :root {
-            --bg:      #050505;
-            --card:    rgba(24, 24, 27, 0.6);
-            --border:  rgba(255,255,255,0.03);
-            --gold:    #d4af37;
-            --gold-glow: rgba(212, 175, 55, 0.2);
-            --silver:  #c0c0c0;
-            --bronze:  #cd7f32;
-            --text:    #f4f4f5;
-            --muted:   #8a8a93;
+            --bg: #09090b;
+            --bg-accent: #18181b;
+            --card: rgba(24, 24, 27, 0.5);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --gold: #f59e0b;
+            --gold-light: #fbbf24;
+            --silver: #e4e4e7;
+            --bronze: #d97706;
+            --text: #fafafa;
+            --muted: #a1a1aa;
+            --primary: #3b82f6;
+            --primary-glow: rgba(59, 130, 246, 0.5);
+            --danger: #ef4444;
+            --success: #10b981;
         }
 
         body {
             background-color: var(--bg);
             background-image: 
-                radial-gradient(circle at 15% 0%, rgba(212, 175, 55, 0.12), transparent 45%),
-                radial-gradient(circle at 85% 100%, rgba(59, 130, 246, 0.08), transparent 45%);
+                radial-gradient(circle at 0% 0%, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 100% 100%, rgba(245, 158, 11, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.02) 0%, transparent 100%);
             background-attachment: fixed;
             color: var(--text);
             font-family: 'Inter', sans-serif;
             min-height: 100vh;
-            padding: 0;
-            margin: 0;
             overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
         }
 
-        /* Nav/Header Area */
+        /* Hero Section */
         .hero-section {
             text-align: center;
-            padding: 80px 20px 50px;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
-            border-bottom: 1px solid rgba(255,255,255,0.02);
-            margin-bottom: 50px;
+            padding: 80px 20px 40px;
+            position: relative;
+        }
+        
+        .hero-section::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
         }
 
         .hero-section h1 {
             font-family: 'Outfit', sans-serif;
-            font-size: 4rem;
+            font-size: 4.5rem;
             font-weight: 900;
             letter-spacing: -1.5px;
-            margin-bottom: 10px;
-            background: linear-gradient(135deg, #fff 0%, #d4af37 100%);
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, #ffffff 0%, #a1a1aa 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             text-transform: uppercase;
+            position: relative;
+            display: inline-block;
+        }
+
+        .hero-section h1 i {
+            color: var(--gold);
+            -webkit-text-fill-color: var(--gold);
+            margin-right: 16px;
+            filter: drop-shadow(0 0 20px rgba(245, 158, 11, 0.4));
         }
 
         .hero-section p {
-            color: var(--muted);
+            color: var(--primary);
             font-size: 1.1rem;
-            letter-spacing: 3px;
+            letter-spacing: 4px;
             text-transform: uppercase;
             font-weight: 700;
         }
 
         .leaderboard-container {
-            max-width: 1050px;
+            max-width: 1100px;
             margin: 0 auto;
-            padding: 0 20px 80px;
+            padding: 20px 20px 80px;
         }
 
-        .closed-overlay { padding: 80px 20px; text-align: center; }
-        .closed-overlay i { font-size: 4rem; color: var(--muted); margin-bottom: 24px; text-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        .closed-overlay h2 { font-size: 2rem; font-family: 'Outfit', sans-serif; margin-bottom: 12px; }
+        /* Closed Layout (Premium) */
+        .closed-overlay {
+            background: var(--card);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--card-border);
+            border-radius: 32px;
+            padding: 80px 40px;
+            text-align: center;
+            max-width: 600px;
+            margin: 40px auto;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1);
+            position: relative;
+            overflow: hidden;
+            animation: fadeInScale 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .closed-overlay::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 100%;
+            background: radial-gradient(circle at 50% 0%, rgba(255,255,255,0.05), transparent 70%);
+            pointer-events: none;
+        }
+
+        .lock-wrapper {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 100px;
+            height: 100px;
+            margin-bottom: 30px;
+        }
+
+        .lock-pulse {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: rgba(239, 68, 68, 0.1);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 0.8; }
+            100% { transform: scale(1.8); opacity: 0; }
+        }
+
+        .closed-overlay i {
+            font-size: 3rem;
+            color: var(--danger);
+            position: relative;
+            z-index: 2;
+            text-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+        }
+
+        .closed-overlay h2 {
+            font-size: 2.2rem;
+            font-family: 'Outfit', sans-serif;
+            margin-bottom: 16px;
+            color: #fff;
+        }
+
+        .closed-overlay p {
+            color: var(--muted);
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+        
+        .glass-divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            margin: 30px 0;
+        }
+        
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255,255,255,0.03);
+            padding: 10px 20px;
+            border-radius: 100px;
+            font-size: 0.9rem;
+            color: var(--muted);
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--danger);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--danger);
+            animation: blink 1.5s infinite;
+        }
+        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
 
         /* Round Tabs */
         .round-tabs {
-            display: flex; gap: 12px; overflow-x: auto; padding-bottom: 20px;
-            margin-bottom: 40px; justify-content: center;
+            display: flex;
+            gap: 16px;
+            overflow-x: auto;
+            padding-bottom: 20px;
+            margin-bottom: 40px;
+            justify-content: center;
         }
         .round-tabs::-webkit-scrollbar { display: none; }
         
         .tab-btn {
-            background: rgba(255,255,255,0.02);
-            border: 1px solid rgba(255,255,255,0.05);
+            background: rgba(24, 24, 27, 0.8);
+            border: 1px solid rgba(255,255,255,0.08);
             color: var(--muted);
-            border-radius: 12px;
-            padding: 12px 30px;
+            border-radius: 16px;
+            padding: 14px 32px;
             font-family: 'Outfit', sans-serif;
-            font-size: 1.05rem;
+            font-size: 1.1rem;
             font-weight: 700;
             cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
             white-space: nowrap;
             text-transform: uppercase;
             letter-spacing: 1.5px;
+            backdrop-filter: blur(10px);
         }
-        .tab-btn:hover { background: rgba(255,255,255,0.06); color: #fff; transform: translateY(-2px); }
+        .tab-btn:hover { 
+            background: rgba(255,255,255,0.05); 
+            color: #fff; 
+            transform: translateY(-2px); 
+            border-color: rgba(255,255,255,0.15);
+        }
         .tab-btn.active {
-            background: linear-gradient(135deg, rgba(212, 175, 55, 0.15) 0%, rgba(212, 175, 55, 0.05) 100%);
-            border-color: rgba(212, 175, 55, 0.5);
-            color: var(--gold);
-            box-shadow: 0 10px 25px rgba(212, 175, 55, 0.15);
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(59, 130, 246, 0.05) 100%);
+            border-color: rgba(59, 130, 246, 0.5);
+            color: var(--primary);
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.15);
+            transform: translateY(-2px);
         }
 
         /* Table (Cards Style) */
-        .lb-table-wrapper { width: 100%; }
-        .lb-table { width: 100%; border-collapse: separate; border-spacing: 0 12px; text-align: left; }
+        .lb-table-wrapper { width: 100%; perspective: 1000px; }
+        .lb-table { width: 100%; border-collapse: separate; border-spacing: 0 16px; text-align: left; }
         
         .lb-table th {
             padding: 0 24px 12px;
             color: var(--muted);
             font-weight: 700;
             text-transform: uppercase;
-            font-size: 0.8rem;
+            font-size: 0.85rem;
             letter-spacing: 2px;
             border: none;
             background: transparent;
         }
         
         .lb-table td {
-            padding: 22px 24px;
+            padding: 24px;
             background: var(--card);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             vertical-align: middle;
-            border-top: 1px solid var(--border);
-            border-bottom: 1px solid var(--border);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-top: 1px solid var(--card-border);
+            border-bottom: 1px solid var(--card-border);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        .lb-table td:first-child { border-left: 1px solid var(--border); border-radius: 16px 0 0 16px; width: 80px; }
-        .lb-table td:last-child { border-right: 1px solid var(--border); border-radius: 0 16px 16px 0; }
+        .lb-table td:first-child { border-left: 1px solid var(--card-border); border-radius: 20px 0 0 20px; width: 90px; }
+        .lb-table td:last-child { border-right: 1px solid var(--card-border); border-radius: 0 20px 20px 0; }
 
         .lb-table tbody tr {
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s;
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s;
             animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) backwards;
         }
         
         @keyframes fadeUp {
-            from { opacity: 0; transform: translateY(30px) scale(0.98); }
+            from { opacity: 0; transform: translateY(30px) scale(0.95); }
             to { opacity: 1; transform: translateY(0) scale(1); }
         }
 
-        .lb-table tbody tr:hover td { background: rgba(39, 39, 42, 0.8); border-color: rgba(255,255,255,0.08); }
+        .lb-table tbody tr:hover td { 
+            background: rgba(39, 39, 42, 0.9); 
+            border-color: rgba(255,255,255,0.15); 
+        }
         .lb-table tbody tr:hover {
-            transform: translateY(-4px) scale(1.01);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+            transform: translateY(-6px) scale(1.02);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
             position: relative;
             z-index: 10;
         }
@@ -163,95 +303,117 @@
         /* Ranks */
         .rank-badge {
             display: flex; align-items: center; justify-content: center;
-            width: 44px; height: 44px; border-radius: 14px;
+            width: 48px; height: 48px; border-radius: 16px;
             font-family: 'Outfit', sans-serif;
-            font-weight: 900; font-size: 1.2rem;
-            background: rgba(255,255,255,0.03); color: var(--muted);
-            border: 1px solid rgba(255,255,255,0.05);
+            font-weight: 900; font-size: 1.3rem;
+            background: rgba(255,255,255,0.05); color: var(--muted);
+            border: 1px solid rgba(255,255,255,0.1);
         }
         
-        tr.rank-1 td { background: linear-gradient(90deg, rgba(212,175,55,0.12) 0%, rgba(24,24,27,0.8) 100%); border-color: rgba(212,175,55,0.25); }
-        tr.rank-1 .rank-badge { background: linear-gradient(135deg, #fceabb 0%, #f8b500 100%); color: #000; box-shadow: 0 0 25px rgba(248,181,0,0.5); border: none; font-size: 1.5rem; }
-        tr.rank-1 .player-name { color: var(--gold); text-shadow: 0 0 10px rgba(212,175,55,0.3); font-size: 1.25rem; }
+        /* Gold Rank (1st) */
+        tr.rank-1 td { 
+            background: linear-gradient(90deg, rgba(245, 158, 11, 0.1) 0%, rgba(24, 24, 27, 0.8) 100%); 
+            border-color: rgba(245, 158, 11, 0.3); 
+        }
+        tr.rank-1:hover td { border-color: rgba(245, 158, 11, 0.6); }
+        tr.rank-1 .rank-badge { 
+            background: linear-gradient(135deg, #fcd34d 0%, #d97706 100%); 
+            color: #fff; 
+            box-shadow: 0 0 30px rgba(245, 158, 11, 0.4); 
+            border: none; 
+            font-size: 1.6rem; 
+        }
+        tr.rank-1 .player-name { color: var(--gold-light); text-shadow: 0 0 15px rgba(245, 158, 11, 0.4); font-size: 1.3rem; }
         
-        tr.rank-2 td { background: linear-gradient(90deg, rgba(192,192,192,0.08) 0%, rgba(24,24,27,0.8) 100%); border-color: rgba(192,192,192,0.2); }
-        tr.rank-2 .rank-badge { background: linear-gradient(135deg, #e0e0e0 0%, #9e9e9e 100%); color: #000; border: none; font-size: 1.4rem; box-shadow: 0 0 15px rgba(192,192,192,0.3); }
-        tr.rank-2 .player-name { color: var(--silver); font-size: 1.15rem; }
+        /* Silver Rank (2nd) */
+        tr.rank-2 td { background: linear-gradient(90deg, rgba(228, 228, 231, 0.08) 0%, rgba(24, 24, 27, 0.8) 100%); border-color: rgba(228, 228, 231, 0.2); }
+        tr.rank-2:hover td { border-color: rgba(228, 228, 231, 0.4); }
+        tr.rank-2 .rank-badge { background: linear-gradient(135deg, #f4f4f5 0%, #a1a1aa 100%); color: #18181b; border: none; font-size: 1.5rem; box-shadow: 0 0 20px rgba(228, 228, 231, 0.3); }
+        tr.rank-2 .player-name { color: var(--silver); font-size: 1.2rem; }
         
-        tr.rank-3 td { background: linear-gradient(90deg, rgba(205,127,50,0.1) 0%, rgba(24,24,27,0.8) 100%); border-color: rgba(205,127,50,0.2); }
-        tr.rank-3 .rank-badge { background: linear-gradient(135deg, #edb078 0%, #b85c15 100%); color: #fff; border: none; font-size: 1.3rem; box-shadow: 0 0 15px rgba(205,127,50,0.3); }
-        tr.rank-3 .player-name { color: var(--bronze); font-size: 1.1rem; }
+        /* Bronze Rank (3rd) */
+        tr.rank-3 td { background: linear-gradient(90deg, rgba(217, 119, 6, 0.08) 0%, rgba(24, 24, 27, 0.8) 100%); border-color: rgba(217, 119, 6, 0.2); }
+        tr.rank-3:hover td { border-color: rgba(217, 119, 6, 0.4); }
+        tr.rank-3 .rank-badge { background: linear-gradient(135deg, #fbbf24 0%, #b45309 100%); color: #fff; border: none; font-size: 1.4rem; box-shadow: 0 0 20px rgba(217, 119, 6, 0.3); }
+        tr.rank-3 .player-name { color: var(--bronze); font-size: 1.15rem; }
 
-        .player-name { font-weight: 800; color: #fff; font-size: 1.1rem; display: flex; align-items: center; gap: 12px; }
-        .player-handle { font-size: 0.85rem; color: rgba(255,255,255,0.4); font-weight: 500; font-family: 'Inter', sans-serif; letter-spacing: 0.5px; }
+        .player-name { font-weight: 800; color: #fff; font-size: 1.15rem; display: flex; align-items: center; gap: 12px; }
+        .player-handle { font-size: 0.9rem; color: rgba(255,255,255,0.4); font-weight: 600; font-family: 'Inter', sans-serif; letter-spacing: 0.5px; background: rgba(255,255,255,0.05); padding: 4px 10px; border-radius: 8px; }
 
-        .rating-col { color: rgba(255,255,255,0.6); font-weight: 600; font-family: 'Outfit', sans-serif; letter-spacing: 1px; font-size: 1.1rem; }
+        .rating-col { color: rgba(255,255,255,0.7); font-weight: 600; font-family: 'Outfit', sans-serif; letter-spacing: 1px; font-size: 1.15rem; }
 
         .status-badge {
             display: inline-flex; align-items: center; justify-content: center;
-            gap: 8px; padding: 6px 14px; border-radius: 8px;
-            font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px;
-            background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05);
+            gap: 8px; padding: 8px 16px; border-radius: 10px;
+            font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px;
+            background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
         }
 
-        .status-won    { color: #10b981; border-color: rgba(16,185,129,0.3); background: rgba(16,185,129,0.08); box-shadow: 0 0 20px rgba(16,185,129,0.15); }
-        .status-draw   { color: #f59e0b; border-color: rgba(245,158,11,0.3); background: rgba(245,158,11,0.08); box-shadow: 0 0 20px rgba(245,158,11,0.15); }
-        .status-lose   { color: #ef4444; border-color: rgba(239,68,68,0.2); background: rgba(239,68,68,0.05); }
-        .status-active { color: #3b82f6; border-color: rgba(59,130,246,0.3); background: rgba(59,130,246,0.08); box-shadow: 0 0 20px rgba(59,130,246,0.15); }
+        .status-won    { color: var(--success); border-color: rgba(16,185,129,0.4); background: rgba(16,185,129,0.1); box-shadow: 0 0 20px rgba(16,185,129,0.2); }
+        .status-draw   { color: var(--gold); border-color: rgba(245,158,11,0.4); background: rgba(245,158,11,0.1); box-shadow: 0 0 20px rgba(245,158,11,0.2); }
+        .status-lose   { color: var(--danger); border-color: rgba(239,68,68,0.3); background: rgba(239,68,68,0.08); }
+        .status-active { color: var(--primary); border-color: rgba(59,130,246,0.4); background: rgba(59,130,246,0.1); box-shadow: 0 0 20px rgba(59,130,246,0.2); }
 
-        .pts-col { font-family: 'Outfit', sans-serif; font-size: 1.5rem; font-weight: 900; color: #fff; text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
-        tr.rank-1 .pts-col { color: var(--gold); text-shadow: 0 0 20px rgba(212,175,55,0.5); }
+        .pts-col { font-family: 'Outfit', sans-serif; font-size: 1.7rem; font-weight: 900; color: #fff; text-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+        tr.rank-1 .pts-col { color: var(--gold-light); text-shadow: 0 0 25px rgba(245, 158, 11, 0.6); }
         tr.rank-2 .pts-col { color: var(--silver); }
         tr.rank-3 .pts-col { color: var(--bronze); }
 
         .spinner-ring {
-            width: 48px; height: 48px;
-            border: 3px solid rgba(255,255,255,0.05); border-top-color: var(--gold);
-            border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto;
+            width: 56px; height: 56px;
+            border: 4px solid rgba(255,255,255,0.05); border-top-color: var(--primary);
+            border-radius: 50%; animation: spin 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite; margin: 0 auto;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
+        
+        @keyframes fadeInScale {
+            0% { opacity: 0; transform: scale(0.9); }
+            100% { opacity: 1; transform: scale(1); }
+        }
 
         @media (max-width: 768px) {
-            .hero-section { padding: 50px 16px 20px; margin-bottom: 30px; }
-            .hero-section h1 { font-size: 2.2rem; }
+            .hero-section { padding: 60px 16px 30px; }
+            .hero-section h1 { font-size: 2.8rem; }
             .hero-section p { font-size: 0.9rem; letter-spacing: 2px; }
             
             .leaderboard-container { padding: 0 10px 40px; }
             
-            .lb-table-wrapper { overflow-x: auto; padding-bottom: 10px; }
-            .lb-table { border-spacing: 0 8px; }
-            .lb-table th { padding: 0 12px 6px; font-size: 0.65rem; letter-spacing: 1px; }
-            .lb-table td { padding: 12px; }
+            .round-tabs {
+                justify-content: flex-start;
+                padding-left: 10px;
+                padding-right: 10px;
+                -webkit-overflow-scrolling: touch;
+            }
             
-            .lb-table td:first-child { width: 50px; }
+            .closed-overlay { padding: 50px 20px; margin: 20px; border-radius: 24px; }
+            .closed-overlay i { font-size: 2.5rem; }
+            .closed-overlay h2 { font-size: 1.8rem; }
+            .closed-overlay p { font-size: 1rem; }
             
-            .rank-badge { width: 32px; height: 32px; font-size: 0.9rem; border-radius: 10px; }
+            .lb-table-wrapper { overflow-x: hidden; padding-bottom: 20px; }
+            .lb-table { border-spacing: 0 10px; width: 100%; }
+            .lb-table th { padding: 0 8px 8px; font-size: 0.65rem; }
+            .lb-table td { padding: 12px 8px; }
+            
+            .lb-table td:first-child { width: 45px; }
+            
+            .rank-badge { width: 32px; height: 32px; font-size: 0.95rem; border-radius: 10px; }
             tr.rank-1 .rank-badge { font-size: 1.1rem; }
-            tr.rank-2 .rank-badge { font-size: 1rem; }
-            tr.rank-3 .rank-badge { font-size: 0.95rem; }
             
-            .player-name { font-size: 0.95rem; gap: 6px; }
+            .player-name { font-size: 0.95rem; gap: 4px; flex-direction: column; align-items: flex-start; }
             tr.rank-1 .player-name { font-size: 1.05rem; }
             .player-handle { display: none; }
             
-            .rating-col { font-size: 0.95rem; }
+            .status-badge { padding: 6px 12px; font-size: 0.7rem; }
             
-            .status-badge { padding: 4px 8px; font-size: 0.65rem; letter-spacing: 0.5px; }
-            .status-badge i { display: none; } /* hide the dot to save space */
-            
-            .pts-col { font-size: 1.2rem; }
+            .pts-col { font-size: 1.4rem; }
         }
 
         @media (max-width: 480px) {
-            .hero-section h1 { font-size: 1.8rem; margin-bottom: 4px; }
-            .hero-section p { font-size: 0.75rem; }
-            .rating-col, .rating-header { display: none; } /* Hide rating entirely on tiny screens */
-            .lb-table td { padding: 10px 8px; }
-            .lb-table th { padding: 0 8px 6px; }
-            .status-badge { font-size: 0.6rem; padding: 4px 6px; }
-            .player-name { font-size: 0.85rem; }
-            .pts-col { font-size: 1.1rem; }
-            .rank-badge { width: 28px; height: 28px; font-size: 0.8rem; border-radius: 8px; }
+            .hero-section h1 { font-size: 2.2rem; }
+            .hero-section p { font-size: 0.8rem; }
+            .tab-btn { padding: 10px 20px; font-size: 0.9rem; }
         }
     </style>
 </head>
@@ -272,9 +434,16 @@
 
         <!-- Leaderboard closed / error -->
         <div id="closedLayout" class="closed-overlay" style="display:none;">
-            <i class="fas fa-lock" id="closedIcon"></i>
-            <h2 id="closedTitle">Leaderboard Hidden</h2>
-            <p id="closedMsg">The admin has not opened the leaderboard for public view yet.</p>
+            <div class="lock-wrapper">
+                <div class="lock-pulse"></div>
+                <i class="fas fa-lock" id="closedIcon"></i>
+            </div>
+            <h2 id="closedTitle">Leaderboard is Hidden</h2>
+            <p id="closedMsg">The tournament admin has restricted public viewing. Stay tuned for the reveal!</p>
+            <div class="glass-divider"></div>
+            <div class="status-indicator">
+                <div class="status-dot"></div> Waiting for admin access...
+            </div>
         </div>
 
         <!-- Leaderboard open -->
@@ -318,16 +487,20 @@
         const loadingTimeout = setTimeout(() => {
             if (document.getElementById('loading').style.display !== 'none') {
                 document.getElementById('loading').style.display = 'none';
+                const lockPulse = document.querySelector('.lock-pulse');
+                if(lockPulse) lockPulse.style.display = 'none';
                 document.getElementById('closedIcon').className = 'fas fa-triangle-exclamation';
-                document.getElementById('closedIcon').style.color = '#f59e0b';
+                document.getElementById('closedIcon').style.color = 'var(--gold)';
                 document.getElementById('closedTitle').textContent = 'Firebase Rules Not Deployed';
                 document.getElementById('closedMsg').innerHTML = `
-                    Firebase Console mein rules deploy nahi hui hain.<br><br>
-                    <strong style="color:#c6a87c;">Fix karo:</strong><br>
-                    1. <a href="https://console.firebase.google.com" target="_blank" style="color:#3b82f6;">console.firebase.google.com</a> jao<br>
-                    2. Project → Firestore → <strong>Rules</strong> tab<br>
-                    3. <code style="background:#111; padding:2px 6px; border-radius:4px; font-size:11px;">allow read: if docId == "global"</code> wali rules paste karo<br>
-                    4. <strong>Publish</strong> karo
+                    <div style="background: rgba(245, 158, 11, 0.1); padding: 20px; border-radius: 16px; border: 1px solid rgba(245, 158, 11, 0.2); margin-top: 10px; color: #fcd34d; text-align: left; font-size: 0.95rem;">
+                        Firebase Console mein rules deploy nahi hui hain.<br><br>
+                        <strong style="color:#fff;">Fix karo:</strong><br>
+                        1. <a href="https://console.firebase.google.com" target="_blank" style="color:var(--primary); text-decoration:none;">console.firebase.google.com</a> jao<br>
+                        2. Project → Firestore → <strong style="color:#fff;">Rules</strong> tab<br>
+                        3. <code style="background:rgba(0,0,0,0.5); padding:4px 8px; border-radius:6px; font-size:0.85rem; display:inline-block; margin:6px 0; border: 1px solid rgba(255,255,255,0.1);">allow read: if docId == "global"</code> wali rules paste karo<br>
+                        4. <strong style="color:#fff;">Publish</strong> karo
+                    </div>
                 `;
                 document.getElementById('closedLayout').style.display = 'flex';
                 document.getElementById('closedLayout').style.textAlign = 'left';
@@ -350,10 +523,16 @@
         }, (err) => {
             clearTimeout(loadingTimeout);
             document.getElementById('loading').style.display = 'none';
+            const lockPulse = document.querySelector('.lock-pulse');
+            if(lockPulse) lockPulse.style.display = 'none';
             document.getElementById('closedIcon').className = 'fas fa-triangle-exclamation';
-            document.getElementById('closedIcon').style.color = '#ef4444';
+            document.getElementById('closedIcon').style.color = 'var(--danger)';
             document.getElementById('closedTitle').textContent = 'Permission Denied';
-            document.getElementById('closedMsg').innerHTML = `Error: <code style="color:#ef4444;">${escHtml(err.code)}</code> — Firebase Console mein Firestore Rules deploy karo.`;
+            document.getElementById('closedMsg').innerHTML = `
+                <div style="background: rgba(239, 68, 68, 0.1); padding: 15px; border-radius: 12px; border: 1px solid rgba(239, 68, 68, 0.2); margin-top: 10px; color: #fca5a5;">
+                    Error: <code style="background:rgba(0,0,0,0.3); padding:2px 6px; border-radius:4px;">${escHtml(err.code)}</code><br>Firebase Console mein Firestore Rules deploy karo.
+                </div>
+            `;
             document.getElementById('closedLayout').style.display = 'flex';
             console.error('Settings read error:', err.code, err.message);
         });
@@ -445,7 +624,7 @@
                         <td>
                             <div class="player-name">
                                 ${escHtml(p.name || 'Unknown')}
-                                ${p.username ? `<span class="player-handle">@${escHtml(p.username)}</span>` : ''}
+                                ${(p.username && p.username.toLowerCase() !== 'no account') ? `<span class="player-handle">@${escHtml(p.username)}</span>` : ''}
                             </div>
                         </td>
                         <td class="rating-col">${escHtml(String(p.rating || '—'))}</td>

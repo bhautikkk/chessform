@@ -361,18 +361,10 @@
     </div>
 
     <script>
-        let isFeatureEnabled = false;
-
         // ── Constants ──────────────────────────────────────────────
         const MAX_ATTEMPTS  = 5;
         const LOCKOUT_MS    = 5 * 60 * 1000; // 5 minutes lockout
 
-        // ── Check if admin has enabled the feature ─────────────────
-        if (typeof db !== 'undefined') {
-            db.collection('settings').doc('global').get().then((doc) => {
-                if (doc.exists) isFeatureEnabled = doc.data().isPassEnabled;
-            });
-        }
 
         let countdownTimer = null;
 
@@ -444,10 +436,6 @@
 
             if (!name || !phone) return showError('<i class="fas fa-exclamation-circle"></i> Please enter both Name and Phone.');
 
-            if (!isFeatureEnabled) {
-                return showError('<i class="fas fa-clock"></i> Pass generation is currently disabled by Admin.');
-            }
-
             if (typeof db === 'undefined') {
                 return showError('<i class="fas fa-wifi"></i> Check your internet connection.');
             }
@@ -456,6 +444,12 @@
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Searching...';
 
             try {
+                // Check if admin has enabled the feature
+                const globalDoc = await db.collection('settings').doc('global').get();
+                if (globalDoc.exists && globalDoc.data().isPassEnabled !== true) {
+                    btn.innerHTML = 'Find My Pass';
+                    return showError('<i class="fas fa-clock"></i> Pass generation is currently disabled by Admin.');
+                }
                 // SERVER-SIDE LOCKOUT CHECK FIRST
                 const attemptDoc = await db.collection('pass_attempts').doc(phone).get();
                 if (attemptDoc.exists) {
