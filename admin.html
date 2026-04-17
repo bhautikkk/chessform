@@ -1251,7 +1251,7 @@
                 // Step 1: Read ALL registrations
                 let snapshot;
                 try {
-                    snapshot = await db.collection('registrations').orderBy('timestamp', 'asc').get();
+                    snapshot = await db.collection('registrations').get();
                 } catch (e) {
                     throw new Error("Failed at reading registrations: " + e.message);
                 }
