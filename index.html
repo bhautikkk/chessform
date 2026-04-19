@@ -73,7 +73,7 @@
             <div class="brand-overlay"></div>
             <div class="brand-content">
                 <div class="logo">
-                    <i class="fas fa-chess-knight"></i> Chess Bird
+                    <img src="header_logo.png" alt="Chess Bird" class="brand-logo">
                 </div>
 
                 <div class="hero-text-container">
@@ -148,7 +148,7 @@
 
                 <!-- Mobile only logo display -->
                 <div class="mobile-logo">
-                    <i class="fas fa-chess-knight"></i> Chess Bird
+                    <img src="header_logo.png" alt="Chess Bird" class="brand-logo">
                 </div>
 
                 <!-- Trust Badges -->
@@ -169,6 +169,33 @@
                     <p>Fill in your details & <strong>start competing for real prizes</strong> — takes less than a minute! 🚀</p>
                 </div>
 
+                <!-- Countdown Timer (shown only if deadline is set) -->
+                <div id="countdownBlock" style="display:none; margin-bottom:28px;">
+                    <div style="text-align:center; margin-bottom:10px; font-size:0.75rem; font-weight:700; letter-spacing:2px; color:var(--text-secondary); text-transform:uppercase;">
+                        <i class="fas fa-hourglass-half" style="color:var(--primary); margin-right:6px;"></i> Registration Closes In
+                    </div>
+                    <div id="countdown" style="display:flex; gap:10px; justify-content:center;">
+                        <div class="cd-unit" id="cd-days">
+                            <div class="cd-num">00</div>
+                            <div class="cd-label">Days</div>
+                        </div>
+                        <div class="cd-sep">:</div>
+                        <div class="cd-unit" id="cd-hours">
+                            <div class="cd-num">00</div>
+                            <div class="cd-label">Hours</div>
+                        </div>
+                        <div class="cd-sep">:</div>
+                        <div class="cd-unit" id="cd-mins">
+                            <div class="cd-num">00</div>
+                            <div class="cd-label">Mins</div>
+                        </div>
+                        <div class="cd-sep">:</div>
+                        <div class="cd-unit" id="cd-secs">
+                            <div class="cd-num">00</div>
+                            <div class="cd-label">Secs</div>
+                        </div>
+                    </div>
+                </div>
 
                 <div id="closedMessage" class="status-message" style="display: none;">
                     <div class="status-icon"><i class="fas fa-lock"></i></div>
@@ -237,14 +264,14 @@
                             <label for="rating">Current Rating <span class="badge">ELO</span></label>
                             <div class="input-wrapper">
                                 <i class="fas fa-chart-line icon-left"></i>
-                                <input type="number" id="rating" name="rating" class="form-control" placeholder="1200"
-                                    min="100" max="4000" readonly required style="cursor: not-allowed; background-color: rgba(255,255,255,0.02);">
+                                <input type="text" id="rating" name="rating" class="form-control" placeholder="Auto-detected"
+                                    readonly required style="cursor: not-allowed; background-color: rgba(255,255,255,0.02);">
                             </div>
                         </div>
                     </div>
 
                     <button type="submit" class="submit-btn" id="submitBtn">
-                        <span class="btn-text">Pay ₹29 & Register <i class="fas fa-arrow-right arrow-icon"></i></span>
+                        <span class="btn-text">Pay & Register <i class="fas fa-arrow-right arrow-icon"></i></span>
                         <div class="btn-glow"></div>
                     </button>
 
@@ -254,8 +281,8 @@
                         <span>Your data is safe &amp; secure.</span>
                     </div>
 
-                    <p class="terms-text">By joining, you agree to our <a href="#">Terms of Service</a> and <a
-                            href="#">Privacy Policy</a>.</p>
+                    <p class="terms-text">By joining, you agree to our <a href="terms.html" target="_blank">Terms of Service</a> and <a
+                            href="privacy.html" target="_blank">Privacy Policy</a>.</p>
                 </form>
 
                 <div class="telegram-link-container">

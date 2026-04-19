@@ -499,7 +499,7 @@
     <div id="loginScreen">
         <div class="login-card">
             <div class="login-logo">
-                <i class="fas fa-chess-king"></i>
+                <img src="header_logo.png" alt="Chess Bird" style="height: 64px; margin-bottom: 12px; filter: drop-shadow(0 0 12px rgba(198,168,124,0.3));">
                 <h1>Admin Login</h1>
                 <p>ChessBird Tournament Panel</p>
             </div>
@@ -529,7 +529,7 @@
     <div id="adminPanel">
         <div class="panel-header">
             <div class="panel-title">
-                <i class="fas fa-chess-king"></i> Admin Dashboard
+                <img src="header_logo.png" alt="Chess Bird" style="height: 36px; filter: drop-shadow(0 0 10px rgba(198,168,124,0.3));"> Admin Dashboard
             </div>
             <div style="display:flex; align-items:center; gap:10px;">
                 <span class="admin-email-tag" id="adminEmailTag"></span>
@@ -554,6 +554,24 @@
                     </label>
                 </div>
                 <div id="regToggleStatus" style="margin-top:10px; font-size:12px; color:var(--muted);"></div>
+            </div>
+
+            <!-- Registration Deadline (Countdown) -->
+            <div class="card-box">
+                <div class="section-title"><i class="fas fa-hourglass-half" style="color:var(--gold);"></i> &nbsp;Registration Deadline</div>
+                <p style="font-size:13px; color:var(--muted); margin-bottom:16px;">Set a deadline date & time. A live countdown will appear on the registration form. When time's up, registration auto-closes.</p>
+                <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                    <input type="datetime-local" id="deadlineInput"
+                        style="flex:1; padding:10px 14px; background:#111113; border:1px solid var(--border); border-radius:8px; color:var(--text); font-family:'Inter',sans-serif; font-size:14px; outline:none; transition: border-color 0.2s; min-width:200px;"
+                        onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'">
+                    <button class="login-btn" onclick="saveDeadline()" id="saveDeadlineBtn" style="width:auto; padding:10px 20px; font-size:13px;">
+                        <i class="fas fa-save"></i> Save
+                    </button>
+                    <button onclick="clearDeadline()" style="padding:10px 16px; background:transparent; border:1px solid rgba(239,68,68,0.4); border-radius:8px; color:#f87171; font-size:13px; cursor:pointer; font-family:'Inter',sans-serif; transition:all 0.2s;" onmouseover="this.style.background='rgba(239,68,68,0.12)'" onmouseout="this.style.background='transparent'">
+                        <i class="fas fa-trash"></i> Clear
+                    </button>
+                </div>
+                <div id="deadlineStatus" style="margin-top:10px; font-size:12px; color:var(--muted);"></div>
             </div>
 
             <!-- Pass Feature Toggle -->
@@ -664,7 +682,31 @@
         </div>
     </div>
 
-    <!-- Confirm Modal -->
+    <!-- Confirm Modal (for hard resets) -->
+    <div class="modal-overlay" id="confirmModal">
+        <div class="modal-box">
+            <i class="fas fa-triangle-exclamation"></i>
+            <h3 id="modalTitle">Are you sure?</h3>
+            <p id="modalDesc">This action is permanent.</p>
+            <div class="modal-btns">
+                <button class="modal-cancel" onclick="closeModal()">Cancel</button>
+                <button class="modal-confirm" id="modalConfirmBtn">Yes, Do it</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Soft Confirm Dialog -->
+    <div class="modal-overlay" id="softConfirmModal" style="z-index:1001;">
+        <div class="modal-box" style="border-color:rgba(239,68,68,0.25); max-width:360px;">
+            <div id="softModalIcon" style="font-size:36px; margin-bottom:14px; color:#f59e0b;"><i class="fas fa-question-circle"></i></div>
+            <h3 id="softModalTitle" style="font-size:17px; margin-bottom:8px;">Are you sure?</h3>
+            <p id="softModalDesc" style="font-size:13px; color:#71717a; margin-bottom:22px;">This action cannot be undone.</p>
+            <div class="modal-btns">
+                <button class="modal-cancel" id="softModalCancel" style="flex:1;">Cancel</button>
+                <button id="softModalOk" style="flex:1; padding:10px 20px; background:var(--danger); border:none; border-radius:8px; color:white; font-weight:700; cursor:pointer; font-family:'Inter',sans-serif; transition:opacity 0.2s;">Confirm</button>
+            </div>
+        </div>
+    </div>
     <div class="modal-overlay" id="confirmModal">
         <div class="modal-box">
             <i class="fas fa-triangle-exclamation"></i>
@@ -801,6 +843,31 @@
                     } else {
                         eventIdStatus.innerHTML = '<span style="color:var(--danger);">⚠ No Event ID set — registration won\'t work properly!</span>';
                     }
+
+                    // Load registration deadline
+                    const deadlineInput = document.getElementById('deadlineInput');
+                    const deadlineStatus = document.getElementById('deadlineStatus');
+                    const deadline = data.registrationDeadline || '';
+                    if (deadlineInput && deadlineInput !== document.activeElement) {
+                        if (deadline) {
+                            // Convert stored timestamp (ms) to local datetime-local format
+                            const d = new Date(deadline);
+                            const localISO = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+                            deadlineInput.value = localISO;
+                            const now = Date.now();
+                            if (deadline > now) {
+                                const diff = deadline - now;
+                                const days = Math.floor(diff / 86400000);
+                                const hrs  = Math.floor((diff % 86400000) / 3600000);
+                                const mins = Math.floor((diff % 3600000) / 60000);
+                                deadlineStatus.innerHTML = `<i class="fas fa-clock" style="color:var(--gold);"></i> Deadline set: <strong style="color:var(--gold);">${d.toLocaleString('en-IN')}</strong> &nbsp;·&nbsp; <span style="color:var(--success);">${days}d ${hrs}h ${mins}m remaining</span>`;
+                            } else {
+                                deadlineStatus.innerHTML = `<i class="fas fa-clock"></i> Deadline was: <strong>${new Date(deadline).toLocaleString('en-IN')}</strong> &nbsp;·&nbsp; <span style="color:var(--danger);">EXPIRED</span>`;
+                            }
+                        } else {
+                            deadlineStatus.innerHTML = '<span style="color:var(--muted);">No deadline set — countdown will not show on form.</span>';
+                        }
+                    }
                 } else {
                     db.collection('settings').doc('global').set({ isPassEnabled: false, isRegistrationOpen: false, isLeaderboardOpen: false, eventId: 'event_default' });
                 }
@@ -870,6 +937,66 @@
                 snapshot.forEach(doc => privatePlayers[doc.id] = doc.data());
                 renderMergedPlayers();
             });
+        }
+
+        // ─── Save / Clear Deadline ──────────────────────────────────
+        function saveDeadline() {
+            const input = document.getElementById('deadlineInput').value;
+            if (!input) { showToast('error', 'No Date Selected', 'Please pick a date and time first.'); return; }
+            const tsMs = new Date(input).getTime();
+            if (isNaN(tsMs)) { showToast('error', 'Invalid Date', 'Please pick a valid date.'); return; }
+            const btn = document.getElementById('saveDeadlineBtn');
+            btn.disabled = true;
+            db.collection('settings').doc('global')
+              .update({ registrationDeadline: tsMs })
+              .then(() => showToast('success', 'Deadline Saved!', 'Countdown will now appear on the registration form.'))
+              .catch(e => showToast('error', 'Failed', e.message))
+              .finally(() => btn.disabled = false);
+        }
+
+        function clearDeadline() {
+            showSoftConfirm({
+                icon: '<i class="fas fa-trash" style="color:#ef4444;"></i>',
+                title: 'Remove Countdown Timer?',
+                desc: 'The deadline will be cleared and countdown will no longer appear on the registration form.',
+                confirmText: 'Yes, Remove',
+                onConfirm: () => {
+                    db.collection('settings').doc('global')
+                      .update({ registrationDeadline: null })
+                      .then(() => {
+                          document.getElementById('deadlineInput').value = '';
+                          showToast('info', 'Deadline Cleared', 'Countdown removed from registration form.');
+                      })
+                      .catch(e => showToast('error', 'Failed', e.message));
+                }
+            });
+        }
+
+        // ─── Reusable Custom Confirm Dialog ─────────────────────────
+        function showSoftConfirm({ icon, title, desc, confirmText = 'Confirm', onConfirm }) {
+            const overlay = document.getElementById('softConfirmModal');
+            document.getElementById('softModalIcon').innerHTML = icon || '<i class="fas fa-question-circle"></i>';
+            document.getElementById('softModalTitle').textContent = title || 'Are you sure?';
+            document.getElementById('softModalDesc').textContent  = desc  || 'This action cannot be undone.';
+            const okBtn = document.getElementById('softModalOk');
+            okBtn.textContent = confirmText;
+            overlay.classList.add('active');
+
+            // Clean previous listeners
+            const newOk     = okBtn.cloneNode(true);
+            const cancelBtn = document.getElementById('softModalCancel');
+            const newCancel = cancelBtn.cloneNode(true);
+            okBtn.parentNode.replaceChild(newOk, okBtn);
+            cancelBtn.parentNode.replaceChild(newCancel, cancelBtn);
+
+            newOk.addEventListener('click', () => {
+                overlay.classList.remove('active');
+                if (typeof onConfirm === 'function') onConfirm();
+            });
+            newCancel.addEventListener('click', () => overlay.classList.remove('active'));
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) overlay.classList.remove('active');
+            }, { once: true });
         }
 
         // ─── Toggle Pass Feature ────────────────────────────────────

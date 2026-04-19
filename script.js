@@ -26,10 +26,69 @@ function initRegistrationApp() {
     let successParamProcessed = false;
 
     // 1. Check registration status and eventId from Firestore (Admin Panel controls this)
+    let countdownInterval = null;
+
+    function startCountdown(deadlineMs) {
+        const block = document.getElementById('countdownBlock');
+        if (!block) return;
+
+        if (countdownInterval) clearInterval(countdownInterval);
+
+        function tick() {
+            const now = Date.now();
+            const diff = deadlineMs - now;
+
+            if (diff <= 0) {
+                // Deadline passed — auto-close
+                clearInterval(countdownInterval);
+                block.style.display = 'none';
+                return;
+            }
+
+            block.style.display = 'block';
+
+            const days  = Math.floor(diff / 86400000);
+            const hours = Math.floor((diff % 86400000) / 3600000);
+            const mins  = Math.floor((diff % 3600000) / 60000);
+            const secs  = Math.floor((diff % 60000) / 1000);
+
+            const isUrgent = diff < 3600000; // < 1 hour: red pulse
+
+            ['cd-days', 'cd-hours', 'cd-mins', 'cd-secs'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.classList.toggle('urgent', isUrgent);
+            });
+
+            const dEl = document.getElementById('cd-days');
+            const hEl = document.getElementById('cd-hours');
+            const mEl = document.getElementById('cd-mins');
+            const sEl = document.getElementById('cd-secs');
+
+            if (dEl) dEl.querySelector('.cd-num').textContent = String(days).padStart(2, '0');
+            if (hEl) hEl.querySelector('.cd-num').textContent = String(hours).padStart(2, '0');
+            if (mEl) mEl.querySelector('.cd-num').textContent = String(mins).padStart(2, '0');
+            if (sEl) sEl.querySelector('.cd-num').textContent = String(secs).padStart(2, '0');
+        }
+
+        tick();
+        countdownInterval = setInterval(tick, 1000);
+    }
+
     if (typeof db !== 'undefined') {
         db.collection('settings').doc('global').onSnapshot((doc) => {
             const isRegistrationOpen = doc.exists ? (doc.data().isRegistrationOpen || false) : false;
             currentEventId = doc.exists ? (doc.data().eventId || 'event_default') : 'event_default';
+
+            // ── Countdown Timer ──────────────────────────────────
+            const deadlineMs = doc.exists ? (doc.data().registrationDeadline || null) : null;
+            const block = document.getElementById('countdownBlock');
+            if (deadlineMs && deadlineMs > Date.now()) {
+                startCountdown(deadlineMs);
+            } else {
+                if (block) block.style.display = 'none';
+                if (countdownInterval) clearInterval(countdownInterval);
+            }
+            // ────────────────────────────────────────────────────
 
             if (!isRegistrationOpen) {
                 // Registration is CLOSED
@@ -148,7 +207,7 @@ function initRegistrationApp() {
                 usernameInput.style.opacity = '0.5';
                 usernameInput.style.pointerEvents = 'none';
                 
-                ratingInput.value = '1200';
+                ratingInput.value = 'N/A';
                 ratingInput.readOnly = true;
                 ratingInput.style.opacity = '0.5';
                 ratingInput.style.pointerEvents = 'none';
@@ -234,7 +293,7 @@ function initRegistrationApp() {
                     const statsRes = await fetch(`https://api.chess.com/pub/player/${username}/stats`);
                     if (statsRes.ok) {
                         const stats = await statsRes.json();
-                        let bestRating = 1200; // default fallback
+                        let bestRating = null; // null = no rating found
 
                         // Prefer Rapid, then Blitz, then Bullet
                         if (stats.chess_rapid && stats.chess_rapid.last) {
@@ -246,7 +305,7 @@ function initRegistrationApp() {
                         }
 
                         // Auto-fill rating
-                        ratingInput.value = bestRating;
+                        ratingInput.value = bestRating !== null ? bestRating : 'N/A';
                         ratingWrapper.classList.add('is-valid');
                         ratingWrapper.classList.remove('is-invalid');
                         
@@ -377,7 +436,7 @@ function initRegistrationApp() {
                                     name:      String(templateParams.name  || '').trim().substring(0, 100),
                                     username:  String(templateParams.username || '').trim().substring(0, 50),
                                     phone:     String(templateParams.phone || '').trim(),
-                                    rating:    parseInt(templateParams.rating, 10) || 1200,
+                                    rating:    templateParams.rating === 'N/A' ? 'N/A' : (parseInt(templateParams.rating, 10) || 'N/A'),
                                     cardId:    'Pending'
                                 };
 

@@ -39,11 +39,11 @@ body {
     color: var(--text-primary);
     -webkit-font-smoothing: antialiased;
     min-height: 100vh;
-    overflow-x: hidden;
+    overflow-x: clip;
     width: 100%;
 }
 html {
-    overflow-x: hidden;
+    scroll-behavior: smooth;
 }
 
 /* --- Layout --- */
@@ -84,19 +84,19 @@ html {
 }
 
 .logo {
-    font-size: 1.5rem;
-    font-weight: 800;
-    color: var(--primary);
     display: flex;
     align-items: center;
-    gap: 12px;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
 }
 
-.logo i {
-    font-size: 2rem;
+.brand-logo {
+    height: 48px; /* Adjust height based on preference */
+    width: auto;
     filter: drop-shadow(0 0 12px var(--primary-glow));
+    transition: transform 0.3s ease;
+}
+
+.brand-logo:hover {
+    transform: scale(1.05);
 }
 
 .hero-text-container {
@@ -187,13 +187,12 @@ html {
 
 .mobile-logo {
     display: none;
-    font-size: 1.5rem;
-    font-weight: 800;
-    color: var(--primary);
     margin-bottom: 32px;
     align-items: center;
-    gap: 12px;
-    letter-spacing: 1px;
+    justify-content: center;
+}
+.mobile-logo .brand-logo {
+    height: 56px;
 }
 
 .header {
@@ -397,6 +396,96 @@ html {
 .terms-text a:hover {
     color: var(--primary);
     border-color: var(--primary);
+}
+
+/* ─── Countdown Timer ──────────────────────────────────── */
+.cd-unit {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(245, 158, 11, 0.04) 100%);
+    border: 1px solid rgba(245, 158, 11, 0.25);
+    border-radius: 14px;
+    padding: 14px 18px;
+    min-width: 68px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(245, 158, 11, 0.1);
+    transition: transform 0.2s ease;
+}
+
+.cd-unit:hover {
+    transform: translateY(-2px);
+}
+
+.cd-unit::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #f59e0b, transparent);
+}
+
+.cd-num {
+    font-family: var(--font-body);
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: var(--primary);
+    line-height: 1;
+    letter-spacing: -1px;
+    text-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
+    transition: all 0.3s ease;
+}
+
+.cd-label {
+    font-size: 0.62rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-top: 6px;
+}
+
+.cd-sep {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: rgba(245, 158, 11, 0.4);
+    align-self: center;
+    margin-bottom: 18px;
+    animation: sepBlink 1s infinite;
+}
+
+@keyframes sepBlink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.2; }
+}
+
+/* urgent red pulse when < 1 hour left */
+.cd-unit.urgent {
+    border-color: rgba(239, 68, 68, 0.4);
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.12) 0%, rgba(239, 68, 68, 0.04) 100%);
+    box-shadow: 0 4px 20px rgba(239, 68, 68, 0.15);
+    animation: urgentPulse 1s infinite;
+}
+
+.cd-unit.urgent .cd-num {
+    color: #ef4444;
+    text-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+}
+
+.cd-unit.urgent::before {
+    background: linear-gradient(90deg, transparent, #ef4444, transparent);
+}
+
+@keyframes urgentPulse {
+    0%, 100% { box-shadow: 0 4px 20px rgba(239, 68, 68, 0.15); }
+    50% { box-shadow: 0 4px 30px rgba(239, 68, 68, 0.35); }
+}
+
+@media (max-width: 480px) {
+    .cd-unit { min-width: 54px; padding: 10px 12px; }
+    .cd-num { font-size: 1.7rem; }
+    .cd-sep { font-size: 1.4rem; }
 }
 
 /* --- Status Messages --- */
