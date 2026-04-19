@@ -75,9 +75,24 @@ service cloud.firestore {
         // Must be for the same phone as docId
         request.resource.data.keys().hasAll(['email', 'paymentId']) &&
 
-        // paymentId MUST match Razorpay format exactly
+        // paymentId MUST match either:
+        //   - Razorpay format: pay_XXXXXXXXXXXXXX
+        //   - Free registration (100% promo): FREE_<timestamp>
         request.resource.data.paymentId is string &&
-        request.resource.data.paymentId.matches('^pay_[A-Za-z0-9]{14,}$') &&
+        (
+          // Case 1: Paid via Razorpay
+          request.resource.data.paymentId.matches('^pay_[A-Za-z0-9]{14,}$') 
+          ||
+          // Case 2: 100% Free Registration (Must have a valid 100% active promo code)
+          (
+            request.resource.data.paymentId.matches('^FREE_[0-9]{10,}$') &&
+            request.resource.data.promoCode is string &&
+            // Check that the code exists, is active, and discount is exactly 100
+            exists(/databases/$(database)/documents/promo_codes/$(request.resource.data.promoCode)) &&
+            get(/databases/$(database)/documents/promo_codes/$(request.resource.data.promoCode)).data.active == true &&
+            get(/databases/$(database)/documents/promo_codes/$(request.resource.data.promoCode)).data.discount == 100
+          )
+        ) &&
 
         // email must be non-empty
         request.resource.data.email is string &&
@@ -122,6 +137,19 @@ service cloud.firestore {
       // Public can ONLY read 'global' doc (for registration open/leaderboard toggle)
       allow read: if docId == 'global';
       allow write: if isAdmin();
+    }
+
+    // ══════════════════════════════════════════════════════════
+    // PROMO CODES — admin-controlled discount codes
+    // Public can only GET a specific code by exact ID (to validate).
+    // Public CANNOT list all codes (enumeration blocked).
+    // Only admin can create, update, or delete codes.
+    // ══════════════════════════════════════════════════════════
+    match /promo_codes/{codeId} {
+      // Allow public to read a specific code doc (validate by exact ID only)
+      allow get: if true;
+      // Only admin can list, create, update, or delete codes
+      allow list, create, update, delete: if isAdmin();
     }
 
     // ══════════════════════════════════════════════════════════

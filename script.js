@@ -6,7 +6,15 @@ function initRegistrationApp() {
     // ==========================================
     // eventId is now loaded dynamically from Firestore!
     let currentEventId = 'event_default';
-    // ==========================================
+
+    // ── PROMO CODE STATE ──────────────────────────────────────
+    // Stores the last successfully validated promo code.
+    // IMPORTANT: This is ONLY used for display/UI purposes.
+    // The actual discount is always RE-FETCHED from Firestore on submit.
+    let appliedPromo = null; // { code: 'CHESS50', discount: 50 }
+    const BASE_AMOUNT_PAISE = 2900; // ₹29 in paise
+    const BASE_AMOUNT_RS = 29;     // ₹29 display
+    // =========================================================
 
     const form = document.getElementById('chessForm');
     const closedMessage = document.getElementById('closedMessage');
@@ -78,6 +86,13 @@ function initRegistrationApp() {
         db.collection('settings').doc('global').onSnapshot((doc) => {
             const isRegistrationOpen = doc.exists ? (doc.data().isRegistrationOpen || false) : false;
             currentEventId = doc.exists ? (doc.data().eventId || 'event_default') : 'event_default';
+            const isPromoEnabled = doc.exists ? (doc.data().isPromoEnabled !== false) : true; // Default ON
+
+            // Show/hide promo code field
+            const promoGroup = document.getElementById('promoCodeGroup');
+            if (promoGroup) {
+                promoGroup.style.display = isPromoEnabled ? 'block' : 'none';
+            }
 
             // ── Countdown Timer ──────────────────────────────────
             const deadlineMs = doc.exists ? (doc.data().registrationDeadline || null) : null;
@@ -89,6 +104,7 @@ function initRegistrationApp() {
                 if (countdownInterval) clearInterval(countdownInterval);
             }
             // ────────────────────────────────────────────────────
+
 
             if (!isRegistrationOpen) {
                 // Registration is CLOSED
@@ -150,6 +166,198 @@ function initRegistrationApp() {
         btn.style.opacity = '0';
         btn.style.animation = `slideUpFade 0.5s ease forwards ${0.3 + (formGroups.length * 0.1)}s`;
     }
+
+    // ═══════════════════════════════════════════════════════════
+    // PROMO CODE SYSTEM
+    // ═══════════════════════════════════════════════════════════
+    const promoInput   = document.getElementById('promoCodeInput');
+    const applyBtn     = document.getElementById('applyPromoBtn');
+    const promoStatus  = document.getElementById('promoStatus');
+    const promoPopup   = document.getElementById('promoPopup');
+    const promoClosBtn = document.getElementById('promoPopupCloseBtn');
+    const submitBtn    = document.getElementById('submitBtn');
+
+    // ── Close popup on button click or overlay click ──
+    if (promoClosBtn) {
+        promoClosBtn.addEventListener('click', () => {
+            if (promoPopup) promoPopup.classList.remove('active');
+        });
+    }
+    if (promoPopup) {
+        promoPopup.addEventListener('click', (e) => {
+            if (e.target === promoPopup) promoPopup.classList.remove('active');
+        });
+    }
+
+    // ── Update submit button text based on applied promo ──
+    function updateSubmitBtn() {
+        if (!submitBtn) return;
+        const btnText = submitBtn.querySelector('.btn-text');
+        const mainPrice = document.getElementById('mainPriceDisplay');
+        const origPrice = document.getElementById('originalPriceDisplay');
+        const discBadge = document.getElementById('discountBadge');
+
+        if (!btnText || !mainPrice) return;
+
+        if (appliedPromo && appliedPromo.discount > 0 && appliedPromo.discount < 100) {
+            const finalRs = Math.max(0, (BASE_AMOUNT_RS * (1 - appliedPromo.discount / 100)));
+            const finalDisplay = Number.isInteger(finalRs) ? finalRs : finalRs.toFixed(2);
+            
+            mainPrice.innerHTML = `&#x20B9;${finalDisplay}`;
+            origPrice.innerHTML = `&#x20B9;${BASE_AMOUNT_RS}`;
+            origPrice.style.display = 'inline';
+            discBadge.innerHTML = `<i class="fas fa-tag"></i> <span>${appliedPromo.discount}% OFF</span>`;
+            discBadge.style.display = 'inline-flex';
+            
+            btnText.innerHTML = `Register & Proceed to Pay <i class="fas fa-arrow-right arrow-icon"></i>`;
+        } else if (appliedPromo && appliedPromo.discount === 100) {
+            mainPrice.innerHTML = `<span style="color:#4ade80;">FREE</span>`;
+            origPrice.innerHTML = `&#x20B9;${BASE_AMOUNT_RS}`;
+            origPrice.style.display = 'inline';
+            discBadge.innerHTML = `<i class="fas fa-tag"></i> <span>100% OFF</span>`;
+            discBadge.style.display = 'inline-flex';
+
+            btnText.innerHTML = `Submit Free Registration <i class="fas fa-arrow-right arrow-icon"></i>`;
+        } else {
+            mainPrice.innerHTML = `&#x20B9;${BASE_AMOUNT_RS}`;
+            origPrice.style.display = 'none';
+            discBadge.style.display = 'none';
+
+            btnText.innerHTML = `Register & Proceed to Pay <i class="fas fa-arrow-right arrow-icon"></i>`;
+        }
+    }
+
+    // ── Apply Promo Code (reads from Firestore) ──
+    async function applyPromoCode() {
+        if (!promoInput || !promoStatus) return;
+        const code = promoInput.value.trim().toUpperCase();
+
+        if (!code) {
+            setPromoStatus('error', '<i class="fas fa-exclamation-circle"></i> Please enter a promo code.');
+            return;
+        }
+
+        // Loading state
+        setPromoStatus('loading', '<i class="fas fa-spinner fa-spin"></i> Verifying code...');
+        if (applyBtn) { applyBtn.disabled = true; applyBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; }
+
+        try {
+            if (typeof db === 'undefined') throw new Error('Database not available.');
+
+            const docSnap = await db.collection('promo_codes').doc(code).get();
+
+            if (!docSnap.exists) {
+                appliedPromo = null;
+                setPromoStatus('error', '<i class="fas fa-times-circle"></i> Invalid promo code. Please check and try again.');
+                resetApplyBtn();
+                updateSubmitBtn();
+                return;
+            }
+
+            const data = docSnap.data();
+
+            if (data.active !== true) {
+                appliedPromo = null;
+                setPromoStatus('error', '<i class="fas fa-times-circle"></i> This code has expired or is no longer active.');
+                resetApplyBtn();
+                updateSubmitBtn();
+                return;
+            }
+
+            const discount = Number(data.discount) || 0;
+            if (discount <= 0 || discount > 100) {
+                appliedPromo = null;
+                setPromoStatus('error', '<i class="fas fa-times-circle"></i> Invalid code configuration. Please contact support.');
+                resetApplyBtn();
+                updateSubmitBtn();
+                return;
+            }
+
+            // ✅ Code is valid — store and show popup
+            appliedPromo = { code, discount };
+
+            setPromoStatus('success', `<i class="fas fa-check-circle"></i> <strong>${code}</strong> applied — ${discount}% discount!`);
+            if (applyBtn) {
+                applyBtn.disabled = false;
+                applyBtn.className = 'apply-btn applied';
+                applyBtn.innerHTML = '<i class="fas fa-check"></i> Applied';
+            }
+
+            // Show popup
+            showPromoPopup(code, discount);
+            updateSubmitBtn();
+
+        } catch (err) {
+            console.error('Promo code verification error:', err);
+            appliedPromo = null;
+            setPromoStatus('error', '<i class="fas fa-exclamation-triangle"></i> Verification failed. Please try again.');
+            resetApplyBtn();
+            updateSubmitBtn();
+        }
+    }
+
+    function setPromoStatus(type, html) {
+        if (!promoStatus) return;
+        promoStatus.className = '';
+        promoStatus.classList.add(`status-${type}`);
+        promoStatus.innerHTML = html;
+    }
+
+    function resetApplyBtn() {
+        if (!applyBtn) return;
+        applyBtn.disabled = false;
+        applyBtn.className = 'apply-btn';
+        applyBtn.innerHTML = '<i class="fas fa-bolt"></i> Apply';
+    }
+
+    function showPromoPopup(code, discount) {
+        const finalRs   = Math.max(0, (BASE_AMOUNT_RS * (1 - discount / 100)));
+        const finalDisplay = Number.isInteger(finalRs) ? finalRs : finalRs.toFixed(2);
+
+        const titleEl  = document.getElementById('promoPopupTitle');
+        const descEl   = document.getElementById('promoPopupDesc');
+        const discEl   = document.getElementById('promoDiscountText');
+        const origEl   = document.getElementById('promoOriginalPrice');
+        const finalEl  = document.getElementById('promoFinalPrice');
+        const priceRow = document.getElementById('promoPriceRow');
+
+        if (titleEl) titleEl.textContent = discount === 100 ? 'Free Registration! 🚀' : 'Code Applied!';
+        if (descEl) {
+            descEl.textContent = discount === 100
+                ? `Code "${code}" gives you 100% off — register completely FREE!`
+                : `Code "${code}" gives you ${discount}% off your registration fee.`;
+        }
+        if (discEl) discEl.textContent = `${discount}% OFF`;
+        if (origEl) origEl.textContent = `\u20B9${BASE_AMOUNT_RS}`;
+        if (finalEl) {
+            finalEl.textContent = discount === 100 ? 'FREE' : `\u20B9${finalDisplay}`;
+            finalEl.style.color = discount === 100 ? '#f59e0b' : '#10b981';
+        }
+        if (priceRow) priceRow.style.display = discount === 100 ? 'flex' : 'flex';
+
+        if (promoPopup) promoPopup.classList.add('active');
+    }
+
+    // ── Wire up Apply button ──
+    if (applyBtn) {
+        applyBtn.addEventListener('click', applyPromoCode);
+    }
+    // Also apply on Enter key in promo input
+    if (promoInput) {
+        promoInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') { e.preventDefault(); applyPromoCode(); }
+        });
+        // Reset if user changes the code after applying
+        promoInput.addEventListener('input', () => {
+            if (appliedPromo) {
+                appliedPromo = null;
+                setPromoStatus('', '');
+                resetApplyBtn();
+                updateSubmitBtn();
+            }
+        });
+    }
+    // ═══════════════════════════════════════════════════════════
 
     // ── Add checkmark icons to all input wrappers ──
     document.querySelectorAll('.input-wrapper').forEach(wrapper => {
@@ -411,13 +619,15 @@ function initRegistrationApp() {
             };
 
             // Database Handling — SECURITY HARDENED
-            const handleFinalSave = (paymentId) => {
+            const handleFinalSave = (paymentId, usedPromoCode, discountApplied, finalAmountPaise) => {
                 // 🔒 SECURITY: Validate paymentId format before writing
-                // Must match Razorpay format: pay_ + 14+ alphanumeric chars
-                // This matches our Firestore rule — if client sends wrong format, write will fail anyway
-                if (!paymentId || !/^pay_[A-Za-z0-9]{14,}$/.test(paymentId)) {
+                // Free registrations (100% off) use 'FREE_<timestamp>' format
+                const isFreeReg = paymentId && /^FREE_\d+$/.test(paymentId);
+                const isRazorpay = paymentId && /^pay_[A-Za-z0-9]{14,}$/.test(paymentId);
+
+                if (!isFreeReg && !isRazorpay) {
                     console.error("Invalid paymentId format. Aborting save.", paymentId);
-                    proceedWithEmailJS(); // Still send confirmation email
+                    proceedWithEmailJS();
                     return;
                 }
 
@@ -440,11 +650,15 @@ function initRegistrationApp() {
                                     cardId:    'Pending'
                                 };
 
-                                // Private (admin only)
+                                // Private (admin only) — includes promo code used
                                 const privateData = {
-                                    email:     String(templateParams.email || '').trim().substring(0, 200),
-                                    paymentId: paymentId,
-                                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                                    email:           String(templateParams.email || '').trim().substring(0, 200),
+                                    paymentId:       paymentId,
+                                    timestamp:       firebase.firestore.FieldValue.serverTimestamp(),
+                                    // Promo code audit trail
+                                    promoCode:       usedPromoCode   || null,
+                                    discountApplied: discountApplied || 0,
+                                    amountPaid:      finalAmountPaise || BASE_AMOUNT_PAISE
                                 };
 
                                 // Write to both collections simultaneously
@@ -470,77 +684,114 @@ function initRegistrationApp() {
                 }
             };
 
-            // Razorpay Integration
-            const options = {
-                "key": "rzp_test_SdF2J3WDCQa5Ko", // The user's test key
-                "amount": 2900, // ₹29 in paise
-                "currency": "INR",
-                "name": "Chess Bird",
-                "description": "Tournament Registration Fee",
-                "handler": function (response){
-                    // Payment successful
-                    console.log("Payment Successful!", response.razorpay_payment_id);
-                    // Keep button loading state
-                    if (btn) {
-                        btn.innerHTML = '<span class="btn-text">Verifying... <i class="fas fa-spinner fa-spin"></i></span><div class="btn-glow"></div>';
+            // ═══════════════════════════════════════════════════════
+            // 🔒 SECURE PROMO CODE RE-VALIDATION ON SUBMIT
+            // We re-fetch the promo code from Firestore at submit time.
+            // This means even if someone edits the appliedPromo variable
+            // in DevTools, the actual Razorpay charge is always based on
+            // the REAL server value — not any client-side value.
+            // ═══════════════════════════════════════════════════════
+            let verifiedDiscount = 0;
+            let verifiedCode = null;
+
+            const cachedCode = appliedPromo ? appliedPromo.code : null;
+
+            const proceedToPayment = async () => {
+                // Re-verify promo from Firestore if a code was applied
+                if (cachedCode && typeof db !== 'undefined') {
+                    try {
+                        const freshSnap = await db.collection('promo_codes').doc(cachedCode).get();
+                        if (freshSnap.exists && freshSnap.data().active === true) {
+                            verifiedDiscount = Number(freshSnap.data().discount) || 0;
+                            if (verifiedDiscount < 0 || verifiedDiscount > 100) verifiedDiscount = 0;
+                            verifiedCode = cachedCode;
+                        }
+                    } catch (err) {
+                        console.warn('Promo re-verification failed, proceeding with no discount:', err);
+                        verifiedDiscount = 0;
+                        verifiedCode = null;
                     }
-                    handleFinalSave(response.razorpay_payment_id);
-                },
-                "prefill": {
-                    "name": templateParams.name,
-                    "email": templateParams.email,
-                    "contact": templateParams.phone
-                },
-                "theme": {
-                    "color": "#c6a87c"
-                },
-                "modal": {
-                    "ondismiss": function() {
+                }
+
+                // Calculate final amount (always from server-verified discount)
+                const finalAmountPaise = Math.round(BASE_AMOUNT_PAISE * (1 - verifiedDiscount / 100));
+
+                // ── 100% OFF: Skip Razorpay entirely ──
+                if (verifiedDiscount === 100) {
+                    if (btn) btn.innerHTML = '<span class="btn-text">Processing... <i class="fas fa-spinner fa-spin"></i></span><div class="btn-glow"></div>';
+                    const freePayId = 'FREE_' + Date.now();
+                    handleFinalSave(freePayId, verifiedCode, verifiedDiscount, finalAmountPaise);
+                    return;
+                }
+
+                // ── Normal / Discounted payment via Razorpay ──
+                const options = {
+                    "key": "rzp_test_SdF2J3WDCQa5Ko",
+                    "amount": finalAmountPaise,
+                    "currency": "INR",
+                    "name": "Chess Bird",
+                    "description": verifiedCode
+                        ? `Tournament Registration (${verifiedCode} — ${verifiedDiscount}% off)`
+                        : "Tournament Registration Fee",
+                    "handler": function (response) {
+                        console.log("Payment Successful!", response.razorpay_payment_id);
+                        if (btn) btn.innerHTML = '<span class="btn-text">Verifying... <i class="fas fa-spinner fa-spin"></i></span><div class="btn-glow"></div>';
+                        handleFinalSave(response.razorpay_payment_id, verifiedCode, verifiedDiscount, finalAmountPaise);
+                    },
+                    "prefill": {
+                        "name": templateParams.name,
+                        "email": templateParams.email,
+                        "contact": templateParams.phone
+                    },
+                    "theme": { "color": "#c6a87c" },
+                    "modal": {
+                        "ondismiss": function() {
+                            updateSubmitBtn(); // Restore correct button text
+                            if (btn) {
+                                btn.style.opacity = '1';
+                                btn.style.pointerEvents = 'all';
+                            }
+                        }
+                    }
+                };
+
+                if (typeof Razorpay !== 'undefined') {
+                    const rzp = new Razorpay(options);
+                    rzp.on('payment.failed', function (response) {
+                        alert("Payment Failed. Reason: " + response.error.description);
+                        updateSubmitBtn();
                         if (btn) {
-                            btn.innerHTML = '<span class="btn-text">Pay ₹29 & Register <i class="fas fa-arrow-right arrow-icon"></i></span><div class="btn-glow"></div>';
                             btn.style.opacity = '1';
                             btn.style.pointerEvents = 'all';
                         }
+                    });
+
+                    // Check if already registered before opening payment
+                    if (typeof db !== 'undefined') {
+                        const userPhone = templateParams.phone;
+                        db.collection("registrations").doc(userPhone).get()
+                            .then(docSnap => {
+                                if (docSnap.exists) {
+                                    alert("You are already registered!");
+                                    updateSubmitBtn();
+                                    if (btn) { btn.style.opacity = '1'; btn.style.pointerEvents = 'all'; }
+                                } else {
+                                    rzp.open();
+                                }
+                            }).catch(e => {
+                                console.error("Checking registration failed", e);
+                                rzp.open();
+                            });
+                    } else {
+                        rzp.open();
                     }
+                } else {
+                    alert("Razorpay is not loaded properly.");
                 }
             };
-            
-            if (typeof Razorpay !== 'undefined') {
-                const rzp = new Razorpay(options);
-                rzp.on('payment.failed', function (response){
-                    alert("Payment Failed. Reason: " + response.error.description);
-                    if (btn) {
-                        btn.innerHTML = '<span class="btn-text">Pay ₹29 & Register <i class="fas fa-arrow-right arrow-icon"></i></span><div class="btn-glow"></div>';
-                        btn.style.opacity = '1';
-                        btn.style.pointerEvents = 'all';
-                    }
-                });
 
-                // Check if already registered before opening payment
-                if (typeof db !== 'undefined') {
-                    const userPhone = templateParams.phone;
-                    db.collection("registrations").doc(userPhone).get()
-                        .then(docSnap => {
-                            if (docSnap.exists) {
-                                alert("You are already registered!");
-                                if (btn) {
-                                    btn.innerHTML = '<span class="btn-text">Pay ₹29 & Register <i class="fas fa-arrow-right arrow-icon"></i></span><div class="btn-glow"></div>';
-                                    btn.style.opacity = '1';
-                                    btn.style.pointerEvents = 'all';
-                                }
-                            } else {
-                                rzp.open();
-                            }
-                        }).catch(e => {
-                            console.error("Checking registration failed", e);
-                            rzp.open(); // Fallback open
-                        });
-                } else {
-                    rzp.open();
-                }
-            } else {
-                 alert("Razorpay is not loaded properly.");
-            }
+            // Execute the payment flow
+            proceedToPayment();
         });
     }
 

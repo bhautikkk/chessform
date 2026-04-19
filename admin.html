@@ -471,6 +471,55 @@
         }
 
         /* Mobile Responsiveness */
+        /* Promo Code Manager */
+        .promo-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(198,168,124,0.12);
+            border: 1px solid rgba(198,168,124,0.3);
+            color: var(--gold);
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            font-family: monospace;
+            letter-spacing: 1px;
+        }
+        .discount-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: rgba(34,197,94,0.1);
+            border: 1px solid rgba(34,197,94,0.3);
+            color: #22c55e;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+        .promo-add-row {
+            display: flex;
+            gap: 10px;
+            align-items: stretch;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+        .promo-add-row input {
+            flex: 1;
+            min-width: 120px;
+            padding: 10px 14px;
+            background: #111113;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .promo-add-row input:focus { border-color: var(--gold); }
+        .promo-add-row input::placeholder { color: #52525b; }
         @media (max-width: 600px) {
             #adminPanel { padding: 20px 10px; }
             .login-card { padding: 30px 20px; width: 92%; }
@@ -486,9 +535,11 @@
             .event-id-row button { width: 100% !important; }
             .reset-grid { flex-direction: column; align-items: stretch; }
             .danger-btn { width: 100%; justify-content: center; }
+            .promo-add-row { flex-direction: column; }
         }
     </style>
 </head>
+
 <body>
     <!-- Toast Container -->
     <div id="toastContainer"></div>
@@ -602,6 +653,47 @@
                 </div>
             </div>
 
+            <!-- Promo Code Feature Toggle -->
+            <div class="card-box">
+                <div class="toggle-row">
+                    <div class="toggle-info">
+                        <h3><i class="fas fa-ticket" style="color:var(--gold); margin-right:8px;"></i> Enable Promo Codes</h3>
+                        <p>If enabled, users will see a promo code field on the registration form.</p>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="promoToggle" onchange="togglePromo()">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- 🎟️ Promo Codes Manager -->
+            <div class="card-box">
+                <div class="section-title" style="margin-bottom:12px;"><i class="fas fa-ticket" style="color:var(--gold);"></i> &nbsp;Promo Codes</div>
+                <p style="font-size:13px; color:var(--muted); margin-bottom:16px;">Create discount codes for users. Enter the code name and the % discount. Codes are case-insensitive for users but stored in UPPERCASE.</p>
+
+                <!-- Add new code form -->
+                <div class="promo-add-row">
+                    <input type="text" id="newPromoCode" placeholder="Code (e.g. CHESS50)"
+                        style="text-transform:uppercase; letter-spacing:1px; font-weight:600;"
+                        onkeydown="if(event.key==='Enter') addPromoCode()"
+                        onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'">
+                    <input type="number" id="newPromoDiscount" placeholder="% Discount (1-100)"
+                        min="1" max="100" style="max-width:180px;"
+                        onkeydown="if(event.key==='Enter') addPromoCode()"
+                        onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'">
+                    <button class="login-btn" onclick="addPromoCode()" id="addPromoBtn"
+                        style="width:auto; padding:10px 20px; font-size:13px; display:flex; align-items:center; gap:7px;">
+                        <i class="fas fa-plus"></i> Add Code
+                    </button>
+                </div>
+
+                <!-- Active codes list -->
+                <div id="promoCodeList" style="max-height:320px; overflow-y:auto; scrollbar-width:thin; scrollbar-color:rgba(198,168,124,0.3) transparent;">
+                    <div class="empty-msg" style="color:var(--muted);"><i class="fas fa-circle-notch fa-spin" style="margin-right:8px;"></i>Loading codes...</div>
+                </div>
+            </div>
+
             <!-- Registrations -->
             <div class="card-box">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:12px;">
@@ -615,7 +707,7 @@
                         </button>
                     </div>
                 </div>
-                <div class="reg-list" id="userList">
+                <div class="reg-list" id="userList" style="max-height:340px; overflow-y:auto; scrollbar-width:thin; scrollbar-color:rgba(198,168,124,0.3) transparent;">
                     <div class="empty-msg"><span class="spinner"></span></div>
                 </div>
             </div>
@@ -639,7 +731,7 @@
                     </div>
                 </div>
                 <p style="font-size:13px; color:var(--muted); margin-bottom:16px;">Assign Won/Draw/Lose to players. Only <b>Won</b> or <b>Draw</b> advances a player to the next round.</p>
-                <div class="reg-list" id="tournamentList">
+                <div class="reg-list" id="tournamentList" style="max-height:340px; overflow-y:auto; scrollbar-width:thin; scrollbar-color:rgba(198,168,124,0.3) transparent;">
                     <div class="empty-msg"><span class="spinner"></span></div>
                 </div>
             </div>
@@ -813,9 +905,147 @@
             // onAuthStateChanged will auto-show login screen
         }
 
+        // ─── Load Promo Codes ────────────────────────────────────────
+        function loadPromoCodes() {
+            if (typeof db === 'undefined') return;
+
+            db.collection('promo_codes').onSnapshot((snapshot) => {
+                const list = document.getElementById('promoCodeList');
+                if (!list) return;
+
+                if (snapshot.empty) {
+                    list.innerHTML = '<div class="empty-msg" style="padding:12px 0;">No promo codes yet. Add one above.</div>';
+                    return;
+                }
+
+                list.innerHTML = '';
+                const codes = [];
+                snapshot.forEach(doc => codes.push({ id: doc.id, ...doc.data() }));
+
+                // Sort: active first, then by discount desc
+                codes.sort((a, b) => {
+                    if (a.active !== b.active) return b.active ? 1 : -1;
+                    return (b.discount || 0) - (a.discount || 0);
+                });
+
+                codes.forEach(c => {
+                    const isActive = c.active !== false;
+                    list.innerHTML += `
+                        <div class="reg-item" style="${isActive ? '' : 'opacity:0.5;'}">
+                            <div class="reg-left" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                                <span class="promo-tag"><i class="fas fa-tag"></i> ${escHtml(c.id)}</span>
+                                <span class="discount-tag"><i class="fas fa-percent"></i> ${escHtml(String(c.discount))}% OFF</span>
+                                ${!isActive ? '<span style="font-size:11px; color:#f87171; background:rgba(239,68,68,0.1); padding:2px 8px; border-radius:4px;">INACTIVE</span>' : ''}
+                            </div>
+                            <div style="display:flex; gap:8px; align-items:center; flex-shrink:0;">
+                                <button class="action-btn" style="color:${isActive ? '#f87171' : '#22c55e'}; border-color:${isActive ? '#f87171' : '#22c55e'}; background:${isActive ? 'rgba(239,68,68,0.08)' : 'rgba(34,197,94,0.08)'}; padding:4px 12px; font-size:12px;"
+                                    onclick="togglePromoStatus('${escHtml(c.id)}', ${isActive})">
+                                    <i class="fas fa-${isActive ? 'pause' : 'play'}"></i> ${isActive ? 'Disable' : 'Enable'}
+                                </button>
+                                <button class="action-btn" style="color:#f87171; border-color:#f87171; background:rgba(239,68,68,0.08); padding:4px 12px; font-size:12px;"
+                                    onclick="deletePromoCode('${escHtml(c.id)}')">
+                                    <i class="fas fa-trash"></i> Delete
+                                </button>
+                            </div>
+                        </div>`;
+                });
+            }, (err) => {
+                console.error('Promo codes load error:', err);
+                const list = document.getElementById('promoCodeList');
+                if (list) {
+                    list.innerHTML = `<div class="empty-msg" style="color:#f87171; flex-direction:column; gap:8px;">
+                        <i class="fas fa-exclamation-triangle" style="font-size:20px; margin-bottom:4px;"></i>
+                        <strong>Could not load promo codes.</strong>
+                        <span style="font-size:12px;">Please deploy the updated Firestore rules in Firebase Console → Firestore → Rules.</span>
+                    </div>`;
+                }
+            });
+        }
+
+        // ─── Add Promo Code ──────────────────────────────────────────
+        async function addPromoCode() {
+            const codeInput     = document.getElementById('newPromoCode');
+            const discountInput = document.getElementById('newPromoDiscount');
+            const btn           = document.getElementById('addPromoBtn');
+
+            const code     = (codeInput.value || '').trim().toUpperCase().replace(/\s+/g, '');
+            const discount = parseInt(discountInput.value, 10);
+
+            if (!code) {
+                showToast('error', 'Code Required', 'Please enter a promo code name (e.g. CHESS50).');
+                codeInput.focus();
+                return;
+            }
+            if (!/^[A-Z0-9_-]{2,20}$/.test(code)) {
+                showToast('error', 'Invalid Code Format', 'Only letters, numbers, hyphens, underscores allowed. Max 20 chars.');
+                codeInput.focus();
+                return;
+            }
+            if (isNaN(discount) || discount < 1 || discount > 100) {
+                showToast('error', 'Invalid Discount', 'Discount must be between 1 and 100.');
+                discountInput.focus();
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;margin-right:5px;border-top-color:currentColor;"></span> Adding...';
+
+            try {
+                await db.collection('promo_codes').doc(code).set({
+                    discount: discount,
+                    active:   true,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                showToast('success', 'Code Created! 🎉', `"${code}" — ${discount}% off is now active.`);
+                codeInput.value = '';
+                discountInput.value = '';
+            } catch (err) {
+                showToast('error', 'Failed to Add Code', err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-plus"></i> Add Code';
+            }
+        }
+
+        // ─── Toggle Promo Active Status ──────────────────────────────
+        function togglePromoStatus(code, currentlyActive) {
+            const action   = currentlyActive ? 'disable' : 'enable';
+            const newState = !currentlyActive;
+            showSoftConfirm({
+                icon: `<i class="fas fa-${currentlyActive ? 'pause-circle' : 'play-circle'}" style="color:${currentlyActive ? '#f59e0b' : '#22c55e'};"></i>`,
+                title: `${currentlyActive ? 'Disable' : 'Enable'} Code "${code}"?`,
+                desc:  currentlyActive
+                    ? 'Users will no longer be able to use this code.'
+                    : 'Users will be able to use this code again.',
+                confirmText: currentlyActive ? 'Yes, Disable' : 'Yes, Enable',
+                onConfirm: () => {
+                    db.collection('promo_codes').doc(code).update({ active: newState })
+                      .then(() => showToast('success', `Code ${newState ? 'Enabled' : 'Disabled'}`, `"${code}" is now ${newState ? 'active' : 'inactive'}.`))
+                      .catch(e => showToast('error', 'Update Failed', e.message));
+                }
+            });
+        }
+
+        // ─── Delete Promo Code ───────────────────────────────────────
+        function deletePromoCode(code) {
+            showSoftConfirm({
+                icon: '<i class="fas fa-trash" style="color:#ef4444;"></i>',
+                title: `Delete Code "${code}"?`,
+                desc: 'This will permanently remove the promo code. Users who have already used it are unaffected.',
+                confirmText: 'Yes, Delete',
+                onConfirm: () => {
+                    db.collection('promo_codes').doc(code).delete()
+                      .then(() => showToast('success', 'Code Deleted', `"${code}" has been removed.`))
+                      .catch(e => showToast('error', 'Delete Failed', e.message));
+                }
+            });
+        }
+
         // ─── Load Admin Data ─────────────────────────────────────────
         function loadAdminData() {
             if (typeof db === 'undefined') return;
+
+            loadPromoCodes(); // Load promo codes list
 
             // 1. Settings toggles (pass + registration)
             db.collection('settings').doc('global').onSnapshot((doc) => {
@@ -824,6 +1054,7 @@
                     document.getElementById('passToggle').checked = data.isPassEnabled || false;
                     document.getElementById('leaderboardToggle').checked = data.isLeaderboardOpen || false;
                     document.getElementById('regToggle').checked = data.isRegistrationOpen || false;
+                    document.getElementById('promoToggle').checked = data.isPromoEnabled !== false; // default ON
                     // Show registration status hint
                     const statusEl = document.getElementById('regToggleStatus');
                     if (data.isRegistrationOpen) {
@@ -1023,6 +1254,14 @@
               .then(() => {
                   showToast('success', isOpen ? 'Registration Opened' : 'Registration Closed', isOpen ? 'Players can now register.' : 'Form is now hidden from public.');
               })
+              .catch(e => showToast('error', 'Update Failed', e.message));
+        }
+
+        // ─── Toggle Promo Code Feature ──────────────────────────────
+        function togglePromo() {
+            const isEnabled = document.getElementById('promoToggle').checked;
+            db.collection('settings').doc('global')
+              .update({ isPromoEnabled: isEnabled })
               .catch(e => showToast('error', 'Update Failed', e.message));
         }
 
