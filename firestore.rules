@@ -26,7 +26,7 @@ service cloud.firestore {
     match /registrations/{docId} {
 
       // ── CREATE ───────────────────────────────────────────────
-      allow create: if
+      allow create: if isAdmin() || (
         // 1. Required public fields
         request.resource.data.keys().hasAll(['name', 'phone', 'username', 'rating']) &&
 
@@ -45,9 +45,9 @@ service cloud.firestore {
         // 5. NO email or paymentId in public collection (goes to _private)
         !request.resource.data.keys().hasAny(['email', 'paymentId']) &&
 
-        // 6. name must be a real string
         request.resource.data.name is string &&
-        request.resource.data.name.size() > 0;
+        request.resource.data.name.size() > 0
+      );
 
       // ── UPDATE: admin only ───────────────────────────────────
       allow update: if isAdmin();
@@ -71,7 +71,7 @@ service cloud.firestore {
     match /registrations_private/{docId} {
 
       // ── CREATE: public can create their own private doc ──────
-      allow create: if
+      allow create: if isAdmin() || (
         // Must be for the same phone as docId
         request.resource.data.keys().hasAll(['email', 'paymentId']) &&
 
@@ -99,7 +99,8 @@ service cloud.firestore {
         request.resource.data.email.size() > 4 &&
 
         // No extra fields allowed
-        !request.resource.data.keys().hasAny(['points', 'matchStatus', 'currentRound', 'cardId']);
+        !request.resource.data.keys().hasAny(['points', 'matchStatus', 'currentRound', 'cardId'])
+      );
 
       // ── ALL READS AND UPDATES: admin only ────────────────────
       // Nobody can read/update/delete private data except admin

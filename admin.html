@@ -718,6 +718,9 @@
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:12px;">
                     <div class="section-title" style="margin-bottom:0;"><i class="fas fa-users"></i> &nbsp;Recent Registrations</div>
                     <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                        <button class="action-btn" onclick="openManualEntry()" id="addPlayerBtn" style="color:#3b82f6; border-color:#3b82f6; background:rgba(59,130,246,0.1);">
+                            <i class="fas fa-user-plus"></i> Add Player
+                        </button>
                         <button class="action-btn" onclick="generatePendingIds()" id="generateIdsBtn" style="color:#22c55e; border-color:#22c55e; background:rgba(34,197,94,0.1);">
                             <i class="fas fa-id-card"></i> Generate IDs
                         </button>
@@ -1594,21 +1597,14 @@
             btn.innerHTML = '<span class="spinner"></span> Deleting...';
 
             try {
-                const snapshotPub = await db.collection('registrations').get();
+                const snapshotPub  = await db.collection('registrations').get();
                 const snapshotPriv = await db.collection('registrations_private').get();
-                
-                if (snapshotPub.empty && snapshotPriv.empty) {
-                    showToast('info', 'Nothing to Delete', 'No registrations found.');
-                    btn.disabled = false;
-                    btn.innerHTML = '<i class="fas fa-trash-can"></i> Delete All Registrations';
-                    return;
-                }
 
-                // Batch delete (max 500 at a time)
+                // Batch delete registrations
                 const batches = [];
                 let batch = db.batch();
                 let count = 0;
-                
+
                 snapshotPub.forEach(doc => {
                     batch.delete(doc.ref);
                     count++;
@@ -1619,9 +1615,20 @@
                     count++;
                     if (count % 499 === 0) { batches.push(batch.commit()); batch = db.batch(); }
                 });
-                
+
+                // Also delete all Swiss pairings (round_1..round_8 + bye_history)
+                const pairingDocs = ['bye_history', 'round_1', 'round_2', 'round_3', 'round_4', 'round_5', 'round_6', 'round_7', 'round_8'];
+                for (const docId of pairingDocs) {
+                    batch.delete(db.collection('pairings').doc(docId));
+                    count++;
+                    if (count % 499 === 0) { batches.push(batch.commit()); batch = db.batch(); }
+                }
+
                 batches.push(batch.commit());
                 await Promise.all(batches);
+
+                // Refresh Swiss pairing UI
+                loadSwissPairings();
 
                 btn.innerHTML = '<i class="fas fa-check"></i> All records deleted!';
                 btn.style.color = 'var(--success)';
@@ -1664,7 +1671,7 @@
 
 
 
-        // ─── Export to PDF ───────────────────────────────────────────
+        // ─── Export Registrations to PDF (Professional) ─────────────
         async function exportToPDF() {
             const btn = document.getElementById('exportPdfBtn');
             const originalText = btn.innerHTML;
@@ -1680,50 +1687,206 @@
                     return;
                 }
 
-                // jsPDF and AutoTable
                 const { jsPDF } = window.jspdf;
-                const doc = new jsPDF('landscape'); // Landscape to fit more columns
-                
+                const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+                const W = 297, H = 210;
+                const GOLD  = [198, 168, 124];
+                const DARK  = [14, 14, 17];
+                const CARD  = [22, 22, 28];
+                const MUTED = [110, 110, 125];
+
+                // Helper: draw page background + gold strips
+                function drawRegPageBg() {
+                    doc.setFillColor(...DARK);
+                    doc.rect(0, 0, W, H, 'F');
+                    doc.setFillColor(...GOLD);
+                    doc.rect(0, 0, W, 2.5, 'F');
+                    doc.rect(0, H - 2.5, W, 2.5, 'F');
+                }
+                drawRegPageBg();
+
+                // ══ HEADER PANEL ══
+                doc.setFillColor(...CARD);
+                doc.rect(0, 2.5, W, 42, 'F');
+                doc.setFillColor(...GOLD);
+                doc.rect(0, 44.5, W, 1, 'F');
+
+                // Logo
+                let regLogoW = 0, regLogoLoaded = false;
+                try {
+                    const logoImg  = await loadImageAsBase64('header_logo.png');
+                    const logoMeta = await getImageDimensions('header_logo.png');
+                    const logoH    = 28;
+                    regLogoW       = Math.round((logoMeta.width / logoMeta.height) * logoH);
+                    doc.addImage(logoImg, 'PNG', 14, 2.5 + (42 - logoH) / 2, regLogoW, logoH);
+                    regLogoLoaded = true;
+                } catch(e) {}
+
+                const tX = regLogoLoaded ? (14 + regLogoW + 8) : 14;
+
+                doc.setFont('helvetica', 'bold');
                 doc.setFontSize(18);
-                doc.text('ChessBird Registration Report', 14, 22);
-                doc.setFontSize(11);
-                doc.setTextColor(100);
-                doc.text(`Total Players: ${exportData.length}`, 14, 30);
+                doc.setTextColor(...GOLD);
+                doc.text('ChessBird Tournament', tX, 19);
 
-                const tableColumn = ["Card ID", "Name", "Chess Username", "Phone", "Email", "Rating", "Payment ID", "Date"];
-                const tableRows = [];
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(10);
+                doc.setTextColor(190, 190, 200);
+                doc.text('Registered Players Report', tX, 27);
 
-                // exportData is already merged and sorted desc. We might want asc for export, let's just reverse it.
-                [...exportData].reverse().forEach(d => {
-                    let dateStr = '';
-                    if (d.timestamp && d.timestamp.toDate) {
-                        dateStr = d.timestamp.toDate().toLocaleDateString();
+                doc.setFontSize(8);
+                doc.setTextColor(...MUTED);
+                doc.text(`Generated: ${new Date().toLocaleString('en-IN')}`, tX, 34);
+
+                // Player count badge (right-aligned)
+                const badgeW = 38, badgeH = 16, badgeX = W - 14 - badgeW, badgeY = 18;
+                doc.setFillColor(35, 35, 48);
+                doc.roundedRect(badgeX, badgeY, badgeW, badgeH, 3, 3, 'F');
+                doc.setFillColor(...GOLD);
+                doc.roundedRect(badgeX, badgeY, 4, badgeH, 2, 2, 'F');
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(16);
+                doc.setTextColor(...GOLD);
+                doc.text(String(exportData.length), badgeX + badgeW / 2 + 3, badgeY + 10.5, { align: 'center' });
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(7);
+                doc.setTextColor(...MUTED);
+                doc.text('PLAYERS', badgeX + badgeW / 2 + 3, badgeY + 14.5, { align: 'center' });
+
+                // ══ COLUMN HEADER BAR ══
+                let cY = 50;
+                const cols = [
+                    { label: '#',            x: 14,    w: 10 },
+                    { label: 'CARD ID',      x: 24,    w: 20 },
+                    { label: 'NAME',         x: 44,    w: 52 },
+                    { label: 'CHESS ID',     x: 96,    w: 42 },
+                    { label: 'PHONE',        x: 138,   w: 32 },
+                    { label: 'RATING',       x: 170,   w: 18 },
+                    { label: 'PAYMENT ID',   x: 188,   w: 57 },
+                    { label: 'DATE',         x: 245,   w: 38 },
+                ];
+
+                doc.setFillColor(28, 28, 36);
+                doc.rect(14, cY, W - 28, 8, 'F');
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(7);
+                doc.setTextColor(...GOLD);
+                cols.forEach(c => doc.text(c.label, c.x + c.w / 2, cY + 5.5, { align: 'center' }));
+
+                cY += 9;
+
+                // ══ PLAYER ROWS ══
+                const rowH = 13;
+                const pageBottom = H - 14;
+
+                const sortedData = [...exportData].reverse();
+                sortedData.forEach((d, i) => {
+                    if (cY + rowH > pageBottom) {
+                        doc.addPage();
+                        drawRegPageBg();
+                        // Repeat col header
+                        doc.setFillColor(28, 28, 36);
+                        doc.rect(14, 12, W - 28, 8, 'F');
+                        doc.setFont('helvetica', 'bold');
+                        doc.setFontSize(7);
+                        doc.setTextColor(...GOLD);
+                        cols.forEach(c => doc.text(c.label, c.x + c.w / 2, 17.5, { align: 'center' }));
+                        cY = 22;
                     }
 
-                    const rowData = [
-                        d.cardId || '-',
-                        d.name || '-',
-                        d.username || '-',
-                        d.phone || '-',
-                        d.email || '-',
-                        d.rating !== undefined ? d.rating : '-',
-                        d.paymentId || '-',
-                        dateStr
-                    ];
-                    tableRows.push(rowData);
+                    const isEven = i % 2 === 0;
+                    doc.setFillColor(isEven ? 20 : 25, isEven ? 20 : 25, isEven ? 28 : 33);
+                    doc.roundedRect(14, cY, W - 28, rowH - 1, 1.5, 1.5, 'F');
+
+                    // Gold left accent
+                    doc.setFillColor(...GOLD);
+                    doc.roundedRect(14, cY, 1.5, rowH - 1, 1, 1, 'F');
+
+                    // Row number
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(7.5);
+                    doc.setTextColor(...MUTED);
+                    doc.text(String(i + 1), cols[0].x + cols[0].w / 2, cY + 8.5, { align: 'center' });
+
+                    // Card ID (gold pill)
+                    const cardId = d.cardId || '—';
+                    if (cardId !== '—') {
+                        doc.setFillColor(50, 42, 28);
+                        doc.roundedRect(cols[1].x + 1, cY + 2, cols[1].w - 2, rowH - 5, 1.5, 1.5, 'F');
+                        doc.setFont('helvetica', 'bold');
+                        doc.setFontSize(7.5);
+                        doc.setTextColor(...GOLD);
+                    } else {
+                        doc.setFont('helvetica', 'normal');
+                        doc.setFontSize(7.5);
+                        doc.setTextColor(...MUTED);
+                    }
+                    doc.text(cardId, cols[1].x + cols[1].w / 2, cY + 8.5, { align: 'center' });
+
+                    // Name (white, bold)
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(9);
+                    doc.setTextColor(245, 245, 250);
+                    const name = (d.name || '—').substring(0, 22);
+                    doc.text(name, cols[2].x + 1, cY + 8.5);
+
+                    // Chess username
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(8);
+                    doc.setTextColor(180, 180, 195);
+                    doc.text((d.username || '—').substring(0, 18), cols[3].x + 1, cY + 8.5);
+
+                    // Phone
+                    doc.setFontSize(8);
+                    doc.setTextColor(180, 180, 195);
+                    doc.text(d.phone || '—', cols[4].x + cols[4].w / 2, cY + 8.5, { align: 'center' });
+
+                    // Rating (gold)
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(8.5);
+                    doc.setTextColor(d.rating ? 198 : 80, d.rating ? 168 : 80, d.rating ? 124 : 90);
+                    doc.text(d.rating !== undefined && d.rating !== '' ? String(d.rating) : '—', cols[5].x + cols[5].w / 2, cY + 8.5, { align: 'center' });
+
+                    // Payment ID
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(7);
+                    if (d.paymentId) {
+                        doc.setTextColor(34, 180, 80);
+                        doc.text(d.paymentId.substring(0, 20), cols[6].x + cols[6].w / 2, cY + 8.5, { align: 'center' });
+                    } else {
+                        doc.setTextColor(...MUTED);
+                        doc.text('—', cols[6].x + cols[6].w / 2, cY + 8.5, { align: 'center' });
+                    }
+
+                    // Date
+                    doc.setFontSize(7.5);
+                    doc.setTextColor(...MUTED);
+                    let dateStr = '—';
+                    if (d.timestamp && d.timestamp.toDate) dateStr = d.timestamp.toDate().toLocaleDateString('en-IN');
+                    doc.text(dateStr, cols[7].x + cols[7].w / 2, cY + 8.5, { align: 'center' });
+
+                    cY += rowH;
                 });
 
-                doc.autoTable({
-                    head: [tableColumn],
-                    body: tableRows,
-                    startY: 35,
-                    theme: 'grid',
-                    styles: { fontSize: 9, cellPadding: 3 },
-                    headStyles: { fillColor: [198, 168, 124], textColor: 20 },
-                    alternateRowStyles: { fillColor: [249, 249, 249] },
-                });
+                // ══ FOOTER (every page) ══
+                const pageCount = doc.internal.getNumberOfPages();
+                for (let i = 1; i <= pageCount; i++) {
+                    doc.setPage(i);
+                    doc.setFillColor(22, 22, 28);
+                    doc.rect(0, H - 12, W, 12, 'F');
+                    doc.setFillColor(...GOLD);
+                    doc.rect(0, H - 12, W, 0.6, 'F');
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(7.5);
+                    doc.setTextColor(...MUTED);
+                    doc.text('ChessBird  |  Official Tournament Document  |  Registered Players', 14, H - 5);
+                    doc.setFont('helvetica', 'bold');
+                    doc.setTextColor(...GOLD);
+                    doc.text(`Page ${i} / ${pageCount}`, W - 14, H - 5, { align: 'right' });
+                }
 
-                doc.save(`chessbird_registrations.pdf`);
+                doc.save('ChessBird_RegisteredPlayers.pdf');
+                showToast('success', 'PDF Exported! 📄', `${exportData.length} players exported successfully.`);
 
                 btn.innerHTML = '<i class="fas fa-check"></i> Exported';
                 setTimeout(() => {
@@ -1732,7 +1895,7 @@
                 }, 2000);
 
             } catch (error) {
-                console.error("Error exporting PDF:", error);
+                console.error('Error exporting PDF:', error);
                 showToast('error', 'Export Failed', error.message);
                 btn.disabled = false;
                 btn.innerHTML = originalText;
@@ -2110,7 +2273,7 @@
             });
         }
 
-        // ─── Swiss: Export Pairing PDF ───────────────────────────────
+        // ─── Swiss: Export Pairing PDF (Professional v3) ─────────────
         async function exportPairingPDF() {
             const round = parseInt(document.getElementById('swissRoundSelector').value) || 1;
             const btn = document.getElementById('exportPairingPdfBtn');
@@ -2123,86 +2286,222 @@
                     showToast('error', 'No Pairings', 'Generate pairings first before exporting PDF.');
                     return;
                 }
-                const boards = snap.data().boards.filter(b => b.blackId !== 'BYE');
-                const byeBoard = snap.data().boards.find(b => b.blackId === 'BYE');
+                const allBoards = snap.data().boards;
+                const boards    = allBoards.filter(b => b.blackId !== 'BYE');
+                const byeBoard  = allBoards.find(b => b.blackId === 'BYE');
+                const totalPlayers = allBoards.reduce((s, b) => s + (b.blackId === 'BYE' ? 1 : 2), 0);
 
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-                const W = doc.internal.pageSize.getWidth();
+                const W = 210, H = 297;
+                const GOLD   = [198, 168, 124];
+                const DARK   = [14, 14, 17];
+                const CARD   = [22, 22, 28];
+                const CARD2  = [30, 30, 38];
+                const WHITE  = [255, 255, 255];
+                const MUTED  = [110, 110, 125];
+                const ACCENT = [59, 130, 246];  // blue for black player side
 
-                // ── Header gradient bar ──
-                doc.setFillColor(13, 13, 15);
-                doc.rect(0, 0, W, 297, 'F');
-                doc.setFillColor(20, 20, 24);
-                doc.roundedRect(10, 8, W - 20, 38, 4, 4, 'F');
+                // ── Background ──
+                doc.setFillColor(...DARK);
+                doc.rect(0, 0, W, H, 'F');
 
-                // Logo placeholder + title
+                // ── Top gold strip ──
+                doc.setFillColor(...GOLD);
+                doc.rect(0, 0, W, 3, 'F');
+
+                // ── Header panel ──
+                doc.setFillColor(20, 20, 26);
+                doc.rect(0, 3, W, 44, 'F');
+
+                // ── Logo (constrained size, locked aspect ratio) ──
+                let logoLoaded = false;
+                let lW = 0;
                 try {
-                    const logoImg = await loadImageAsBase64('header_logo.png');
-                    doc.addImage(logoImg, 'PNG', 16, 12, 28, 28);
-                } catch(e) { /* logo not loaded — skip */ }
+                    const logoImg  = await loadImageAsBase64('header_logo.png');
+                    const logoMeta = await getImageDimensions('header_logo.png');
+                    
+                    const aspect = logoMeta.width / logoMeta.height;
+                    let lH = 26; // max height
+                    lW = lH * aspect;
+                    
+                    const maxW = 60; // max width
+                    if (lW > maxW) {
+                        lW = maxW;
+                        lH = lW / aspect; // scale height down proportionally
+                    }
+                    
+                    const lY = 3 + (44 - lH) / 2;
+                    doc.addImage(logoImg, 'PNG', 12, lY, lW, lH);
+                    logoLoaded = true;
+                } catch(e) {}
+
+                // ── Right: Round badge ──
+                const rbW = 28, rbH = 38, rbX = W - 12 - rbW, rbY = 6;
+                doc.setFillColor(30, 28, 20);
+                doc.roundedRect(rbX, rbY, rbW, rbH, 3, 3, 'F');
+                doc.setFillColor(...GOLD);
+                doc.rect(rbX, rbY, rbW, 1.5, 'F');
+                doc.rect(rbX, rbY + rbH - 1.5, rbW, 1.5, 'F');
+
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(7);
+                doc.setTextColor(...MUTED);
+                doc.text('ROUND', rbX + rbW / 2, rbY + 9, { align: 'center' });
 
                 doc.setFont('helvetica', 'bold');
-                doc.setFontSize(22);
-                doc.setTextColor(198, 168, 124);
-                doc.text('ChessBird Tournament', 52, 24);
+                doc.setFontSize(26);
+                doc.setTextColor(...GOLD);
+                doc.text(String(round), rbX + rbW / 2, rbY + 26, { align: 'center' });
 
-                doc.setFontSize(13);
-                doc.setTextColor(180, 180, 180);
-                doc.text(`Round ${round} — Swiss Pairings`, 52, 33);
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(6.5);
+                doc.setTextColor(...MUTED);
+                doc.text('Swiss', rbX + rbW / 2, rbY + 34, { align: 'center' });
 
+                // ── Left text block (right of logo) ──
+                const tX = logoLoaded ? (12 + lW + 6) : 12;
+                const midY = 3 + 22;
+
+                // Fixed width guarantees no overlap, so no maxWidth wrapping needed
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(16);
+                doc.setTextColor(...GOLD);
+                doc.text('ChessBird Tournament', tX, midY - 5);
+
+                doc.setFont('helvetica', 'normal');
                 doc.setFontSize(9);
-                doc.setTextColor(120, 120, 120);
-                doc.text(`Generated: ${new Date().toLocaleString('en-IN')}`, 52, 41);
+                doc.setTextColor(175, 175, 190);
+                doc.text('Official Swiss Pairing Sheet', tX, midY + 3);
 
-                // ── Gold divider ──
-                doc.setDrawColor(198, 168, 124);
-                doc.setLineWidth(0.5);
-                doc.line(10, 50, W - 10, 50);
+                doc.setFontSize(7.5);
+                doc.setTextColor(...MUTED);
+                doc.text(`${new Date().toLocaleDateString('en-IN')}  ·  ${totalPlayers} players`, tX, midY + 10);
 
-                // ── Table ──
-                const tableHeaders = [['Board', 'White Player', 'vs', 'Black Player']];
-                const tableRows = boards.map(b => [
-                    `Board ${b.board}`,
-                    b.whiteName,
-                    'vs',
-                    b.blackName
-                ]);
+                // ── Bottom header separator ──
+                doc.setFillColor(...GOLD);
+                doc.rect(0, 47, W, 0.8, 'F');
 
-                doc.autoTable({
-                    head: tableHeaders,
-                    body: tableRows,
-                    startY: 56,
-                    margin: { left: 10, right: 10 },
-                    theme: 'grid',
-                    headStyles: { fillColor: [30, 30, 36], textColor: [198, 168, 124], fontStyle: 'bold', fontSize: 10, halign: 'center' },
-                    bodyStyles: { fontSize: 11, textColor: [230, 230, 230], fillColor: [18, 18, 22], halign: 'center', cellPadding: 4 },
-                    alternateRowStyles: { fillColor: [24, 24, 28] },
-                    columnStyles: {
-                        0: { cellWidth: 25, halign: 'center', textColor: [198,168,124], fontStyle: 'bold' },
-                        1: { cellWidth: 70, halign: 'right', fontStyle: 'bold', textColor: [255,255,255] },
-                        2: { cellWidth: 15, halign: 'center', textColor: [198,168,124] },
-                        3: { cellWidth: 70, halign: 'left', fontStyle: 'bold', textColor: [255,255,255] },
-                    },
-                    rowPageBreak: 'avoid',
+                // ── Info bar (boards count) ──
+                doc.setFillColor(18, 18, 24);
+                doc.rect(0, 47.8, W, 9, 'F');
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(8);
+                doc.setTextColor(...GOLD);
+                doc.text('PAIRINGS', 12, 53.5);
+                doc.setFont('helvetica', 'normal');
+                doc.setTextColor(...MUTED);
+                doc.text(`Round ${round}  ·  ${boards.length} board${boards.length !== 1 ? 's' : ''}${byeBoard ? ' + 1 BYE' : ''}`, W - 12, 53.5, { align: 'right' });
+
+                // ── Pairings Table (autoTable) ──
+                const tableBody = boards.map(b => {
+                    const wScore = `(${b.whiteScore ?? 0} pts)`;
+                    const bScore = `(${b.blackScore ?? 0} pts)`;
+                    let result = '—';
+                    if (b.result === 'white') result = '1 – 0';
+                    else if (b.result === 'black') result = '0 – 1';
+                    else if (b.result === 'draw') result = '½ – ½';
+                    return [b.board, b.whiteName, wScore, 'vs', b.blackName, bScore, result];
                 });
 
-                // ── Bye note ──
+                doc.autoTable({
+                    head: [[
+                        { content: '#', styles: { halign: 'center' } },
+                        { content: 'White Player', styles: { halign: 'left' } },
+                        { content: 'Pts', styles: { halign: 'center' } },
+                        { content: '', styles: { halign: 'center' } },
+                        { content: 'Black Player', styles: { halign: 'left' } },
+                        { content: 'Pts', styles: { halign: 'center' } },
+                        { content: 'Result', styles: { halign: 'center' } },
+                    ]],
+                    body: tableBody,
+                    startY: 59,
+                    margin: { left: 12, right: 12 },
+                    theme: 'plain',
+                    headStyles: {
+                        fillColor: [26, 26, 34],
+                        textColor: [198, 168, 124],
+                        fontStyle: 'bold',
+                        fontSize: 8,
+                        cellPadding: { top: 4, bottom: 4, left: 3, right: 3 },
+                    },
+                    bodyStyles: {
+                        fontSize: 10,
+                        textColor: [230, 230, 235],
+                        fillColor: [20, 20, 26],
+                        cellPadding: { top: 5, bottom: 5, left: 3, right: 3 },
+                        lineColor: [35, 35, 45],
+                        lineWidth: 0.3,
+                    },
+                    alternateRowStyles: { fillColor: [26, 26, 34] },
+                    columnStyles: {
+                        0: { cellWidth: 12, halign: 'center', fontStyle: 'bold', textColor: [198, 168, 124] },
+                        1: { cellWidth: 58, halign: 'left',   fontStyle: 'bold', textColor: [245, 245, 252] },
+                        2: { cellWidth: 18, halign: 'center', fontSize: 8,       textColor: [110, 110, 125] },
+                        3: { cellWidth: 12, halign: 'center', fontStyle: 'bold', textColor: [198, 168, 124], fontSize: 8 },
+                        4: { cellWidth: 58, halign: 'left',   fontStyle: 'bold', textColor: [245, 245, 252] },
+                        5: { cellWidth: 18, halign: 'center', fontSize: 8,       textColor: [110, 110, 125] },
+                        6: { cellWidth: 22, halign: 'center', fontStyle: 'bold', fontSize: 9 },
+                    },
+                    didParseCell(data) {
+                        // Colour result column
+                        if (data.column.index === 6 && data.section === 'body') {
+                            const v = data.cell.raw;
+                            if (v === '1 – 0')   data.cell.styles.textColor = [80, 200, 120];
+                            else if (v === '0 – 1') data.cell.styles.textColor = [80, 200, 120];
+                            else if (v === '½ – ½') data.cell.styles.textColor = [220, 160, 40];
+                            else data.cell.styles.textColor = [100, 100, 115];
+                        }
+                    },
+                    didDrawPage(data) {
+                        // Only repaint background on page 2+ (page 1 already has header drawn)
+                        if (data.pageNumber > 1) {
+                            doc.setFillColor(...DARK);
+                            doc.rect(0, 0, W, H, 'F');
+                            doc.setFillColor(...GOLD);
+                            doc.rect(0, 0, W, 3, 'F');
+                            doc.rect(0, H - 3, W, 3, 'F');
+                        }
+                    },
+                });
+
+                // ── Bye notice ──
                 if (byeBoard) {
-                    const finalY = doc.lastAutoTable.finalY + 10;
-                    doc.setFontSize(10);
-                    doc.setTextColor(245, 158, 11);
-                    doc.text(`★  BYE this round: ${byeBoard.whiteName}  (+1 point awarded)`, 10, finalY);
+                    const byeY = doc.lastAutoTable.finalY + 6;
+                    doc.setFillColor(45, 35, 10);
+                    doc.roundedRect(12, byeY, W - 24, 11, 2, 2, 'F');
+                    doc.setFillColor(198, 168, 60);
+                    doc.roundedRect(12, byeY, 3, 11, 1, 1, 'F');
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(8.5);
+                    doc.setTextColor(230, 190, 80);
+                    doc.text('BYE:', 19, byeY + 7.5);
+                    doc.setFont('helvetica', 'normal');
+                    doc.setTextColor(210, 190, 140);
+                    doc.text(`${byeBoard.whiteName}  receives a full point (+1.0) this round`, 32, byeY + 7.5);
                 }
 
-                // ── Footer ──
+                // ══════════════════════════════════════════
+                //  FOOTER  (every page)
+                // ══════════════════════════════════════════
+                doc.setFillColor(...GOLD);
+                doc.rect(0, H - 2.5, W, 2.5, 'F');
+
                 const pageCount = doc.internal.getNumberOfPages();
                 for (let i = 1; i <= pageCount; i++) {
                     doc.setPage(i);
-                    doc.setFontSize(8);
-                    doc.setTextColor(80, 80, 80);
-                    doc.text('ChessBird — Official Tournament Document', 10, 290);
-                    doc.text(`Page ${i} of ${pageCount}`, W - 30, 290);
+                    // Footer bar
+                    doc.setFillColor(22, 22, 28);
+                    doc.rect(0, H - 12, W, 12, 'F');
+                    doc.setFillColor(...GOLD);
+                    doc.rect(0, H - 12, W, 0.6, 'F');
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(7.5);
+                    doc.setTextColor(...MUTED);
+                    doc.text('ChessBird  |  Official Tournament Document  |  Swiss System', 14, H - 5);
+                    doc.setFont('helvetica', 'bold');
+                    doc.setTextColor(...GOLD);
+                    doc.text(`Round ${round}  —  Page ${i} / ${pageCount}`, W - 14, H - 5, { align: 'right' });
                 }
 
                 doc.save(`ChessBird_Round${round}_Pairings.pdf`);
@@ -2262,14 +2561,167 @@
                 img.crossOrigin = 'anonymous';
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
-                    canvas.width = img.width; canvas.height = img.height;
+                    canvas.width = img.naturalWidth;
+                    canvas.height = img.naturalHeight;
                     canvas.getContext('2d').drawImage(img, 0, 0);
                     resolve(canvas.toDataURL('image/png'));
                 };
                 img.onerror = reject;
-                img.src = src;
+                img.src = src + '?cb=' + Date.now();
             });
         }
+
+        // ─── Helper: Get image natural dimensions ────────────────────
+        function getImageDimensions(src) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight });
+                img.onerror = reject;
+                img.src = src + '?cb=' + Date.now();
+            });
+        }
+
+        // ─── Manual Player Entry ─────────────────────────────────────
+        function openManualEntry() {
+            document.getElementById('manualEntryForm').reset();
+            document.getElementById('manualEntryModal').style.display = 'flex';
+        }
+
+        function closeManualEntry() {
+            document.getElementById('manualEntryModal').style.display = 'none';
+        }
+
+        async function submitManualEntry(e) {
+            e.preventDefault();
+            const btn = document.getElementById('manSubmitBtn');
+            const origHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;margin-right:5px;border-top-color:currentColor;"></span> Saving...';
+
+            try {
+                const phone = document.getElementById('manPhone').value.trim();
+                const name = document.getElementById('manName').value.trim();
+                const email = document.getElementById('manEmail').value.trim();
+                const username = document.getElementById('manUsername').value.trim() || 'N/A';
+                const rawRating = document.getElementById('manRating').value.trim();
+                const rating = rawRating ? parseInt(rawRating) : 0;
+                const gender = document.getElementById('manGender').value;
+                const city = document.getElementById('manCity').value.trim() || 'N/A';
+                const paymentId = document.getElementById('manPayment').value;
+
+                if(phone.length !== 10 || isNaN(phone)) throw new Error("Invalid phone number. Must be 10 digits.");
+
+                // 1. Check if phone exists
+                const docSnap = await db.collection('registrations').doc(phone).get();
+                if (docSnap.exists) {
+                    throw new Error('A player with this phone number is already registered.');
+                }
+
+                // 2. Batch write to bypass restrictions (Allowed by isAdmin bypass in Rules)
+                const batch = db.batch();
+                
+                const pubRef = db.collection('registrations').doc(phone);
+                batch.set(pubRef, {
+                    name,
+                    phone,
+                    username,
+                    rating,
+                    gender,
+                    city,
+                    cardId: 'Pending',
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                const privRef = db.collection('registrations_private').doc(phone);
+                batch.set(privRef, {
+                    email,
+                    paymentId,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                await batch.commit();
+
+                showToast('success', 'Player Added', `${name} successfully registered.`);
+                closeManualEntry();
+            } catch (err) {
+                showToast('error', 'Registration Failed', err.message);
+                console.error(err);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = origHtml;
+            }
+        }
     </script>
+
+    <!-- Manual Entry Modal -->
+    <div id="manualEntryModal" class="custom-dialog-overlay" style="display:none; z-index:9999;">
+        <div class="custom-dialog-box" style="max-width: 500px; padding: 24px; text-align: left;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
+                <h3 style="color:var(--gold); margin:0; font-size:18px;"><i class="fas fa-user-plus"></i> Manual Player Entry</h3>
+                <button onclick="closeManualEntry()" style="background:none; border:none; color:var(--muted); cursor:pointer; font-size:16px;"><i class="fas fa-times"></i></button>
+            </div>
+            
+            <form id="manualEntryForm" onsubmit="submitManualEntry(event)" style="display:grid; gap:12px;">
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+                    <div>
+                        <label style="color:var(--muted); font-size:12px; margin-bottom:4px; display:block;">Full Name *</label>
+                        <input type="text" id="manName" required style="width:100%; padding:8px 12px; background:#1e1e24; border:1px solid #333; color:#fff; border-radius:6px; font-family:'Inter',sans-serif;" placeholder="John Doe">
+                    </div>
+                    <div>
+                        <label style="color:var(--muted); font-size:12px; margin-bottom:4px; display:block;">Phone Number *</label>
+                        <input type="tel" id="manPhone" required pattern="[0-9]{10}" style="width:100%; padding:8px 12px; background:#1e1e24; border:1px solid #333; color:#fff; border-radius:6px; font-family:'Inter',sans-serif;" placeholder="10-digit number">
+                    </div>
+                </div>
+
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+                    <div>
+                        <label style="color:var(--muted); font-size:12px; margin-bottom:4px; display:block;">Email Address *</label>
+                        <input type="email" id="manEmail" required style="width:100%; padding:8px 12px; background:#1e1e24; border:1px solid #333; color:#fff; border-radius:6px; font-family:'Inter',sans-serif;" placeholder="john@example.com">
+                    </div>
+                    <div>
+                        <label style="color:var(--muted); font-size:12px; margin-bottom:4px; display:block;">Payment Status</label>
+                        <select id="manPayment" style="width:100%; padding:8px 12px; background:#1e1e24; border:1px solid #333; color:#fff; border-radius:6px; font-family:'Inter',sans-serif;">
+                            <option value="MANUAL_PAID">Paid (Manual/Cash)</option>
+                            <option value="MANUAL_FREE">Free / Promo</option>
+                            <option value="PENDING">Pending Payment</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+                    <div>
+                        <label style="color:var(--muted); font-size:12px; margin-bottom:4px; display:block;">Chess.com / FIDE ID</label>
+                        <input type="text" id="manUsername" style="width:100%; padding:8px 12px; background:#1e1e24; border:1px solid #333; color:#fff; border-radius:6px; font-family:'Inter',sans-serif;" placeholder="Optional">
+                    </div>
+                    <div>
+                        <label style="color:var(--muted); font-size:12px; margin-bottom:4px; display:block;">Current Rating</label>
+                        <input type="number" id="manRating" style="width:100%; padding:8px 12px; background:#1e1e24; border:1px solid #333; color:#fff; border-radius:6px; font-family:'Inter',sans-serif;" placeholder="e.g. 1200">
+                    </div>
+                </div>
+                
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+                    <div>
+                        <label style="color:var(--muted); font-size:12px; margin-bottom:4px; display:block;">Gender</label>
+                        <select id="manGender" style="width:100%; padding:8px 12px; background:#1e1e24; border:1px solid #333; color:#fff; border-radius:6px; font-family:'Inter',sans-serif;">
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="color:var(--muted); font-size:12px; margin-bottom:4px; display:block;">City/Location</label>
+                        <input type="text" id="manCity" style="width:100%; padding:8px 12px; background:#1e1e24; border:1px solid #333; color:#fff; border-radius:6px; font-family:'Inter',sans-serif;" placeholder="Optional">
+                    </div>
+                </div>
+
+                <div style="margin-top: 16px; display:flex; justify-content:flex-end; gap:10px;">
+                    <button type="button" class="danger-btn" onclick="closeManualEntry()" style="padding:10px 16px;">Cancel</button>
+                    <button type="submit" class="action-btn" id="manSubmitBtn" style="padding:10px 16px; color:#22c55e; border-color:#22c55e; background:rgba(34,197,94,0.1);">
+                        <i class="fas fa-plus"></i> Register Player
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 </body>
 </html>
