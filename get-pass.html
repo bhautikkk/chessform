@@ -296,7 +296,7 @@
         
         <div class="input-group">
             <i class="fas fa-user"></i>
-            <input type="text" id="passName" class="form-input" placeholder="Full Name (e.g. Rahul Sharma)">
+            <input type="text" id="passName" class="form-input" placeholder="Full Name (e.g. RAHUL SHARMA)" style="text-transform: uppercase; letter-spacing: 0.5px;">
         </div>
         
         <div class="input-group">
@@ -468,7 +468,7 @@
                 } else {
                     const userData = docSnap.data();
                     // Securely verify name locally since we can't query lists directly by name in standard rules without indexing
-                    if (userData.name && userData.name.toLowerCase().trim() === name.toLowerCase().trim()) {
+                    if (userData.name && userData.name.toUpperCase().trim() === name.toUpperCase().trim()) {
                         // ✅ Success — reset server-side attempts
                         await db.collection('pass_attempts').doc(phone).set({ count: 0, lockedUntil: 0 });
 
@@ -478,7 +478,7 @@
                         document.getElementById('downloadBtn').style.display  = 'block';
 
                         // Fill card
-                        document.getElementById('cardName').innerText     = userData.name;
+                        document.getElementById('cardName').innerText     = userData.name.toUpperCase();
                         document.getElementById('cardUsername').innerText = '@' + (userData.username || 'unknown');
                         document.getElementById('cardId').innerText = userData.cardId || 'CB000';
                         document.getElementById('cardRating').innerText = (userData.rating || '-') + ' ELO';
