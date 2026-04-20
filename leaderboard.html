@@ -515,6 +515,7 @@
                             <th>Player</th>
                             <th class="rating-header">Rating</th>
                             <th>Points</th>
+                            <th id="buchholzHeader" style="display:none;">Buchholz</th>
                             <th>Status</th>
                         </tr>
                     </thead>
@@ -530,6 +531,7 @@
         let allPlayers = [];
         let activeRoundTab = 1;
         let leaderboardListenerAttached = false;
+        let currentTournamentMode = 'elementary'; // 'elementary' | 'swiss'
 
         function escHtml(unsafe) {
             if (unsafe === null || unsafe === undefined) return '';
@@ -571,9 +573,33 @@
             document.getElementById('loading').style.display = 'none';
 
             if (doc.exists && doc.data().isLeaderboardOpen) {
+                currentTournamentMode = doc.data().tournamentMode || 'elementary';
+                // Show/hide Buchholz column header
+                const buchHeader = document.getElementById('buchholzHeader');
+                if (buchHeader) buchHeader.style.display = currentTournamentMode === 'swiss' ? '' : 'none';
+                // Mode badge in hero
+                let badge = document.getElementById('modeBadge');
+                if (!badge) {
+                    badge = document.createElement('div');
+                    badge.id = 'modeBadge';
+                    badge.style.cssText = 'display:inline-flex;align-items:center;gap:8px;padding:5px 14px;border-radius:100px;font-size:0.8rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-top:10px;margin-left:10px;';
+                    document.querySelector('.live-indicator').insertAdjacentElement('afterend', badge);
+                }
+                if (currentTournamentMode === 'swiss') {
+                    badge.style.background = 'rgba(59,130,246,0.12)';
+                    badge.style.border = '1px solid rgba(59,130,246,0.35)';
+                    badge.style.color = '#60a5fa';
+                    badge.innerHTML = '<i class="fas fa-chess-knight"></i> Swiss Pairing';
+                } else {
+                    badge.style.background = 'rgba(198,168,124,0.1)';
+                    badge.style.border = '1px solid rgba(198,168,124,0.3)';
+                    badge.style.color = '#c6a87c';
+                    badge.innerHTML = '<i class="fas fa-chess-board"></i> Elementary';
+                }
                 document.getElementById('closedLayout').style.display = 'none';
                 document.getElementById('openLayout').style.display  = 'block';
                 startLeaderboardListener();
+                renderTabsAndData(); // Re-render if mode changed
             } else {
                 document.getElementById('closedLayout').style.display = 'flex';
                 document.getElementById('openLayout').style.display  = 'none';
@@ -614,12 +640,11 @@
             });
         }
 
-        // ── 3. Render round tabs + table ─────────────────────────────
         function renderTabsAndData() {
             if (allPlayers.length === 0) {
                 document.getElementById('roundTabs').innerHTML = '';
                 document.getElementById('lbTableBody').innerHTML =
-                    '<tr><td colspan="5" style="text-align:center;padding:30px;color:#71717a;">No players registered yet.</td></tr>';
+                    '<tr><td colspan="6" style="text-align:center;padding:30px;color:#71717a;">No players registered yet.</td></tr>';
                 return;
             }
 
@@ -643,38 +668,68 @@
                 tabsEl.appendChild(btn);
             }
 
-            // Filter players who've reached the active round
-            let players = allPlayers.filter(p => (p.currentRound || 1) >= activeRoundTab);
+            // ── Swiss Mode: Buchholz calculation ──────────────────────
+            // Buchholz = sum of all opponents' current total points
+            const playerMap = {};
+            allPlayers.forEach(p => { playerMap[p.phone || p.docId || p.name] = p; });
 
-            // Sort: most points first, then highest rating
-            players.sort((a, b) => {
-                const pa = parseFloat(a.points) || 0;
-                const pb = parseFloat(b.points) || 0;
-                if (pb !== pa) return pb - pa;
-                return (parseInt(b.rating) || 0) - (parseInt(a.rating) || 0);
-            });
+            function calcBuchholz(player) {
+                const ms = player.matchStatus || {};
+                // In Swiss mode, matchStatus keys are 'r1', 'r2', etc.
+                // We need to find opponent for each round from pairings — but since we can't
+                // do async here, we use opponent points stored in pairing data.
+                // As a simple Buchholz fallback: sum of rating of opponents divided by 100
+                // Real Buchholz requires pairings — use stored buchholz if available
+                return parseFloat(player.buchholz) || 0;
+            }
+
+            // ── Sorting ───────────────────────────────────────────────
+            let players;
+            if (currentTournamentMode === 'swiss') {
+                // Swiss: ALL players visible (no elimination), sort by points then buchholz then rating
+                players = [...allPlayers];
+                players.sort((a, b) => {
+                    const pa = parseFloat(a.points) || 0, pb = parseFloat(b.points) || 0;
+                    if (pb !== pa) return pb - pa;
+                    const ba = calcBuchholz(a), bb = calcBuchholz(b);
+                    if (bb !== ba) return bb - ba;
+                    return (parseInt(b.rating) || 0) - (parseInt(a.rating) || 0);
+                });
+            } else {
+                // Elementary: filter by round, sort by points then rating
+                players = allPlayers.filter(p => (p.currentRound || 1) >= activeRoundTab);
+                players.sort((a, b) => {
+                    const pa = parseFloat(a.points) || 0, pb = parseFloat(b.points) || 0;
+                    if (pb !== pa) return pb - pa;
+                    return (parseInt(b.rating) || 0) - (parseInt(a.rating) || 0);
+                });
+            }
 
             const tbody = document.getElementById('lbTableBody');
             tbody.innerHTML = '';
+            const isSwiss = currentTournamentMode === 'swiss';
 
             if (players.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:30px;color:#71717a;">No players have reached this round yet.</td></tr>';
+                tbody.innerHTML = `<tr><td colspan="${isSwiss ? 6 : 5}" style="text-align:center;padding:30px;color:#71717a;">No players have reached this round yet.</td></tr>`;
                 return;
             }
 
             players.forEach((p, index) => {
                 const statusMap  = p.matchStatus || {};
-                const statusVal  = statusMap[activeRoundTab];
+                const roundKey   = isSwiss ? ('r' + activeRoundTab) : activeRoundTab;
+                const statusVal  = statusMap[roundKey];
                 const totalPts   = parseFloat(p.points || 0);
+                const buch       = calcBuchholz(p);
 
                 let badgeClass = 'status-active', badgeText = 'Playing';
                 if (statusVal === 'won')  { badgeClass = 'status-won';  badgeText = 'Won'; }
                 if (statusVal === 'draw') { badgeClass = 'status-draw'; badgeText = 'Draw'; }
                 if (statusVal === 'lose') { badgeClass = 'status-lose'; badgeText = 'Eliminated'; }
+                if (statusVal === 'bye')  { badgeClass = 'status-draw'; badgeText = 'BYE'; }
 
                 const rankIndicator = index < 3 ? ['1','2','3'][index] : index + 1;
                 const rowClass  = index < 3 ? `rank-${index + 1}` : '';
-                const animDelay = index * 0.05; // Staggered fade in
+                const animDelay = index * 0.05;
 
                 tbody.innerHTML += `
                     <tr class="${rowClass}" style="animation-delay: ${animDelay}s">
@@ -687,6 +742,7 @@
                         </td>
                         <td class="rating-col">${escHtml(String(p.rating || '—'))}</td>
                         <td class="pts-col">${totalPts}</td>
+                        ${isSwiss ? `<td class="pts-col" style="font-size:1.1rem; color:var(--muted);">${buch > 0 ? buch.toFixed(1) : '—'}</td>` : ''}
                         <td><span class="status-badge ${badgeClass}"><i class="fas fa-circle" style="font-size:8px;"></i> ${badgeText}</span></td>
                     </tr>`;
             });

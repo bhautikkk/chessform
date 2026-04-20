@@ -153,6 +153,15 @@ service cloud.firestore {
     }
 
     // ══════════════════════════════════════════════════════════
+    // PAIRINGS — Swiss Tournament Round Pairings
+    // Admin creates pairings per round. Public can read.
+    // ══════════════════════════════════════════════════════════
+    match /pairings/{docId} {
+      allow read: if true;          // Players can view pairings
+      allow write: if isAdmin();    // Only admin can generate/edit
+    }
+
+    // ══════════════════════════════════════════════════════════
     // DEFAULT: Deny everything not explicitly allowed
     // ══════════════════════════════════════════════════════════
     match /{document=**} {

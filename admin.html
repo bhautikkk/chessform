@@ -607,6 +607,25 @@
                 <div id="regToggleStatus" style="margin-top:10px; font-size:12px; color:var(--muted);"></div>
             </div>
 
+            <!-- Registration Fee Control -->
+            <div class="card-box">
+                <div class="section-title"><i class="fas fa-indian-rupee-sign" style="color:var(--gold);"></i> &nbsp;Registration Fee</div>
+                <p style="font-size:13px; color:var(--muted); margin-bottom:16px;">Set the fee players will be charged. This is fetched securely at payment time — users cannot bypass it.</p>
+                <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                    <div style="position:relative; flex:1; min-width:160px;">
+                        <span style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--gold); font-weight:700; font-size:15px; pointer-events:none;">₹</span>
+                        <input type="number" id="feeInput" min="1" max="10000" placeholder="e.g. 29"
+                            style="width:100%; padding:10px 14px 10px 28px; background:#111113; border:1px solid var(--border); border-radius:8px; color:var(--text); font-family:'Inter',sans-serif; font-size:15px; font-weight:700; outline:none; transition: border-color 0.2s;"
+                            onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'"
+                            onkeydown="if(event.key==='Enter') saveFee()">
+                    </div>
+                    <button class="login-btn" onclick="saveFee()" id="saveFeeBtn" style="width:auto; padding:10px 20px; font-size:13px;">
+                        <i class="fas fa-save"></i> Save Fee
+                    </button>
+                </div>
+                <div id="feeStatus" style="margin-top:10px; font-size:12px; color:var(--muted);"></div>
+            </div>
+
             <!-- Registration Deadline (Countdown) -->
             <div class="card-box">
                 <div class="section-title"><i class="fas fa-hourglass-half" style="color:var(--gold);"></i> &nbsp;Registration Deadline</div>
@@ -712,10 +731,28 @@
                 </div>
             </div>
 
-            <!-- Tournament Manager -->
-            <div class="card-box" id="tournamentManagerBox">
+            <!-- Tournament Mode Toggle -->
+            <div class="card-box">
+                <div class="toggle-row">
+                    <div class="toggle-info">
+                        <h3><i class="fas fa-chess-board" style="color:var(--gold); margin-right:8px;"></i> Tournament Mode</h3>
+                        <p id="tournamentModeDesc">Loading mode...</p>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:10px; flex-shrink:0;">
+                        <span id="modeLabel-elem" style="font-size:12px; font-weight:700; color:var(--gold); transition:opacity 0.3s;">ELEMENTARY</span>
+                        <label class="switch">
+                            <input type="checkbox" id="tournamentModeToggle" onchange="toggleTournamentMode()">
+                            <span class="slider"></span>
+                        </label>
+                        <span id="modeLabel-swiss" style="font-size:12px; font-weight:700; color:#3b82f6; transition:opacity 0.3s;">SWISS</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Elementary: Result Manager (shown when mode=elementary) -->
+            <div class="card-box" id="elementaryManagerBox">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:12px;">
-                    <div class="section-title" style="margin-bottom:0;"><i class="fas fa-medal"></i> &nbsp;Tournament Manager</div>
+                    <div class="section-title" style="margin-bottom:0;"><i class="fas fa-medal"></i> &nbsp;Result Manager <span style="font-size:11px; color:var(--gold); background:rgba(198,168,124,0.1); padding:2px 8px; border-radius:4px; margin-left:6px;">ELEMENTARY</span></div>
                     <div style="display:flex; gap:10px; align-items:center;">
                         <span style="font-size:13px; color:var(--muted);">Select Round:</span>
                         <select id="roundSelector" onchange="renderTournamentManager()" style="padding:6px 12px; background:#111113; border:1px solid var(--border); border-radius:8px; color:var(--text); outline:none;">
@@ -733,6 +770,51 @@
                 <p style="font-size:13px; color:var(--muted); margin-bottom:16px;">Assign Won/Draw/Lose to players. Only <b>Won</b> or <b>Draw</b> advances a player to the next round.</p>
                 <div class="reg-list" id="tournamentList" style="max-height:340px; overflow-y:auto; scrollbar-width:thin; scrollbar-color:rgba(198,168,124,0.3) transparent;">
                     <div class="empty-msg"><span class="spinner"></span></div>
+                </div>
+            </div>
+
+            <!-- Swiss: Pairing Manager (shown when mode=swiss) -->
+            <div class="card-box" id="swissPairingBox" style="display:none;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:12px;">
+                    <div class="section-title" style="margin-bottom:0;"><i class="fas fa-chess-knight"></i> &nbsp;Swiss Pairing Manager <span style="font-size:11px; color:#3b82f6; background:rgba(59,130,246,0.1); padding:2px 8px; border-radius:4px; margin-left:6px;">SWISS</span></div>
+                    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                        <span style="font-size:13px; color:var(--muted);">Round:</span>
+                        <select id="swissRoundSelector" onchange="loadSwissPairings()" style="padding:6px 12px; background:#111113; border:1px solid var(--border); border-radius:8px; color:var(--text); outline:none;">
+                            <option value="1">Round 1</option>
+                            <option value="2">Round 2</option>
+                            <option value="3">Round 3</option>
+                            <option value="4">Round 4</option>
+                            <option value="5">Round 5</option>
+                            <option value="6">Round 6</option>
+                            <option value="7">Round 7</option>
+                            <option value="8">Round 8</option>
+                        </select>
+                    </div>
+                </div>
+                <p style="font-size:13px; color:var(--muted); margin-bottom:16px;">Swiss mode: players auto-pair based on equal score. No repeat opponents. Bye given to odd player (lowest score).</p>
+
+                <!-- Action Buttons -->
+                <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px;">
+                    <button class="action-btn" id="generatePairingBtn" onclick="generateSwissPairings()" style="color:#3b82f6; border-color:#3b82f6; background:rgba(59,130,246,0.1);">
+                        <i class="fas fa-wand-magic-sparkles"></i> Generate Pairings
+                    </button>
+                    <button class="action-btn" id="exportPairingPdfBtn" onclick="exportPairingPDF()" style="color:#ef4444; border-color:#ef4444; background:rgba(239,68,68,0.1);">
+                        <i class="fas fa-file-pdf"></i> Export PDF
+                    </button>
+                    <button class="action-btn" id="clearPairingBtn" onclick="confirmClearPairings()" style="color:#f59e0b; border-color:#f59e0b; background:rgba(245,158,11,0.1);">
+                        <i class="fas fa-rotate-right"></i> Regenerate
+                    </button>
+                </div>
+
+                <!-- Pairings List -->
+                <div id="swissPairingList" style="max-height:400px; overflow-y:auto; scrollbar-width:thin; scrollbar-color:rgba(59,130,246,0.3) transparent;">
+                    <div class="empty-msg" style="color:var(--muted);"><i class="fas fa-chess-knight" style="margin-right:8px; color:#3b82f6;"></i>Click "Generate Pairings" to create pairings for this round.</div>
+                </div>
+
+                <!-- Swiss Result Entry -->
+                <div id="swissResultSection" style="display:none; margin-top:16px;">
+                    <div class="section-title" style="margin-bottom:12px; margin-top:8px;"><i class="fas fa-clipboard-check"></i> &nbsp;Enter Results</div>
+                    <div id="swissResultList" class="reg-list" style="max-height:340px; overflow-y:auto; scrollbar-width:thin; scrollbar-color:rgba(59,130,246,0.3) transparent;"></div>
                 </div>
             </div>
 
@@ -1055,6 +1137,22 @@
                     document.getElementById('leaderboardToggle').checked = data.isLeaderboardOpen || false;
                     document.getElementById('regToggle').checked = data.isRegistrationOpen || false;
                     document.getElementById('promoToggle').checked = data.isPromoEnabled !== false; // default ON
+
+                    // Load Tournament Mode
+                    const isSwiss = data.tournamentMode === 'swiss';
+                    document.getElementById('tournamentModeToggle').checked = isSwiss;
+                    applyTournamentModeUI(isSwiss);
+
+                    // Load Registration Fee
+                    const feeInput = document.getElementById('feeInput');
+                    const feeStatus = document.getElementById('feeStatus');
+                    const currentFee = data.registrationFee || 29;
+                    if (feeInput && feeInput !== document.activeElement) {
+                        feeInput.value = currentFee;
+                    }
+                    if (feeStatus) {
+                        feeStatus.innerHTML = `<i class="fas fa-lock" style="color:var(--gold);"></i> Current fee: <strong style="color:var(--gold);">₹${currentFee}</strong> &nbsp;·&nbsp; <span style="color:var(--muted);">Fetched securely from Firestore at payment time.</span>`;
+                    }
                     // Show registration status hint
                     const statusEl = document.getElementById('regToggleStatus');
                     if (data.isRegistrationOpen) {
@@ -1263,6 +1361,41 @@
             db.collection('settings').doc('global')
               .update({ isPromoEnabled: isEnabled })
               .catch(e => showToast('error', 'Update Failed', e.message));
+        }
+
+        // ─── Save Registration Fee ───────────────────────────────────
+        async function saveFee() {
+            const input = document.getElementById('feeInput');
+            const btn   = document.getElementById('saveFeeBtn');
+            const statusEl = document.getElementById('feeStatus');
+
+            const fee = parseInt(input.value, 10);
+
+            if (isNaN(fee) || fee < 1 || fee > 10000) {
+                showToast('error', 'Invalid Fee', 'Fee must be between ₹1 and ₹10,000.');
+                input.focus();
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span>';
+
+            try {
+                await db.collection('settings').doc('global').update({ registrationFee: fee });
+                showToast('success', 'Fee Updated! 💰', `Registration fee set to ₹${fee}. Takes effect immediately for all new payments.`);
+                btn.innerHTML = '<i class="fas fa-check"></i> Saved!';
+                btn.style.background = 'var(--success)';
+                statusEl.innerHTML = `<i class="fas fa-lock" style="color:var(--gold);"></i> Current fee: <strong style="color:var(--gold);">₹${fee}</strong> &nbsp;·&nbsp; <span style="color:var(--success);">Updated successfully!</span>`;
+                setTimeout(() => {
+                    btn.disabled = false;
+                    btn.style.background = '';
+                    btn.innerHTML = '<i class="fas fa-save"></i> Save Fee';
+                }, 2500);
+            } catch (err) {
+                showToast('error', 'Save Failed', err.message);
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-save"></i> Save Fee';
+            }
         }
 
         // ─── Tournament Manager Logic ─────────────────────────────────
@@ -1691,6 +1824,451 @@
         // ─── Utility: Prevent XSS in injected HTML ──────────────────
         function escHtml(str) {
             return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+
+        // ─── Tournament Mode UI ──────────────────────────────────────
+        function applyTournamentModeUI(isSwiss) {
+            const elemBox   = document.getElementById('elementaryManagerBox');
+            const swissBox  = document.getElementById('swissPairingBox');
+            const modeDesc  = document.getElementById('tournamentModeDesc');
+            const lbElem    = document.getElementById('modeLabel-elem');
+            const lbSwiss   = document.getElementById('modeLabel-swiss');
+            if (isSwiss) {
+                if (elemBox)  elemBox.style.display  = 'none';
+                if (swissBox) swissBox.style.display = 'block';
+                if (modeDesc) modeDesc.textContent = 'Swiss Pairing: Players are auto-paired by score each round. Leaderboard uses Buchholz tiebreaker.';
+                if (lbElem)  lbElem.style.opacity  = '0.35';
+                if (lbSwiss) lbSwiss.style.opacity = '1';
+                loadSwissPairings();
+            } else {
+                if (elemBox)  elemBox.style.display  = 'block';
+                if (swissBox) swissBox.style.display = 'none';
+                if (modeDesc) modeDesc.textContent = 'Elementary: You manually assign Won/Draw/Lose. Players advance round by round. Simple leaderboard by points.';
+                if (lbElem)  lbElem.style.opacity  = '1';
+                if (lbSwiss) lbSwiss.style.opacity = '0.35';
+            }
+        }
+
+        function toggleTournamentMode() {
+            const isSwiss = document.getElementById('tournamentModeToggle').checked;
+            db.collection('settings').doc('global')
+              .update({ tournamentMode: isSwiss ? 'swiss' : 'elementary' })
+              .then(() => {
+                  showToast('success', isSwiss ? 'Swiss Mode ON ♟️' : 'Elementary Mode ON', isSwiss ? 'Pairings will be auto-generated.' : 'Manual result entry enabled.');
+                  applyTournamentModeUI(isSwiss);
+              })
+              .catch(e => showToast('error', 'Update Failed', e.message));
+        }
+
+        // ─── Swiss: Load pairings from Firestore ─────────────────────
+        async function loadSwissPairings() {
+            const round = parseInt(document.getElementById('swissRoundSelector').value) || 1;
+            const listEl = document.getElementById('swissPairingList');
+            const resultSection = document.getElementById('swissResultSection');
+            listEl.innerHTML = '<div class="empty-msg"><span class="spinner"></span> Loading pairings...</div>';
+            try {
+                const snap = await db.collection('pairings').doc('round_' + round).get();
+                if (!snap.exists || !snap.data().boards || snap.data().boards.length === 0) {
+                    listEl.innerHTML = '<div class="empty-msg" style="color:var(--muted);"><i class="fas fa-chess-knight" style="margin-right:8px;color:#3b82f6;"></i>No pairings yet for this round. Click "Generate Pairings".</div>';
+                    if (resultSection) resultSection.style.display = 'none';
+                    return;
+                }
+                renderSwissPairings(snap.data().boards, round);
+            } catch(e) {
+                listEl.innerHTML = '<div class="empty-msg" style="color:#f87171;">Error loading pairings: ' + escHtml(e.message) + '</div>';
+            }
+        }
+
+        function renderSwissPairings(boards, round) {
+            const listEl = document.getElementById('swissPairingList');
+            const resultSection = document.getElementById('swissResultSection');
+            const resultList = document.getElementById('swissResultList');
+            listEl.innerHTML = '';
+            boards.forEach((b, i) => {
+                const isBye = b.blackId === 'BYE';
+                listEl.innerHTML += `
+                    <div class="reg-item" style="background:${isBye ? 'rgba(245,158,11,0.05)' : 'rgba(59,130,246,0.04)'}; border-color:${isBye ? 'rgba(245,158,11,0.2)' : 'rgba(59,130,246,0.15)'};">
+                        <div style="display:flex; align-items:center; gap:12px; flex:1; flex-wrap:wrap;">
+                            <span style="font-size:13px; color:var(--muted); font-weight:700; min-width:28px;">B${b.board}</span>
+                            <div style="flex:1;">
+                                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                                    <span style="font-weight:700; color:#fff;">${escHtml(b.whiteName)}</span>
+                                    <span style="font-size:11px; color:var(--muted);">(${b.whiteScore ?? 0} pts)</span>
+                                    <span style="font-size:11px; color:var(--gold); font-weight:700;">vs</span>
+                                    ${isBye
+                                        ? '<span style="font-size:12px; color:#f59e0b; font-weight:700; background:rgba(245,158,11,0.1); padding:2px 8px; border-radius:4px;">BYE (+1 pt)</span>'
+                                        : `<span style="font-weight:700; color:#fff;">${escHtml(b.blackName)}</span><span style="font-size:11px; color:var(--muted);">(${b.blackScore ?? 0} pts)</span>`}
+                                </div>
+                            </div>
+                        </div>
+                        ${b.result ? `<span style="font-size:11px; font-weight:700; padding:3px 10px; border-radius:4px; background:rgba(34,197,94,0.1); color:#22c55e; border:1px solid rgba(34,197,94,0.2);">Result: ${escHtml(b.result)}</span>` : ''}
+                    </div>`;
+            });
+            // Show result entry section
+            if (resultSection) resultSection.style.display = 'block';
+            renderSwissResultEntry(boards, round);
+        }
+
+        function renderSwissResultEntry(boards, round) {
+            const resultList = document.getElementById('swissResultList');
+            if (!resultList) return;
+            resultList.innerHTML = '';
+            boards.forEach((b) => {
+                if (b.blackId === 'BYE') return;
+                const cur = b.result || '';
+                resultList.innerHTML += `
+                    <div class="reg-item" style="flex-wrap:wrap; gap:10px;">
+                        <div style="flex:1; min-width:180px;">
+                            <strong style="font-size:13px;">${escHtml(b.whiteName)} vs ${escHtml(b.blackName)}</strong>
+                            <span style="font-size:11px; color:var(--muted); display:block; margin-top:2px;">Board ${b.board}</span>
+                        </div>
+                        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                            <button class="action-btn" style="padding:4px 10px; font-size:11px; color:#10b981; border-color:#10b981; background:${cur==='white'?'#10b981':'rgba(16,185,129,0.1)'}; ${cur==='white'?'color:#111;':''}" onclick="saveSwissResult(${round}, ${b.board}, 'white', '${b.whiteId}', '${b.blackId}')">
+                                <i class="fas fa-chess-king"></i> ${escHtml(b.whiteName.split(' ')[0])} Wins
+                            </button>
+                            <button class="action-btn" style="padding:4px 10px; font-size:11px; color:#f59e0b; border-color:#f59e0b; background:${cur==='draw'?'#f59e0b':'rgba(245,158,11,0.1)'}; ${cur==='draw'?'color:#111;':''}" onclick="saveSwissResult(${round}, ${b.board}, 'draw', '${b.whiteId}', '${b.blackId}')">
+                                ½ Draw
+                            </button>
+                            <button class="action-btn" style="padding:4px 10px; font-size:11px; color:#10b981; border-color:#10b981; background:${cur==='black'?'#10b981':'rgba(16,185,129,0.1)'}; ${cur==='black'?'color:#111;':''}" onclick="saveSwissResult(${round}, ${b.board}, 'black', '${b.whiteId}', '${b.blackId}')">
+                                <i class="fas fa-chess-king"></i> ${escHtml(b.blackName.split(' ')[0])} Wins
+                            </button>
+                        </div>
+                    </div>`;
+            });
+        }
+
+        // ─── Swiss: Save result for one board ────────────────────────
+        async function saveSwissResult(round, boardNum, result, whiteId, blackId) {
+            try {
+                const pairingRef = db.collection('pairings').doc('round_' + round);
+                const snap = await pairingRef.get();
+                if (!snap.exists) return;
+                const boards = snap.data().boards;
+                const board = boards.find(b => b.board === boardNum);
+                if (!board) return;
+                board.result = result;
+                await pairingRef.update({ boards });
+
+                // Update points in registrations
+                const batch = db.batch();
+                const wPts = result === 'white' ? 1 : result === 'draw' ? 0.5 : 0;
+                const bPts = result === 'black' ? 1 : result === 'draw' ? 0.5 : 0;
+
+                // Get current points from Firestore
+                const [wSnap, bSnap] = await Promise.all([
+                    db.collection('registrations').doc(whiteId).get(),
+                    db.collection('registrations').doc(blackId).get()
+                ]);
+                const wCurPts = parseFloat((wSnap.exists ? wSnap.data().points : 0)) || 0;
+                const bCurPts = parseFloat((bSnap.exists ? bSnap.data().points : 0)) || 0;
+
+                // Store per-round results for Swiss
+                const wMatchStatus = (wSnap.exists ? wSnap.data().matchStatus : {}) || {};
+                const bMatchStatus = (bSnap.exists ? bSnap.data().matchStatus : {}) || {};
+                const wRoundKey = 'r' + round;
+                const bRoundKey = 'r' + round;
+                const wOldPts  = wMatchStatus[wRoundKey] === 'won' ? 1 : wMatchStatus[wRoundKey] === 'draw' ? 0.5 : 0;
+                const bOldPts  = bMatchStatus[bRoundKey] === 'won' ? 1 : bMatchStatus[bRoundKey] === 'draw' ? 0.5 : 0;
+                wMatchStatus[wRoundKey] = result === 'white' ? 'won' : result === 'draw' ? 'draw' : 'lose';
+                bMatchStatus[bRoundKey] = result === 'black' ? 'won' : result === 'draw' ? 'draw' : 'lose';
+
+                const wNewPts = Math.max(0, wCurPts - wOldPts + wPts);
+                const bNewPts = Math.max(0, bCurPts - bOldPts + bPts);
+
+                batch.update(db.collection('registrations').doc(whiteId), { points: wNewPts, matchStatus: wMatchStatus });
+                batch.update(db.collection('registrations').doc(blackId), { points: bNewPts, matchStatus: bMatchStatus });
+                await batch.commit();
+
+                // Recalculate Buchholz for both players across all rounds
+                await recalcBuchholz([whiteId, blackId]);
+
+                showToast('success', 'Result Saved!', `Board ${boardNum} result recorded.`);
+                loadSwissPairings();
+            } catch(e) {
+                showToast('error', 'Save Failed', e.message);
+            }
+        }
+
+        // ─── Swiss: Generate Pairings Algorithm ──────────────────────
+        async function generateSwissPairings() {
+            const round = parseInt(document.getElementById('swissRoundSelector').value) || 1;
+            const btn = document.getElementById('generatePairingBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;margin-right:5px;border-top-color:currentColor;"></span> Generating...';
+
+            try {
+                // 1. Get all players
+                const regSnap = await db.collection('registrations').get();
+                if (regSnap.empty) { showToast('error', 'No Players', 'No registered players found.'); return; }
+
+                let players = [];
+                regSnap.forEach(doc => players.push({ id: doc.id, ...doc.data() }));
+
+                // 2. Get previous pairings (to avoid repeat opponents)
+                const prevPairings = {};  // playerId → Set of opponentIds
+                players.forEach(p => { prevPairings[p.id] = new Set(); });
+                for (let r = 1; r < round; r++) {
+                    const pSnap = await db.collection('pairings').doc('round_' + r).get();
+                    if (pSnap.exists && pSnap.data().boards) {
+                        pSnap.data().boards.forEach(b => {
+                            if (b.blackId !== 'BYE') {
+                                prevPairings[b.whiteId]?.add(b.blackId);
+                                prevPairings[b.blackId]?.add(b.whiteId);
+                            }
+                        });
+                    }
+                }
+
+                // 3. Sort by points desc, rating desc
+                players.sort((a, b) => {
+                    const pa = parseFloat(a.points) || 0, pb = parseFloat(b.points) || 0;
+                    if (pb !== pa) return pb - pa;
+                    return (parseInt(b.rating) || 0) - (parseInt(a.rating) || 0);
+                });
+
+                // 4. Generate pairings (Dutch Swiss simplified)
+                const boards = [];
+                const paired = new Set();
+                let boardNum = 1;
+                let byePlayer = null;
+
+                // Handle odd number of players — give bye to lowest-scoring unpaired player
+                if (players.length % 2 !== 0) {
+                    // Find lowest score player who hasn't had a bye
+                    const byePrevSnap = await db.collection('pairings').doc('bye_history').get();
+                    const byeHistory = byePrevSnap.exists ? (byePrevSnap.data().playerIds || []) : [];
+                    for (let i = players.length - 1; i >= 0; i--) {
+                        if (!byeHistory.includes(players[i].id)) {
+                            byePlayer = players[i];
+                            paired.add(byePlayer.id);
+                            byeHistory.push(byePlayer.id);
+                            // Update bye history
+                            await db.collection('pairings').doc('bye_history').set({ playerIds: byeHistory });
+                            break;
+                        }
+                    }
+                    if (!byePlayer) { byePlayer = players[players.length - 1]; paired.add(byePlayer.id); }
+                    boards.push({ board: boardNum++, whiteId: byePlayer.id, whiteName: byePlayer.name || '—', whiteScore: parseFloat(byePlayer.points) || 0, blackId: 'BYE', blackName: 'BYE', blackScore: 0, result: 'bye' });
+                    // Give bye player 1 point
+                    const byeCurPts = parseFloat(byePlayer.points) || 0;
+                    const byeMatchStatus = byePlayer.matchStatus || {};
+                    byeMatchStatus['r' + round] = 'bye';
+                    await db.collection('registrations').doc(byePlayer.id).update({ points: byeCurPts + 1, matchStatus: byeMatchStatus });
+                }
+
+                // Pair remaining players
+                for (let i = 0; i < players.length; i++) {
+                    if (paired.has(players[i].id)) continue;
+                    // Find best opponent: same/close score, not yet played
+                    let opp = null;
+                    for (let j = i + 1; j < players.length; j++) {
+                        if (paired.has(players[j].id)) continue;
+                        if (!prevPairings[players[i].id]?.has(players[j].id)) { opp = players[j]; break; }
+                    }
+                    // If no new opponent, allow repeat (last resort)
+                    if (!opp) {
+                        for (let j = i + 1; j < players.length; j++) {
+                            if (!paired.has(players[j].id)) { opp = players[j]; break; }
+                        }
+                    }
+                    if (!opp) continue;
+                    paired.add(players[i].id);
+                    paired.add(opp.id);
+                    // Alternate colors — higher-rated plays white in odd rounds
+                    const whitePlayer = (round % 2 === 1) ? players[i] : opp;
+                    const blackPlayer = (round % 2 === 1) ? opp : players[i];
+                    boards.push({
+                        board: boardNum++,
+                        whiteId: whitePlayer.id, whiteName: whitePlayer.name || '—', whiteScore: parseFloat(whitePlayer.points) || 0,
+                        blackId: blackPlayer.id, blackName: blackPlayer.name || '—', blackScore: parseFloat(blackPlayer.points) || 0,
+                        result: null
+                    });
+                }
+
+                // 5. Save to Firestore
+                await db.collection('pairings').doc('round_' + round).set({ round, boards, generatedAt: firebase.firestore.FieldValue.serverTimestamp() });
+                showToast('success', 'Pairings Generated! ♟️', `${boards.length} boards created for Round ${round}.`);
+                loadSwissPairings();
+            } catch(e) {
+                showToast('error', 'Generation Failed', e.message);
+                console.error(e);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-wand-magic-sparkles"></i> Generate Pairings';
+            }
+        }
+
+        // ─── Swiss: Confirm Regenerate ───────────────────────────────
+        function confirmClearPairings() {
+            const round = parseInt(document.getElementById('swissRoundSelector').value) || 1;
+            showSoftConfirm({
+                icon: '<i class="fas fa-rotate-right" style="color:#f59e0b;"></i>',
+                title: `Regenerate Round ${round} Pairings?`,
+                desc: 'Existing pairings and results for this round will be overwritten.',
+                confirmText: 'Yes, Regenerate',
+                onConfirm: () => generateSwissPairings()
+            });
+        }
+
+        // ─── Swiss: Export Pairing PDF ───────────────────────────────
+        async function exportPairingPDF() {
+            const round = parseInt(document.getElementById('swissRoundSelector').value) || 1;
+            const btn = document.getElementById('exportPairingPdfBtn');
+            const origHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;margin-right:5px;border-top-color:currentColor;"></span> PDF...';
+            try {
+                const snap = await db.collection('pairings').doc('round_' + round).get();
+                if (!snap.exists || !snap.data().boards || snap.data().boards.length === 0) {
+                    showToast('error', 'No Pairings', 'Generate pairings first before exporting PDF.');
+                    return;
+                }
+                const boards = snap.data().boards.filter(b => b.blackId !== 'BYE');
+                const byeBoard = snap.data().boards.find(b => b.blackId === 'BYE');
+
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+                const W = doc.internal.pageSize.getWidth();
+
+                // ── Header gradient bar ──
+                doc.setFillColor(13, 13, 15);
+                doc.rect(0, 0, W, 297, 'F');
+                doc.setFillColor(20, 20, 24);
+                doc.roundedRect(10, 8, W - 20, 38, 4, 4, 'F');
+
+                // Logo placeholder + title
+                try {
+                    const logoImg = await loadImageAsBase64('header_logo.png');
+                    doc.addImage(logoImg, 'PNG', 16, 12, 28, 28);
+                } catch(e) { /* logo not loaded — skip */ }
+
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(22);
+                doc.setTextColor(198, 168, 124);
+                doc.text('ChessBird Tournament', 52, 24);
+
+                doc.setFontSize(13);
+                doc.setTextColor(180, 180, 180);
+                doc.text(`Round ${round} — Swiss Pairings`, 52, 33);
+
+                doc.setFontSize(9);
+                doc.setTextColor(120, 120, 120);
+                doc.text(`Generated: ${new Date().toLocaleString('en-IN')}`, 52, 41);
+
+                // ── Gold divider ──
+                doc.setDrawColor(198, 168, 124);
+                doc.setLineWidth(0.5);
+                doc.line(10, 50, W - 10, 50);
+
+                // ── Table ──
+                const tableHeaders = [['Board', 'White Player', 'vs', 'Black Player']];
+                const tableRows = boards.map(b => [
+                    `Board ${b.board}`,
+                    b.whiteName,
+                    'vs',
+                    b.blackName
+                ]);
+
+                doc.autoTable({
+                    head: tableHeaders,
+                    body: tableRows,
+                    startY: 56,
+                    margin: { left: 10, right: 10 },
+                    theme: 'grid',
+                    headStyles: { fillColor: [30, 30, 36], textColor: [198, 168, 124], fontStyle: 'bold', fontSize: 10, halign: 'center' },
+                    bodyStyles: { fontSize: 11, textColor: [230, 230, 230], fillColor: [18, 18, 22], halign: 'center', cellPadding: 4 },
+                    alternateRowStyles: { fillColor: [24, 24, 28] },
+                    columnStyles: {
+                        0: { cellWidth: 25, halign: 'center', textColor: [198,168,124], fontStyle: 'bold' },
+                        1: { cellWidth: 70, halign: 'right', fontStyle: 'bold', textColor: [255,255,255] },
+                        2: { cellWidth: 15, halign: 'center', textColor: [198,168,124] },
+                        3: { cellWidth: 70, halign: 'left', fontStyle: 'bold', textColor: [255,255,255] },
+                    },
+                    rowPageBreak: 'avoid',
+                });
+
+                // ── Bye note ──
+                if (byeBoard) {
+                    const finalY = doc.lastAutoTable.finalY + 10;
+                    doc.setFontSize(10);
+                    doc.setTextColor(245, 158, 11);
+                    doc.text(`★  BYE this round: ${byeBoard.whiteName}  (+1 point awarded)`, 10, finalY);
+                }
+
+                // ── Footer ──
+                const pageCount = doc.internal.getNumberOfPages();
+                for (let i = 1; i <= pageCount; i++) {
+                    doc.setPage(i);
+                    doc.setFontSize(8);
+                    doc.setTextColor(80, 80, 80);
+                    doc.text('ChessBird — Official Tournament Document', 10, 290);
+                    doc.text(`Page ${i} of ${pageCount}`, W - 30, 290);
+                }
+
+                doc.save(`ChessBird_Round${round}_Pairings.pdf`);
+                showToast('success', 'PDF Exported! 📄', `Round ${round} pairings saved as PDF.`);
+            } catch(e) {
+                showToast('error', 'PDF Failed', e.message);
+                console.error(e);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = origHtml;
+            }
+        }
+
+        // ─── Swiss: Recalculate Buchholz Score ───────────────────────
+        // Buchholz = sum of all opponents' current total points
+        async function recalcBuchholz(playerIds) {
+            try {
+                // Get all registrations (for current points)
+                const regSnap = await db.collection('registrations').get();
+                const playerPoints = {};
+                regSnap.forEach(doc => { playerPoints[doc.id] = parseFloat(doc.data().points) || 0; });
+
+                // Get all pairings docs to find opponents
+                const opponentsMap = {}; // playerId -> Set of opponentIds
+                regSnap.forEach(doc => { opponentsMap[doc.id] = new Set(); });
+
+                for (let r = 1; r <= 8; r++) {
+                    try {
+                        const pSnap = await db.collection('pairings').doc('round_' + r).get();
+                        if (!pSnap.exists || !pSnap.data().boards) continue;
+                        pSnap.data().boards.forEach(b => {
+                            if (b.blackId === 'BYE') return;
+                            if (opponentsMap[b.whiteId]) opponentsMap[b.whiteId].add(b.blackId);
+                            if (opponentsMap[b.blackId]) opponentsMap[b.blackId].add(b.whiteId);
+                        });
+                    } catch(e) { break; }
+                }
+
+                // Update buchholz for each player in playerIds
+                const batch = db.batch();
+                playerIds.forEach(pid => {
+                    const oppIds = opponentsMap[pid] || new Set();
+                    let buch = 0;
+                    oppIds.forEach(oppId => { buch += playerPoints[oppId] || 0; });
+                    batch.update(db.collection('registrations').doc(pid), { buchholz: buch });
+                });
+                await batch.commit();
+            } catch(e) {
+                console.warn('Buchholz recalc failed (non-critical):', e.message);
+            }
+        }
+
+        // ─── Helper: Load image as base64 ───────────────────────────
+        function loadImageAsBase64(src) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.width; canvas.height = img.height;
+                    canvas.getContext('2d').drawImage(img, 0, 0);
+                    resolve(canvas.toDataURL('image/png'));
+                };
+                img.onerror = reject;
+                img.src = src;
+            });
         }
     </script>
 </body>

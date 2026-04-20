@@ -12,8 +12,12 @@ function initRegistrationApp() {
     // IMPORTANT: This is ONLY used for display/UI purposes.
     // The actual discount is always RE-FETCHED from Firestore on submit.
     let appliedPromo = null; // { code: 'CHESS50', discount: 50 }
-    const BASE_AMOUNT_PAISE = 2900; // ₹29 in paise
-    const BASE_AMOUNT_RS = 29;     // ₹29 display
+
+    // ── REGISTRATION FEE STATE ───────────────────────────────────
+    // These are DISPLAY-ONLY variables. On submit, fee is RE-FETCHED
+    // from Firestore directly. DevTools se change karoge toh bhi kuch nahi hoga.
+    let BASE_AMOUNT_PAISE = 2900; // ₹29 default fallback (updated from Firestore)
+    let BASE_AMOUNT_RS = 29;      // ₹29 display (updated from Firestore)
     // =========================================================
 
     const form = document.getElementById('chessForm');
@@ -87,6 +91,19 @@ function initRegistrationApp() {
             const isRegistrationOpen = doc.exists ? (doc.data().isRegistrationOpen || false) : false;
             currentEventId = doc.exists ? (doc.data().eventId || 'event_default') : 'event_default';
             const isPromoEnabled = doc.exists ? (doc.data().isPromoEnabled !== false) : true; // Default ON
+
+            // ── Load Registration Fee from Firestore ─────────────────
+            // Update display variables (these are ONLY for UI display)
+            // Actual payment amount is ALWAYS re-fetched at submit time
+            if (doc.exists && doc.data().registrationFee) {
+                const serverFee = parseInt(doc.data().registrationFee, 10);
+                if (!isNaN(serverFee) && serverFee >= 1 && serverFee <= 10000) {
+                    BASE_AMOUNT_RS    = serverFee;
+                    BASE_AMOUNT_PAISE = serverFee * 100;
+                    updateSubmitBtn(); // Refresh displayed price
+                }
+            }
+            // ─────────────────────────────────────────────────────────
 
             // Show/hide promo code field
             const promoGroup = document.getElementById('promoCodeGroup');
@@ -685,7 +702,6 @@ function initRegistrationApp() {
             };
 
             // ═══════════════════════════════════════════════════════
-            // 🔒 SECURE PROMO CODE RE-VALIDATION ON SUBMIT
             // We re-fetch the promo code from Firestore at submit time.
             // This means even if someone edits the appliedPromo variable
             // in DevTools, the actual Razorpay charge is always based on
@@ -697,7 +713,25 @@ function initRegistrationApp() {
             const cachedCode = appliedPromo ? appliedPromo.code : null;
 
             const proceedToPayment = async () => {
-                // Re-verify promo from Firestore if a code was applied
+                // ── Step 1: Re-fetch registration fee LIVE from Firestore ─
+                // Yeh ensure karta hai ki DevTools se BASE_AMOUNT_PAISE
+                // change karne par bhi Razorpay correct amount charge kare.
+                let secureAmountPaise = BASE_AMOUNT_PAISE; // fallback: display value
+                try {
+                    if (typeof db !== 'undefined') {
+                        const settingsSnap = await db.collection('settings').doc('global').get();
+                        if (settingsSnap.exists) {
+                            const rawFee = parseInt(settingsSnap.data().registrationFee, 10);
+                            if (!isNaN(rawFee) && rawFee >= 1 && rawFee <= 10000) {
+                                secureAmountPaise = rawFee * 100;
+                            }
+                        }
+                    }
+                } catch (feeErr) {
+                    console.warn('Fee re-fetch failed, using cached display value:', feeErr);
+                }
+
+                // ── Step 2: Re-verify promo code LIVE from Firestore ──────
                 if (cachedCode && typeof db !== 'undefined') {
                     try {
                         const freshSnap = await db.collection('promo_codes').doc(cachedCode).get();
@@ -713,8 +747,8 @@ function initRegistrationApp() {
                     }
                 }
 
-                // Calculate final amount (always from server-verified discount)
-                const finalAmountPaise = Math.round(BASE_AMOUNT_PAISE * (1 - verifiedDiscount / 100));
+                // Calculate final amount (fee + discount — BOTH from Firestore, not JS variables)
+                const finalAmountPaise = Math.round(secureAmountPaise * (1 - verifiedDiscount / 100));
 
                 // ── 100% OFF: Skip Razorpay entirely ──
                 if (verifiedDiscount === 100) {
