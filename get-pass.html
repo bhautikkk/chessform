@@ -483,18 +483,28 @@
                         document.getElementById('cardId').innerText = userData.cardId || 'CB000';
                         document.getElementById('cardRating').innerText = (userData.rating || '-') + ' ELO';
                         
-                        // Generate QR Code pointing to Tournament Guide Video
-                        document.getElementById('qrcode').innerHTML = ''; // clear previous
-                        // Derive base path from current URL so it works on GitHub Pages (/chessform/) and root hosting
-                        const videoPageUrl = window.location.href.replace(/\/[^\/]*$/, '/video.html');
-                        new QRCode(document.getElementById("qrcode"), {
-                            text: videoPageUrl,
-                            width: 80,
-                            height: 80,
-                            colorDark : "#111113",
-                            colorLight : "#ffffff",
-                            correctLevel : QRCode.CorrectLevel.M
-                        });
+                        // Generate QR Code — fetch YouTube video URL from Firestore
+                        document.getElementById('qrcode').innerHTML = '';
+                        (async () => {
+                            let qrUrl = 'https://chessbird-4625c.web.app'; // fallback
+                            try {
+                                if (typeof db !== 'undefined') {
+                                    const settingsDoc = await db.collection('settings').doc('global').get();
+                                    if (settingsDoc.exists && settingsDoc.data().qrVideoId) {
+                                        qrUrl = `https://youtu.be/${settingsDoc.data().qrVideoId}`;
+                                    }
+                                }
+                            } catch(e) { console.warn('QR URL fetch failed', e); }
+
+                            new QRCode(document.getElementById("qrcode"), {
+                                text: qrUrl,
+                                width: 80,
+                                height: 80,
+                                colorDark : "#111113",
+                                colorLight : "#ffffff",
+                                correctLevel : QRCode.CorrectLevel.M
+                            });
+                        })();
                         
                     } else {
                         await recordFailedAttempt(phone); // Name mismatch

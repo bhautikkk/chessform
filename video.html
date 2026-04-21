@@ -298,8 +298,24 @@
         /* ── Mobile ── */
         @media (max-width: 480px) {
             .steps-grid { grid-template-columns: 1fr; }
-            .page-header { padding: 14px 16px; }
+            .page-header { padding: 12px 14px; }
             .content { padding: 24px 14px 40px; gap: 22px; }
+
+            /* Hide brand text on very small screens, keep only logo */
+            .header-brand span { display: none; }
+            .header-brand img { height: 30px; }
+
+            /* Shrink badge so it doesn't overlap */
+            .live-badge {
+                font-size: 10px;
+                padding: 5px 10px;
+                gap: 5px;
+            }
+            .live-dot { width: 6px; height: 6px; }
+        }
+
+        @media (max-width: 360px) {
+            .live-badge { display: none; }
         }
     </style>
 </head>
