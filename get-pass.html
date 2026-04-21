@@ -485,7 +485,8 @@
                         
                         // Generate QR Code pointing to Tournament Guide Video
                         document.getElementById('qrcode').innerHTML = ''; // clear previous
-                        const videoPageUrl = `${window.location.origin}/video.html`;
+                        // Derive base path from current URL so it works on GitHub Pages (/chessform/) and root hosting
+                        const videoPageUrl = window.location.href.replace(/\/[^\/]*$/, '/video.html');
                         new QRCode(document.getElementById("qrcode"), {
                             text: videoPageUrl,
                             width: 80,
