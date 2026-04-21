@@ -658,6 +658,23 @@
                 </div>
             </div>
 
+            <!-- QR Code Video Link -->
+            <div class="card-box">
+                <div class="section-title" style="margin-bottom:12px;"><i class="fas fa-qrcode" style="color:var(--gold);"></i> &nbsp;QR Code Video (Pass Scan)</div>
+                <p style="font-size:13px; color:var(--muted); margin-bottom:16px;">When a player scans the QR code on their tournament pass, this YouTube video will play automatically. Paste any YouTube URL or just the Video ID.</p>
+                <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                    <input type="text" id="qrVideoInput"
+                        placeholder="e.g. https://youtu.be/VA5CN2RUdFA"
+                        style="flex:1; min-width:200px; padding:10px 14px; background:#111113; border:1px solid var(--border); border-radius:8px; color:var(--text); font-family:'Inter',sans-serif; font-size:13px; outline:none; transition: border-color 0.2s;"
+                        onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'"
+                        onkeydown="if(event.key==='Enter') saveQrVideoUrl()">
+                    <button class="login-btn" onclick="saveQrVideoUrl()" id="saveQrVideoBtn" style="width:auto; padding:10px 20px; font-size:13px; display:flex; align-items:center; gap:7px;">
+                        <i class="fas fa-save"></i> Save
+                    </button>
+                </div>
+                <div id="qrVideoStatus" style="margin-top:10px; font-size:12px; color:var(--muted);">Loading...</div>
+            </div>
+
             <!-- Leaderboard Feature Toggle -->
             <div class="card-box">
                 <div class="toggle-row">
@@ -1176,6 +1193,19 @@
                         eventIdStatus.innerHTML = '<span style="color:var(--danger);">⚠ No Event ID set — registration won\'t work properly!</span>';
                     }
 
+                    // Load QR Video ID
+                    const qrVideoInput = document.getElementById('qrVideoInput');
+                    const qrVideoStatus = document.getElementById('qrVideoStatus');
+                    const qrVideoId = data.qrVideoId || '';
+                    if (qrVideoInput && qrVideoInput !== document.activeElement) {
+                        qrVideoInput.value = qrVideoId ? `https://youtu.be/${qrVideoId}` : '';
+                    }
+                    if (qrVideoStatus) {
+                        qrVideoStatus.innerHTML = qrVideoId
+                            ? `<i class="fas fa-check-circle" style="color:var(--success);"></i> Active Video ID: <strong style="color:var(--gold);">${escHtml(qrVideoId)}</strong> &nbsp;·&nbsp; <a href="https://youtu.be/${escHtml(qrVideoId)}" target="_blank" style="color:var(--muted); font-size:11px;"><i class="fas fa-external-link-alt"></i> Preview</a>`
+                            : '<span style="color:#f59e0b;"><i class="fas fa-exclamation-triangle"></i> No video set — QR code will open video.html without a video.</span>';
+                    }
+
                     // Load registration deadline
                     const deadlineInput = document.getElementById('deadlineInput');
                     const deadlineStatus = document.getElementById('deadlineStatus');
@@ -1269,6 +1299,56 @@
                 snapshot.forEach(doc => privatePlayers[doc.id] = doc.data());
                 renderMergedPlayers();
             });
+        }
+
+        // ─── Save QR Video URL ────────────────────────────────────────
+        async function saveQrVideoUrl() {
+            const input    = document.getElementById('qrVideoInput');
+            const btn      = document.getElementById('saveQrVideoBtn');
+            const statusEl = document.getElementById('qrVideoStatus');
+
+            const rawUrl = (input.value || '').trim();
+            if (!rawUrl) {
+                showToast('error', 'URL Required', 'Please enter a YouTube video URL or Video ID.');
+                return;
+            }
+
+            // Extract YouTube Video ID from all common URL formats
+            let videoId = null;
+            const patterns = [
+                /youtu\.be\/([A-Za-z0-9_-]{11})/,
+                /[?&]v=([A-Za-z0-9_-]{11})/,
+                /youtube\.com\/embed\/([A-Za-z0-9_-]{11})/,
+                /^([A-Za-z0-9_-]{11})$/
+            ];
+            for (const pat of patterns) {
+                const m = rawUrl.match(pat);
+                if (m) { videoId = m[1]; break; }
+            }
+
+            if (!videoId) {
+                showToast('error', 'Invalid URL', 'Could not find a YouTube Video ID. Please paste the full YouTube link.');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;margin-right:5px;border-top-color:currentColor;"></span> Saving...';
+
+            try {
+                await db.collection('settings').doc('global').update({ qrVideoId: videoId });
+                showToast('success', 'Video Updated! 🎬', `QR code will now open video: ${videoId}`);
+                btn.innerHTML = '<i class="fas fa-check"></i> Saved!';
+                btn.style.background = 'var(--success)';
+                setTimeout(() => {
+                    btn.disabled = false;
+                    btn.style.background = '';
+                    btn.innerHTML = '<i class="fas fa-save"></i> Save';
+                }, 2500);
+            } catch (err) {
+                showToast('error', 'Save Failed', err.message);
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-save"></i> Save';
+            }
         }
 
         // ─── Save / Clear Deadline ──────────────────────────────────

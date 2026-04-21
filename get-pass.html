@@ -483,10 +483,11 @@
                         document.getElementById('cardId').innerText = userData.cardId || 'CB000';
                         document.getElementById('cardRating').innerText = (userData.rating || '-') + ' ELO';
                         
-                        // Generate QR Code containing Card ID
+                        // Generate QR Code pointing to Tournament Guide Video
                         document.getElementById('qrcode').innerHTML = ''; // clear previous
+                        const videoPageUrl = `${window.location.origin}/video.html`;
                         new QRCode(document.getElementById("qrcode"), {
-                            text: `ChessBird Verified: ${userData.cardId || phone}`,
+                            text: videoPageUrl,
                             width: 80,
                             height: 80,
                             colorDark : "#111113",

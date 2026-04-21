@@ -12,9 +12,13 @@ service cloud.firestore {
     // HELPER FUNCTIONS
     // ══════════════════════════════════════════════════════════
 
-    // Admin = any Firebase-authenticated user (only you have the login)
+    // Admin = ONLY the owner email (bhautikk264@gmail.com)
+    // Even if someone else logs in via Firebase Auth, they get ZERO admin access.
+    // Note: email_verified NOT checked because Email/Password login doesn't auto-verify.
+    // Security is ensured by the unique password only the owner knows.
     function isAdmin() {
-      return request.auth != null;
+      return request.auth != null &&
+             request.auth.token.email == "bhautikk264@gmail.com";
     }
 
     // ══════════════════════════════════════════════════════════

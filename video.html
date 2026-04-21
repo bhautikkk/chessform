@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChessBird - Tournament Guide</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --bg: #0d0d0f;
+            --card: #18181b;
+            --border: #2a2a2e;
+            --gold: #c6a87c;
+            --gold-hover: #d4bc96;
+            --text: #f4f4f5;
+            --muted: #71717a;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-image:
+                radial-gradient(ellipse at 50% 0%, rgba(198, 168, 124, 0.12) 0%, transparent 60%),
+                radial-gradient(circle at 80% 80%, rgba(198, 168, 124, 0.05) 0%, transparent 50%);
+        }
+
+        /* ── Header ── */
+        .page-header {
+            width: 100%;
+            padding: 20px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border);
+            background: rgba(18, 18, 21, 0.8);
+            backdrop-filter: blur(12px);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header-brand img {
+            height: 36px;
+            filter: drop-shadow(0 0 8px rgba(198,168,124,0.4));
+        }
+
+        .header-brand span {
+            font-family: 'Playfair Display', serif;
+            font-size: 20px;
+            color: var(--gold);
+        }
+
+        .live-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(198, 168, 124, 0.1);
+            border: 1px solid rgba(198, 168, 124, 0.3);
+            border-radius: 20px;
+            padding: 6px 14px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--gold);
+        }
+
+        .live-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--gold);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.8); }
+        }
+
+        /* ── Main Content ── */
+        .content {
+            width: 100%;
+            max-width: 800px;
+            padding: 32px 20px 48px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 28px;
+        }
+
+        /* ── Title Section ── */
+        .title-section {
+            text-align: center;
+            animation: fadeInDown 0.6s ease;
+        }
+
+        .title-section .eyebrow {
+            font-size: 11px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--gold);
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .title-section h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(22px, 5vw, 34px);
+            color: var(--text);
+            line-height: 1.2;
+            margin-bottom: 10px;
+        }
+
+        .title-section p {
+            font-size: 14px;
+            color: var(--muted);
+            max-width: 460px;
+            line-height: 1.6;
+        }
+
+        /* ── Video Container ── */
+        .video-container {
+            width: 100%;
+            position: relative;
+            background: #000;
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            box-shadow:
+                0 0 0 1px rgba(198, 168, 124, 0.1),
+                0 30px 60px rgba(0, 0, 0, 0.7),
+                0 0 80px rgba(198, 168, 124, 0.08);
+            animation: fadeInUp 0.6s ease 0.2s both;
+        }
+
+        /* Gold top accent */
+        .video-container::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--gold), #f4d093, var(--gold), transparent);
+            z-index: 2;
+        }
+
+        .video-aspect {
+            position: relative;
+            padding-bottom: 56.25%; /* 16:9 */
+            height: 0;
+        }
+
+        .video-aspect iframe {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* ── Steps Section ── */
+        .steps-section {
+            width: 100%;
+            animation: fadeInUp 0.6s ease 0.4s both;
+        }
+
+        .steps-title {
+            font-size: 13px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        .steps-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+        }
+
+        .step-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 18px 16px;
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            transition: border-color 0.2s, transform 0.2s;
+        }
+
+        .step-card:hover {
+            border-color: rgba(198, 168, 124, 0.35);
+            transform: translateY(-2px);
+        }
+
+        .step-num {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: rgba(198, 168, 124, 0.12);
+            border: 1px solid rgba(198, 168, 124, 0.3);
+            color: var(--gold);
+            font-weight: 700;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .step-text h4 {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 4px;
+        }
+
+        .step-text p {
+            font-size: 12px;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+
+        /* ── CTA Button ── */
+        .cta-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 32px;
+            background: var(--gold);
+            color: #111;
+            border: none;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 15px;
+            cursor: pointer;
+            text-decoration: none;
+            font-family: 'Inter', sans-serif;
+            transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+            animation: fadeInUp 0.6s ease 0.6s both;
+            box-shadow: 0 8px 24px rgba(198, 168, 124, 0.25);
+        }
+
+        .cta-btn:hover {
+            background: var(--gold-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 32px rgba(198, 168, 124, 0.35);
+        }
+
+        /* ── Footer ── */
+        .page-footer {
+            margin-top: auto;
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: var(--muted);
+            border-top: 1px solid var(--border);
+            width: 100%;
+        }
+
+        /* ── Animations ── */
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ── Mobile ── */
+        @media (max-width: 480px) {
+            .steps-grid { grid-template-columns: 1fr; }
+            .page-header { padding: 14px 16px; }
+            .content { padding: 24px 14px 40px; gap: 22px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="page-header">
+        <div class="header-brand">
+            <img src="header_logo.png" alt="ChessBird">
+            <span>ChessBird</span>
+        </div>
+        <div class="live-badge">
+            <div class="live-dot"></div>
+            Tournament Guide
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="content">
+
+        <!-- Title -->
+        <div class="title-section">
+            <div class="eyebrow">🏆 Elite Tournament</div>
+            <h1>How to Join the Tournament?</h1>
+            <p>Watch this quick guide to learn everything you need to know before the tournament begins.</p>
+        </div>
+
+        <!-- Video Player -->
+        <div class="video-container">
+            <div class="video-aspect">
+                <!-- Video ID is loaded dynamically from Firestore (set via Admin Panel) -->
+                <div id="video-loading" style="position:absolute;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#000;gap:12px;">
+                    <i class="fas fa-spinner fa-spin" style="font-size:28px;color:#c6a87c;"></i>
+                    <span style="color:#71717a;font-size:13px;">Loading video...</span>
+                </div>
+                <iframe
+                    id="yt-player"
+                    src=""
+                    title="ChessBird Tournament Guide"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowfullscreen
+                    style="opacity:0;transition:opacity 0.4s;">
+                </iframe>
+            </div>
+        </div>
+
+        <!-- Steps -->
+        <div class="steps-section">
+            <p class="steps-title">Quick Recap</p>
+            <div class="steps-grid">
+                <div class="step-card">
+                    <div class="step-num">1</div>
+                    <div class="step-text">
+                        <h4>Register</h4>
+                        <p>Fill the registration form with your name, phone & Chess.com username.</p>
+                    </div>
+                </div>
+                <div class="step-card">
+                    <div class="step-num">2</div>
+                    <div class="step-text">
+                        <h4>Get Your Pass</h4>
+                        <p>Download your unique tournament pass from the Get Pass page.</p>
+                    </div>
+                </div>
+                <div class="step-card">
+                    <div class="step-num">3</div>
+                    <div class="step-text">
+                        <h4>Join the Room</h4>
+                        <p>Use your Entry ID to join the tournament room when it goes live.</p>
+                    </div>
+                </div>
+                <div class="step-card">
+                    <div class="step-num">4</div>
+                    <div class="step-text">
+                        <h4>Play & Win</h4>
+                        <p>Follow the pairings on the leaderboard and play your matches!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CTA -->
+        <a href="index.html" class="cta-btn">
+            <i class="fas fa-chess"></i>
+            Register Now
+        </a>
+
+    </div>
+
+    <!-- Footer -->
+    <footer class="page-footer">
+        &copy; 2024 ChessBird Elite Tournament &nbsp;·&nbsp; All rights reserved
+    </footer>
+
+    <script>
+        // Load YouTube Video ID from Firestore (set by admin)
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof db === 'undefined') {
+                showFallback();
+                return;
+            }
+
+            db.collection('settings').doc('global').get()
+                .then(doc => {
+                    const videoId = doc.exists ? (doc.data().qrVideoId || '') : '';
+                    const player  = document.getElementById('yt-player');
+                    const loader  = document.getElementById('video-loading');
+
+                    if (videoId && player) {
+                        player.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1&color=white`;
+                        player.onload = () => {
+                            loader.style.display = 'none';
+                            player.style.opacity = '1';
+                        };
+                        // Fallback if onload doesn't fire
+                        setTimeout(() => {
+                            loader.style.display = 'none';
+                            player.style.opacity = '1';
+                        }, 2000);
+                    } else {
+                        showFallback();
+                    }
+                })
+                .catch(() => showFallback());
+
+            function showFallback() {
+                const loader = document.getElementById('video-loading');
+                if (loader) {
+                    loader.innerHTML = `
+                        <i class="fas fa-clock" style="font-size:28px;color:#c6a87c;"></i>
+                        <span style="color:#71717a;font-size:14px;text-align:center;">Video will be available soon.<br>Please check back later.</span>
+                    `;
+                }
+            }
+        });
+    </script>
+</body>
+</html>
