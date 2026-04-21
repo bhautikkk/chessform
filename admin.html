@@ -675,6 +675,23 @@
                 <div id="qrVideoStatus" style="margin-top:10px; font-size:12px; color:var(--muted);">Loading...</div>
             </div>
 
+            <!-- Form Page Video Link -->
+            <div class="card-box">
+                <div class="section-title" style="margin-bottom:12px;"><i class="fas fa-film" style="color:var(--gold);"></i> &nbsp;Form Page Video (Registration Guide)</div>
+                <p style="font-size:13px; color:var(--muted); margin-bottom:16px;">Jab koi user registration form scroll kare, niche yeh YouTube video play hoga. Registration process se related guide video yahan set karo.</p>
+                <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                    <input type="text" id="formVideoInput"
+                        placeholder="e.g. https://youtu.be/VA5CN2RUdFA"
+                        style="flex:1; min-width:200px; padding:10px 14px; background:#111113; border:1px solid var(--border); border-radius:8px; color:var(--text); font-family:'Inter',sans-serif; font-size:13px; outline:none; transition: border-color 0.2s;"
+                        onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'"
+                        onkeydown="if(event.key==='Enter') saveFormVideoUrl()">
+                    <button class="login-btn" onclick="saveFormVideoUrl()" id="saveFormVideoBtn" style="width:auto; padding:10px 20px; font-size:13px; display:flex; align-items:center; gap:7px;">
+                        <i class="fas fa-save"></i> Save
+                    </button>
+                </div>
+                <div id="formVideoStatus" style="margin-top:10px; font-size:12px; color:var(--muted);">Loading...</div>
+            </div>
+
             <!-- Leaderboard Feature Toggle -->
             <div class="card-box">
                 <div class="toggle-row">
@@ -1206,6 +1223,19 @@
                             : '<span style="color:#f59e0b;"><i class="fas fa-exclamation-triangle"></i> No video set — QR code will open video.html without a video.</span>';
                     }
 
+                    // Load Form Page Video ID
+                    const formVideoInput = document.getElementById('formVideoInput');
+                    const formVideoStatus = document.getElementById('formVideoStatus');
+                    const formVideoId = data.formVideoId || '';
+                    if (formVideoInput && formVideoInput !== document.activeElement) {
+                        formVideoInput.value = formVideoId ? `https://youtu.be/${formVideoId}` : '';
+                    }
+                    if (formVideoStatus) {
+                        formVideoStatus.innerHTML = formVideoId
+                            ? `<i class="fas fa-check-circle" style="color:var(--success);"></i> Active Video ID: <strong style="color:var(--gold);">${escHtml(formVideoId)}</strong> &nbsp;·&nbsp; <a href="https://youtu.be/${escHtml(formVideoId)}" target="_blank" style="color:var(--muted); font-size:11px;"><i class="fas fa-external-link-alt"></i> Preview</a>`
+                            : '<span style="color:#f59e0b;"><i class="fas fa-exclamation-triangle"></i> No video set — Form page video section will show a placeholder.</span>';
+                    }
+
                     // Load registration deadline
                     const deadlineInput = document.getElementById('deadlineInput');
                     const deadlineStatus = document.getElementById('deadlineStatus');
@@ -1337,6 +1367,56 @@
             try {
                 await db.collection('settings').doc('global').update({ qrVideoId: videoId });
                 showToast('success', 'Video Updated! 🎬', `QR code will now open video: ${videoId}`);
+                btn.innerHTML = '<i class="fas fa-check"></i> Saved!';
+                btn.style.background = 'var(--success)';
+                setTimeout(() => {
+                    btn.disabled = false;
+                    btn.style.background = '';
+                    btn.innerHTML = '<i class="fas fa-save"></i> Save';
+                }, 2500);
+            } catch (err) {
+                showToast('error', 'Save Failed', err.message);
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-save"></i> Save';
+            }
+        }
+
+        // ─── Save Form Page Video URL ─────────────────────────────────
+        async function saveFormVideoUrl() {
+            const input    = document.getElementById('formVideoInput');
+            const btn      = document.getElementById('saveFormVideoBtn');
+            const statusEl = document.getElementById('formVideoStatus');
+
+            const rawUrl = (input.value || '').trim();
+            if (!rawUrl) {
+                showToast('error', 'URL Required', 'Please enter a YouTube video URL or Video ID.');
+                return;
+            }
+
+            // Extract YouTube Video ID from all common URL formats
+            let videoId = null;
+            const patterns = [
+                /youtu\.be\/([A-Za-z0-9_-]{11})/,
+                /[?&]v=([A-Za-z0-9_-]{11})/,
+                /youtube\.com\/embed\/([A-Za-z0-9_-]{11})/,
+                /^([A-Za-z0-9_-]{11})$/
+            ];
+            for (const pat of patterns) {
+                const m = rawUrl.match(pat);
+                if (m) { videoId = m[1]; break; }
+            }
+
+            if (!videoId) {
+                showToast('error', 'Invalid URL', 'Could not find a YouTube Video ID. Please paste the full YouTube link.');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;margin-right:5px;border-top-color:currentColor;"></span> Saving...';
+
+            try {
+                await db.collection('settings').doc('global').update({ formVideoId: videoId });
+                showToast('success', 'Form Video Updated! 🎬', `Registration form will now show video: ${videoId}`);
                 btn.innerHTML = '<i class="fas fa-check"></i> Saved!';
                 btn.style.background = 'var(--success)';
                 setTimeout(() => {
