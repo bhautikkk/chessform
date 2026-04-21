@@ -660,12 +660,19 @@
             // Build tabs
             const tabsEl = document.getElementById('roundTabs');
             tabsEl.innerHTML = '';
-            for (let i = 1; i <= maxRound; i++) {
-                const btn = document.createElement('button');
-                btn.className = 'tab-btn' + (i === activeRoundTab ? ' active' : '');
-                btn.textContent = 'Round ' + i;
-                btn.onclick = () => { activeRoundTab = i; renderTabsAndData(); };
-                tabsEl.appendChild(btn);
+            
+            if (currentTournamentMode === 'swiss') {
+                tabsEl.style.display = 'none';
+                activeRoundTab = maxRound; // Always use latest round for status
+            } else {
+                tabsEl.style.display = 'flex';
+                for (let i = 1; i <= maxRound; i++) {
+                    const btn = document.createElement('button');
+                    btn.className = 'tab-btn' + (i === activeRoundTab ? ' active' : '');
+                    btn.textContent = 'Round ' + i;
+                    btn.onclick = () => { activeRoundTab = i; renderTabsAndData(); };
+                    tabsEl.appendChild(btn);
+                }
             }
 
             // ── Swiss Mode: Buchholz calculation ──────────────────────

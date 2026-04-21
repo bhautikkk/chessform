@@ -1,3 +1,48 @@
+// ── Premium Sound Design (Web Audio API) ──
+const PremiumSoundManager = {
+    audioCtx: null,
+    init() {
+        if (!this.audioCtx) {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (AudioContext) {
+                this.audioCtx = new AudioContext();
+            }
+        }
+    },
+    playTone(frequency, type, duration, vol, detune=0) {
+        if (!this.audioCtx) return;
+        try {
+            const osc = this.audioCtx.createOscillator();
+            const gain = this.audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(frequency, this.audioCtx.currentTime);
+            if (osc.detune) osc.detune.setValueAtTime(detune, this.audioCtx.currentTime);
+            
+            gain.gain.setValueAtTime(vol, this.audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, this.audioCtx.currentTime + duration);
+            
+            osc.connect(gain);
+            gain.connect(this.audioCtx.destination);
+            
+            osc.start();
+            osc.stop(this.audioCtx.currentTime + duration);
+        } catch (e) {
+            console.error("Audio API error", e);
+        }
+    },
+    playSuccess() {
+        this.playTone(600, 'sine', 0.1, 0.04);
+        setTimeout(() => this.playTone(800, 'sine', 0.2, 0.04), 100);
+    },
+    playError() {
+        this.playTone(300, 'sawtooth', 0.15, 0.03);
+        setTimeout(() => this.playTone(250, 'sawtooth', 0.2, 0.03), 150);
+    }
+};
+
+// Initialize audio context on first user interaction
+document.addEventListener('click', () => PremiumSoundManager.init(), { once: true });
+
 function initRegistrationApp() {
     // ==========================================
     // CONFIGURATION
@@ -265,6 +310,7 @@ function initRegistrationApp() {
 
             if (!docSnap.exists) {
                 appliedPromo = null;
+                PremiumSoundManager.playError();
                 setPromoStatus('error', '<i class="fas fa-times-circle"></i> Invalid promo code. Please check and try again.');
                 resetApplyBtn();
                 updateSubmitBtn();
@@ -275,6 +321,7 @@ function initRegistrationApp() {
 
             if (data.active !== true) {
                 appliedPromo = null;
+                PremiumSoundManager.playError();
                 setPromoStatus('error', '<i class="fas fa-times-circle"></i> This code has expired or is no longer active.');
                 resetApplyBtn();
                 updateSubmitBtn();
@@ -284,6 +331,7 @@ function initRegistrationApp() {
             const discount = Number(data.discount) || 0;
             if (discount <= 0 || discount > 100) {
                 appliedPromo = null;
+                PremiumSoundManager.playError();
                 setPromoStatus('error', '<i class="fas fa-times-circle"></i> Invalid code configuration. Please contact support.');
                 resetApplyBtn();
                 updateSubmitBtn();
@@ -292,6 +340,8 @@ function initRegistrationApp() {
 
             // ✅ Code is valid — store and show popup
             appliedPromo = { code, discount };
+            
+            PremiumSoundManager.playSuccess();
 
             setPromoStatus('success', `<i class="fas fa-check-circle"></i> <strong>${code}</strong> applied — ${discount}% discount!`);
             if (applyBtn) {
@@ -307,6 +357,7 @@ function initRegistrationApp() {
         } catch (err) {
             console.error('Promo code verification error:', err);
             appliedPromo = null;
+            PremiumSoundManager.playError();
             setPromoStatus('error', '<i class="fas fa-exclamation-triangle"></i> Verification failed. Please try again.');
             resetApplyBtn();
             updateSubmitBtn();
