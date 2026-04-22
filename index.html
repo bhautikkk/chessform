@@ -187,6 +187,128 @@
             .form-video-section { padding: 44px 14px 56px; }
             .fvs-steps { grid-template-columns: 1fr; }
         }
+
+        /* ── Action Buttons for Status Messages ── */
+        .status-actions {
+            margin-top: 24px;
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .status-btn {
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+            font-family: 'Outfit', sans-serif;
+        }
+        .status-btn-primary {
+            background: #c6a87c;
+            color: #111;
+            box-shadow: 0 4px 12px rgba(198,168,124,0.2);
+        }
+        .status-btn-primary:hover {
+            background: #d4bc96;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(198,168,124,0.3);
+        }
+        .status-btn-secondary {
+            background: rgba(255,255,255,0.05);
+            color: #f4f4f5;
+            border: 1px solid #2a2a2e;
+        }
+        .status-btn-secondary:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: #3f3f46;
+            transform: translateY(-2px);
+        }
+
+        /* ── Toast Notification ── */
+        .toast-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .toast {
+            background: #18181b;
+            border-left: 4px solid #f59e0b;
+            color: #f4f4f5;
+            padding: 16px 20px;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            animation: slideInRight 0.3s ease forwards;
+            opacity: 0;
+            transform: translateX(100%);
+        }
+        .toast i {
+            color: #f59e0b;
+            font-size: 18px;
+        }
+        @keyframes slideInRight {
+            to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes slideOutRight {
+            to { opacity: 0; transform: translateX(100%); }
+        }
+
+        /* ── Form Skeleton Loading ── */
+        .form-skeleton {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            animation: fadeIn 0.3s ease;
+            margin-top: 10px;
+        }
+        .skel-row { display: flex; gap: 16px; width: 100%; }
+        .skel-box {
+            height: 52px;
+            background: #18181b;
+            border: 1px solid #2a2a2e;
+            border-radius: 8px;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+        .skel-box.half { width: 50%; }
+        .skel-box.short { width: 35%; height: 24px; margin-bottom: 4px; border: none; background: #2a2a2e; }
+        .skel-btn {
+            height: 56px;
+            background: #2a2a2e;
+            border-radius: 8px;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+        .skel-box::before, .skel-btn::before {
+            content: "";
+            position: absolute;
+            top: 0; left: -150%;
+            width: 50%; height: 100%;
+            background: linear-gradient(to right, transparent 0%, rgba(255,255,255,0.04) 50%, transparent 100%);
+            animation: skeleton-load 1.5s infinite;
+            transform: skewX(-20deg);
+        }
+        @keyframes skeleton-load {
+            0% { left: -150%; }
+            100% { left: 150%; }
+        }
     </style>
 
     <!-- Razorpay Checkout -->
@@ -200,6 +322,8 @@
 </head>
 
 <body>
+
+    <div class="toast-container" id="toastContainer"></div>
 
     <div class="success-overlay">
         <div class="success-content">
@@ -363,15 +487,53 @@
                     <div class="status-icon"><i class="fas fa-lock"></i></div>
                     <h3>Registration Closed</h3>
                     <p>We are not accepting new players at the moment. Please check back later.</p>
+                    <div class="status-actions">
+                        <a href="get-pass.html" class="status-btn status-btn-primary">
+                            <i class="fas fa-ticket-alt"></i> Get Pass
+                        </a>
+                        <a href="leaderboard.html" class="status-btn status-btn-secondary">
+                            <i class="fas fa-trophy"></i> Leaderboard
+                        </a>
+                    </div>
                 </div>
 
                 <div id="alreadyRegisteredMessage" class="status-message success-status" style="display: none;">
                     <div class="status-icon success-icon"><i class="fas fa-check-circle"></i></div>
                     <h3>Already Registered</h3>
                     <p>You have already secured your spot in this event.</p>
+                    <div class="status-actions">
+                        <a href="get-pass.html" class="status-btn status-btn-primary">
+                            <i class="fas fa-ticket-alt"></i> Get Pass
+                        </a>
+                        <a href="leaderboard.html" class="status-btn status-btn-secondary">
+                            <i class="fas fa-trophy"></i> Leaderboard
+                        </a>
+                    </div>
                 </div>
 
-                <form id="chessForm" action="https://formsubmit.co/hrr26400@gmail.com" method="POST">
+                <div id="formSkeleton" class="form-skeleton">
+                    <div>
+                        <div class="skel-box short"></div>
+                        <div class="skel-box"></div>
+                    </div>
+                    <div>
+                        <div class="skel-box short"></div>
+                        <div class="skel-box"></div>
+                    </div>
+                    <div class="skel-row">
+                        <div style="width:50%">
+                            <div class="skel-box short" style="width:70%"></div>
+                            <div class="skel-box"></div>
+                        </div>
+                        <div style="width:50%">
+                            <div class="skel-box short" style="width:70%"></div>
+                            <div class="skel-box"></div>
+                        </div>
+                    </div>
+                    <div class="skel-btn"></div>
+                </div>
+
+                <form id="chessForm" action="https://formsubmit.co/hrr26400@gmail.com" method="POST" style="display: none;">
                     <input type="hidden" name="_captcha" value="false">
                     <input type="hidden" name="_template" value="table">
                     <input type="hidden" name="_next" id="nextRedirect" value="">
@@ -515,7 +677,7 @@
         <div class="fvs-title-block">
             <div class="fvs-eyebrow">🎬 Registration Guide</div>
             <h2>How to Register &amp; Play?</h2>
-            <p>Yeh video dekho aur samjho — registration se lekar tournament mein khelne tak ka poora process step-by-step.</p>
+            <p>Watch this video to understand the complete step-by-step process, from registration to playing in the tournament.</p>
         </div>
 
         <!-- Video Player -->
@@ -523,7 +685,7 @@
             <div class="fvs-aspect">
                 <div class="fvs-loading" id="fvsLoading">
                     <i class="fas fa-spinner fa-spin" style="font-size:28px; color:#c6a87c;"></i>
-                    <span style="color:#71717a; font-size:13px;">Video load ho raha hai...</span>
+                    <span style="color:#71717a; font-size:13px;">Loading video...</span>
                 </div>
                 <iframe
                     id="fvsPlayer"
@@ -541,29 +703,29 @@
             <div class="fvs-step">
                 <div class="fvs-step-num">1</div>
                 <div class="fvs-step-text">
-                    <h4>Form Bharo</h4>
-                    <p>Apna naam, phone, Chess.com username aur rating fill karo.</p>
+                    <h4>Fill the Form</h4>
+                    <p>Enter your name, phone number, Chess.com username, and rating.</p>
                 </div>
             </div>
             <div class="fvs-step">
                 <div class="fvs-step-num">2</div>
                 <div class="fvs-step-text">
-                    <h4>Payment Karo</h4>
-                    <p>Razorpay se secure payment karo aur confirmation lo.</p>
+                    <h4>Make Payment</h4>
+                    <p>Complete a secure payment via Razorpay to receive your confirmation.</p>
                 </div>
             </div>
             <div class="fvs-step">
                 <div class="fvs-step-num">3</div>
                 <div class="fvs-step-text">
-                    <h4>Pass Download Karo</h4>
-                    <p>Get Pass page se apna unique tournament pass download karo.</p>
+                    <h4>Download Pass</h4>
+                    <p>Download your unique tournament pass from the Get Pass page.</p>
                 </div>
             </div>
             <div class="fvs-step">
                 <div class="fvs-step-num">4</div>
                 <div class="fvs-step-text">
-                    <h4>Khelo aur Jito!</h4>
-                    <p>Room join karo, leaderboard dekho aur apne matches khelo.</p>
+                    <h4>Play & Win!</h4>
+                    <p>Join the match room, check the leaderboard, and play your games.</p>
                 </div>
             </div>
         </div>
@@ -599,6 +761,67 @@
             }
             tryLoad();
         })();
+
+        // Toast function
+        function showToast(message) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerHTML = `<i class="fas fa-exclamation-triangle"></i> <span>${message}</span>`;
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.animation = 'slideOutRight 0.3s ease forwards';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Action Buttons click handler
+        function handleActionClick(event, type) {
+            event.preventDefault();
+            
+            // Show loading state on button temporarily
+            const btn = event.currentTarget;
+            const originalHtml = btn.innerHTML;
+            btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Processing...`;
+            btn.style.pointerEvents = 'none';
+
+            if (typeof db === 'undefined') {
+                btn.innerHTML = originalHtml;
+                btn.style.pointerEvents = 'auto';
+                showToast("Please check your internet connection.");
+                return;
+            }
+
+            db.collection('settings').doc('global').get().then(doc => {
+                btn.innerHTML = originalHtml;
+                btn.style.pointerEvents = 'auto';
+                
+                if (doc.exists) {
+                    const data = doc.data();
+                    if (type === 'pass') {
+                        if (data.isPassEnabled !== true) {
+                            showToast("Tournament hasn't started yet! Passes will be available on match day.");
+                        } else {
+                            window.location.href = 'get-pass.html';
+                        }
+                    } else if (type === 'leaderboard') {
+                        // Assuming leaderboard also has a toggle, else fallback to enabled
+                        if (data.isLeaderboardEnabled === false) {
+                            showToast("Tournament hasn't started yet! Leaderboard will be live on match day.");
+                        } else {
+                            window.location.href = 'leaderboard.html';
+                        }
+                    }
+                } else {
+                    window.location.href = type === 'pass' ? 'get-pass.html' : 'leaderboard.html';
+                }
+            }).catch(err => {
+                btn.innerHTML = originalHtml;
+                btn.style.pointerEvents = 'auto';
+                window.location.href = type === 'pass' ? 'get-pass.html' : 'leaderboard.html';
+            });
+        }
     </script>
 
     <script>

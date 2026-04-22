@@ -170,6 +170,9 @@ function initRegistrationApp() {
 
             if (!isRegistrationOpen) {
                 // Registration is CLOSED
+                const skel = document.getElementById('formSkeleton');
+                if (skel) skel.style.display = 'none';
+
                 if (form) form.style.display = 'none';
                 if (alreadyRegisteredMessage) alreadyRegisteredMessage.style.display = 'none';
                 if (closedMessage) {
@@ -178,6 +181,9 @@ function initRegistrationApp() {
                 }
             } else {
                 // Registration is OPEN — check if already registered
+                const skel = document.getElementById('formSkeleton');
+                if (skel) skel.style.display = 'none';
+
                 if (closedMessage) closedMessage.style.display = 'none';
 
                 // Handle ?success=true with the correct eventId
@@ -213,6 +219,8 @@ function initRegistrationApp() {
         });
     } else {
         // Firestore not available — fallback: show form (open by default)
+        const skel = document.getElementById('formSkeleton');
+        if (skel) skel.style.display = 'none';
         if (form) form.style.display = 'block';
     }
 

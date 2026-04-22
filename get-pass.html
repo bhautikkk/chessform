@@ -23,6 +23,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.8.1/vanilla-tilt.min.js"></script>
 
     <style>
         :root {
@@ -148,6 +149,72 @@
         }
         #downloadBtn:hover { background: #e4e4e7; }
         
+        /* Skeleton Loading */
+        .skeleton-wrapper {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .skeleton-ticket {
+            width: 92%;
+            max-width: 380px;
+            background: #111113;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            padding: 30px 24px 24px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .skeleton-ticket::before {
+            content: "";
+            position: absolute;
+            top: 0; left: -150%;
+            width: 50%; height: 100%;
+            background: linear-gradient(to right, transparent 0%, rgba(255,255,255,0.04) 50%, transparent 100%);
+            animation: skeleton-loading 1.5s infinite;
+            transform: skewX(-20deg);
+        }
+
+        @keyframes skeleton-loading {
+            0% { left: -150%; }
+            100% { left: 150%; }
+        }
+
+        .skeleton-text, .skeleton-box {
+            background: #2a2a2e;
+            border-radius: 4px;
+            margin-bottom: 12px;
+        }
+
+        .skeleton-text.short { width: 40%; height: 24px; }
+        .skeleton-text.mini { width: 30%; height: 12px; }
+        .skeleton-text.medium { width: 50%; height: 16px; margin-top: 16px; }
+        .skeleton-text.long { width: 70%; height: 28px; margin-bottom: 8px;}
+        .skeleton-text.xl { width: 85%; height: 14px; margin-bottom: 6px; }
+        
+        .skeleton-box { 
+            width: 80px; height: 80px; 
+            border-radius: 8px; 
+            position: absolute; 
+            right: 24px; top: 90px; 
+        }
+        
+        .skeleton-divider { 
+            height: 1px; background: var(--border); 
+            margin: 24px -24px 20px; 
+        }
+        
+        .skeleton-text.download-btn { 
+            width: 100%; max-width: 380px; 
+            height: 48px; border-radius: 8px; 
+            margin-top: 24px; background: #2a2a2e;
+        }
+        
         /* New Register Button */
         .register-link {
             display: block;
@@ -158,6 +225,41 @@
             transition: color 0.2s;
         }
         .register-link:hover { color: var(--gold); }
+
+        /* Toast Notification */
+        .toast-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .toast {
+            background: #18181b;
+            border-left: 4px solid #f59e0b;
+            color: #f4f4f5;
+            padding: 16px 20px;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            animation: slideInRight 0.3s ease forwards;
+            opacity: 0;
+            transform: translateX(100%);
+        }
+        .toast i { color: #f59e0b; font-size: 18px; }
+        
+        @keyframes slideInRight {
+            to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes slideOutRight {
+            to { opacity: 0; transform: translateX(100%); }
+        }
 
         /* PASS CARD STYLES */
         .card-wrapper {
@@ -174,10 +276,16 @@
             max-width: 380px;
             background: #111113;
             border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.8);
             border: 1px solid var(--border);
             position: relative;
             overflow: hidden;
+            transform-style: preserve-3d;
+        }
+
+        /* Glare adjustment for vanilla-tilt */
+        .js-tilt-glare {
+            border-radius: 16px;
         }
 
         /* Gold Gradient Accent */
@@ -288,6 +396,8 @@
 </head>
 <body>
 
+    <div class="toast-container" id="toastContainer"></div>
+
     <!-- PHASE 1: Form to verify -->
     <div class="search-container" id="searchPhase">
         <img src="header_logo.png" alt="Chess Bird" style="height: 64px; margin-bottom: 12px; filter: drop-shadow(0 0 12px rgba(198,168,124,0.3));">
@@ -308,6 +418,36 @@
         <div class="error-msg" id="errorMsg"></div>
         
 
+    </div>
+
+    <!-- PHASE 1.5: Loading Skeleton -->
+    <div class="skeleton-wrapper" id="loadingPhase">
+        <div class="skeleton-ticket">
+            <div class="skeleton-text short"></div>
+            <div class="skeleton-text mini"></div>
+            
+            <div style="margin-top: 32px;">
+                <div class="skeleton-text mini" style="width:20%"></div>
+                <div class="skeleton-text long"></div>
+                <div class="skeleton-text mini" style="width:40%"></div>
+            </div>
+            
+            <div class="skeleton-box"></div>
+            
+            <div class="skeleton-divider"></div>
+            
+            <div style="display: flex; gap: 16px;">
+                <div style="flex: 1;">
+                    <div class="skeleton-text mini"></div>
+                    <div class="skeleton-text medium"></div>
+                </div>
+                <div style="flex: 1;">
+                    <div class="skeleton-text mini"></div>
+                    <div class="skeleton-text medium"></div>
+                </div>
+            </div>
+        </div>
+        <div class="skeleton-text download-btn"></div>
     </div>
 
     <!-- PHASE 2: Display the Card -->
@@ -423,11 +563,27 @@
         }
 
         function showError(msg) {
+            document.getElementById('loadingPhase').style.display = 'none';
+            document.getElementById('searchPhase').style.display = 'block';
+            
             const errDiv = document.getElementById('errorMsg');
             errDiv.innerHTML = msg;
             errDiv.style.display = 'block';
             const btn = document.getElementById('findBtn');
             if (!btn.disabled) btn.innerHTML = 'Find My Pass';
+        }
+
+        function showToast(message) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerHTML = `<i class="fas fa-clock"></i> <span>${message}</span>`;
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.animation = 'slideOutRight 0.3s ease forwards';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
         }
 
         async function findPass() {
@@ -443,12 +599,20 @@
             const btn = document.getElementById('findBtn');
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Searching...';
 
+            document.getElementById('searchPhase').style.display = 'none';
+            document.getElementById('loadingPhase').style.display = 'flex';
+
             try {
+                // Artificial delay for premium loading feel
+                await new Promise(r => setTimeout(r, 800));
+                
                 // Check if admin has enabled the feature
                 const globalDoc = await db.collection('settings').doc('global').get();
                 if (globalDoc.exists && globalDoc.data().isPassEnabled !== true) {
+                    document.getElementById('loadingPhase').style.display = 'none';
+                    document.getElementById('searchPhase').style.display = 'block';
                     btn.innerHTML = 'Find My Pass';
-                    return showError('<i class="fas fa-clock"></i> Pass generation is currently disabled by Admin.');
+                    return showToast("Your pass is not generated yet! Please wait.");
                 }
                 // SERVER-SIDE LOCKOUT CHECK FIRST
                 const attemptDoc = await db.collection('pass_attempts').doc(phone).get();
@@ -472,10 +636,19 @@
                         // ✅ Success — reset server-side attempts
                         await db.collection('pass_attempts').doc(phone).set({ count: 0, lockedUntil: 0 });
 
-                        // Hide search, show pass card
-                        document.getElementById('searchPhase').style.display = 'none';
+                        // Hide skeleton, show pass card
+                        document.getElementById('loadingPhase').style.display = 'none';
                         document.getElementById('resultPhase').style.display  = 'flex';
                         document.getElementById('downloadBtn').style.display  = 'block';
+
+                        // Initialize 3D Tilt Effect
+                        VanillaTilt.init(document.querySelector(".ticket"), {
+                            max: 15,
+                            speed: 400,
+                            glare: true,
+                            "max-glare": 0.2,
+                            scale: 1.02
+                        });
 
                         // Fill card
                         document.getElementById('cardName').innerText     = userData.name.toUpperCase();
@@ -524,7 +697,14 @@
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating PDF...';
             btn.disabled = true;
 
-            // Wait for QR code to fully render before capturing
+            // Temporarily disable tilt effect for clean capture
+            if (cardElement.vanillaTilt) {
+                cardElement.vanillaTilt.destroy();
+            }
+            cardElement.style.transform = 'none';
+            cardElement.style.boxShadow = 'none';
+
+            // Wait for QR code and layout to settle before capturing
             setTimeout(() => {
                 html2canvas(cardElement, {
                     scale: 3, // High resolution capture
@@ -553,6 +733,17 @@
                     pdf.save(`ChessBird_Pass_${cardId}.pdf`);
 
                     btn.innerHTML = '<i class="fas fa-check"></i> PDF Downloaded!';
+                    
+                    // Re-initialize tilt
+                    VanillaTilt.init(cardElement, {
+                        max: 15,
+                        speed: 400,
+                        glare: true,
+                        "max-glare": 0.2,
+                        scale: 1.02
+                    });
+                    cardElement.style.boxShadow = '0 20px 40px rgba(0,0,0,0.8)';
+
                     setTimeout(() => {
                         btn.disabled = false;
                         btn.innerHTML = originalText;
@@ -561,6 +752,16 @@
                     alert('Error generating PDF: ' + err.message);
                     btn.disabled = false;
                     btn.innerHTML = originalText;
+                    
+                    // Re-initialize tilt even on error
+                    VanillaTilt.init(cardElement, {
+                        max: 15,
+                        speed: 400,
+                        glare: true,
+                        "max-glare": 0.2,
+                        scale: 1.02
+                    });
+                    cardElement.style.boxShadow = '0 20px 40px rgba(0,0,0,0.8)';
                 });
             }, 300);
         }
