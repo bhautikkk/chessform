@@ -137,6 +137,23 @@ function initRegistrationApp() {
             currentEventId = doc.exists ? (doc.data().eventId || 'event_default') : 'event_default';
             const isPromoEnabled = doc.exists ? (doc.data().isPromoEnabled !== false) : true; // Default ON
 
+            // ── Update Urgency Banner ────────────────────────────
+            const urgencyBanner = document.getElementById('urgencyBanner');
+            const urgencyText = document.getElementById('urgencyText');
+            const urgencyPulse = document.getElementById('urgencyPulse');
+            if (urgencyBanner && urgencyText) {
+                urgencyBanner.style.display = '';
+                if (isRegistrationOpen) {
+                    if (urgencyPulse) urgencyPulse.style.display = 'block';
+                    urgencyText.innerHTML = '<strong style="color: var(--primary);">Registrations Open</strong> — Join India\'s Most Exclusive Chess Community';
+                } else {
+                    if (urgencyPulse) urgencyPulse.style.display = 'none';
+                    urgencyText.innerHTML = '<strong style="color: #ef4444;">Registration Closed</strong> — Stay tuned for the next tournament';
+                }
+            }
+            // ─────────────────────────────────────────────────────────
+
+
             // ── Load Registration Fee from Firestore ─────────────────
             // Update display variables (these are ONLY for UI display)
             // Actual payment amount is ALWAYS re-fetched at submit time

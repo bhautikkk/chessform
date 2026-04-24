@@ -345,10 +345,10 @@
     </div>
 
     <!-- Premium Top Banner -->
-    <div class="urgency-banner">
+    <div class="urgency-banner" id="urgencyBanner" style="display:none;">
         <div class="urgency-inner">
-            <div class="pulse-ring"></div>
-            <span><strong style="color: var(--primary);">Registrations Open</strong> — Join India's Most Exclusive Chess Community</span>
+            <div class="pulse-ring" id="urgencyPulse"></div>
+            <span id="urgencyText"><strong style="color: var(--primary);">Registrations Open</strong> — Join India's Most Exclusive Chess Community</span>
         </div>
     </div>
 
@@ -364,7 +364,7 @@
 
                 <div class="hero-text-container">
                     <h1>Secure Your<br><span>Spot & Win!</span></h1>
-                    <p>Register on Chess Bird, compete in exclusive tournaments, and take home real prize money. Don't miss your chance — limited spots available!</p>
+                    <p>Register on Chess Bird and experience the best tournaments — compete with top players, sharpen your skills, and claim your place on the leaderboard. Limited spots available!</p>
                 </div>
 
                 <!-- Stats Strip -->
@@ -441,9 +441,6 @@
                 <div class="trust-badges">
                     <div class="trust-badge">
                         <i class="fas fa-trophy"></i> Official Tournament
-                    </div>
-                    <div class="trust-badge">
-                        <i class="fas fa-lock"></i> No Spam
                     </div>
                     <div class="trust-badge">
                         <i class="fas fa-bolt"></i> Instant Confirmation
