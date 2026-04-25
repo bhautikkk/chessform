@@ -1927,9 +1927,12 @@
             const paidCount = players.filter(p => p.paymentId).length;
             document.getElementById('an-paid').textContent = paidCount;
 
-            // Revenue estimate (fetch current fee from settings)
-            let currentFee = parseInt(document.getElementById('feeInput')?.value) || 29;
-            document.getElementById('an-revenue').textContent = '₹' + (paidCount * currentFee).toLocaleString('en-IN');
+            // Revenue estimate (sum of amountPaid across all players)
+            let totalRevenue = players.reduce((sum, p) => {
+                const amount = parseFloat(p.amountPaid) || 0;
+                return sum + (amount / 100); // amount is stored in paise
+            }, 0);
+            document.getElementById('an-revenue').textContent = '₹' + totalRevenue.toLocaleString('en-IN');
 
             // Ratings
             const ratings = players.map(p => parseInt(p.rating)).filter(r => !isNaN(r) && r > 0);
