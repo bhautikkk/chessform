@@ -666,10 +666,23 @@
                 activeRoundTab = maxRound; // Always use latest round for status
             } else {
                 tabsEl.style.display = 'flex';
+
+                // Detect which rounds have winners (to label tab as 'Winners')
+                const winnerRoundsSet = new Set();
+                allPlayers.forEach(p => {
+                    const ms = p.matchStatus || {};
+                    for (const rStr in ms) {
+                        if (ms[rStr] && ms[rStr].startsWith('winner_')) {
+                            // The NEXT round (rStr+1) is the Winners tab
+                            winnerRoundsSet.add(parseInt(rStr) + 1);
+                        }
+                    }
+                });
+
                 for (let i = 1; i <= maxRound; i++) {
                     const btn = document.createElement('button');
                     btn.className = 'tab-btn' + (i === activeRoundTab ? ' active' : '');
-                    btn.textContent = 'Round ' + i;
+                    btn.textContent = winnerRoundsSet.has(i) ? '🏆 Winners' : 'Round ' + i;
                     btn.onclick = () => { activeRoundTab = i; renderTabsAndData(); };
                     tabsEl.appendChild(btn);
                 }
@@ -703,9 +716,35 @@
                     return (parseInt(b.rating) || 0) - (parseInt(a.rating) || 0);
                 });
             } else {
-                // Elementary: filter by round, sort by points then rating
+                // Elementary: filter by round (lose wale next rounds mein nahi aayenge)
                 players = allPlayers.filter(p => (p.currentRound || 1) >= activeRoundTab);
+
+                // Check if this is a Winners tab (prev round had winners)
+                const isWinnersTab = allPlayers.some(p => {
+                    const prevSt = (p.matchStatus || {})[activeRoundTab - 1];
+                    return prevSt && prevSt.startsWith('winner_');
+                });
+
                 players.sort((a, b) => {
+                    // In winners tab, sort by winner rank from prev round
+                    if (isWinnersTab) {
+                        const stA = (a.matchStatus || {})[activeRoundTab - 1];
+                        const stB = (b.matchStatus || {})[activeRoundTab - 1];
+                        const isWA = stA && stA.startsWith('winner_');
+                        const isWB = stB && stB.startsWith('winner_');
+                        if (isWA && isWB) return parseInt(stA.split('_')[1]) - parseInt(stB.split('_')[1]);
+                        if (isWA) return -1;
+                        if (isWB) return 1;
+                    }
+                    // Sort by winner_X in current round first
+                    const stA = (a.matchStatus || {})[activeRoundTab];
+                    const stB = (b.matchStatus || {})[activeRoundTab];
+                    const isWA = stA && stA.startsWith('winner_');
+                    const isWB = stB && stB.startsWith('winner_');
+                    if (isWA && isWB) return parseInt(stA.split('_')[1]) - parseInt(stB.split('_')[1]);
+                    if (isWA) return -1;
+                    if (isWB) return 1;
+
                     const pa = parseFloat(a.points) || 0, pb = parseFloat(b.points) || 0;
                     if (pb !== pa) return pb - pa;
                     return (parseInt(b.rating) || 0) - (parseInt(a.rating) || 0);
@@ -728,11 +767,36 @@
                 const totalPts   = parseFloat(p.points || 0);
                 const buch       = calcBuchholz(p);
 
+                // Check if this is a winners tab (based on prev round status)
+                const isWinnersTab = allPlayers.some(pp => {
+                    const prevSt = (pp.matchStatus || {})[activeRoundTab - 1];
+                    return prevSt && prevSt.startsWith('winner_');
+                });
+
                 let badgeClass = 'status-active', badgeText = 'Playing';
-                if (statusVal === 'won')  { badgeClass = 'status-won';  badgeText = 'Won'; }
-                if (statusVal === 'draw') { badgeClass = 'status-draw'; badgeText = 'Draw'; }
-                if (statusVal === 'lose') { badgeClass = 'status-lose'; badgeText = 'Eliminated'; }
-                if (statusVal === 'bye')  { badgeClass = 'status-draw'; badgeText = 'BYE'; }
+
+                if (isWinnersTab) {
+                    // In winners tab: show winner rank from PREVIOUS round
+                    const prevSt = statusMap[activeRoundTab - 1];
+                    if (prevSt && prevSt.startsWith('winner_')) {
+                        const rank = prevSt.split('_')[1];
+                        badgeClass = 'status-won';
+                        badgeText = '🏆 Winner ' + rank;
+                    } else {
+                        badgeClass = 'status-active';
+                        badgeText = 'Playing';
+                    }
+                } else {
+                    if (statusVal === 'won')  { badgeClass = 'status-won';  badgeText = 'Won'; }
+                    if (statusVal === 'draw') { badgeClass = 'status-draw'; badgeText = 'Draw'; }
+                    if (statusVal === 'lose' || statusVal === 'lose_next') { badgeClass = 'status-lose'; badgeText = 'Eliminated'; }
+                    if (statusVal === 'bye')  { badgeClass = 'status-draw'; badgeText = 'BYE'; }
+                    if (statusVal && statusVal.startsWith('winner_')) {
+                        // In the round where winner was clicked: show 'Won'
+                        badgeClass = 'status-won';
+                        badgeText = 'Won ⭐';
+                    }
+                }
 
                 const rankIndicator = index < 3 ? ['1','2','3'][index] : index + 1;
                 const rowClass  = index < 3 ? `rank-${index + 1}` : '';

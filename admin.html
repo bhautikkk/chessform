@@ -1576,13 +1576,45 @@
             }
 
             // Filter players who have REACHED the selectedRound
+            // Lose wale players bhi current round tak dikhenge (wo eliminate hue hain)
+            // lekin agle rounds mein nahi jayenge
             let validPlayers = players.filter(p => {
                 const pRound = p.currentRound || 1;
-                return pRound >= selectedRound;
+                // Player either at this round, OR eliminated at a previous round
+                if (pRound >= selectedRound) return true;
+                // If player was eliminated (lose) at a round before selectedRound, hide them
+                return false;
             });
 
-            // Sort by points (highest first), then rating
+            // Check if this round is a 'Winners' round (previous round had winners)
+            const prevRoundWinners = players.filter(p => {
+                const prevStatus = (p.matchStatus || {})[selectedRound - 1];
+                return prevStatus && prevStatus.startsWith('winner_');
+            });
+            const isWinnersRound = prevRoundWinners.length > 0;
+
+            // Sort: by winner rank in prev round (for winners round), else by points
             validPlayers.sort((a, b) => {
+                if (isWinnersRound) {
+                    const stA = (a.matchStatus || {})[selectedRound - 1];
+                    const stB = (b.matchStatus || {})[selectedRound - 1];
+                    const isWinnerA = stA && stA.startsWith('winner_');
+                    const isWinnerB = stB && stB.startsWith('winner_');
+                    if (isWinnerA && isWinnerB) {
+                        return parseInt(stA.split('_')[1]) - parseInt(stB.split('_')[1]);
+                    }
+                    if (isWinnerA) return -1;
+                    if (isWinnerB) return 1;
+                }
+                // Sort by current round status (winner_X first)
+                const stA = (a.matchStatus || {})[selectedRound];
+                const stB = (b.matchStatus || {})[selectedRound];
+                const isWA = stA && stA.startsWith('winner_');
+                const isWB = stB && stB.startsWith('winner_');
+                if (isWA && isWB) return parseInt(stA.split('_')[1]) - parseInt(stB.split('_')[1]);
+                if (isWA) return -1;
+                if (isWB) return 1;
+
                 const ptsA = parseFloat(a.points) || 0;
                 const ptsB = parseFloat(b.points) || 0;
                 if (ptsB !== ptsA) return ptsB - ptsA;
@@ -1597,19 +1629,42 @@
             validPlayers.forEach((d, index) => {
                 const matchStatusMap = d.matchStatus || {};
                 const currentStatus = matchStatusMap[selectedRound] || 'playing';
+                // If this is a winners round, check previous round winner status
+                const prevStatus = matchStatusMap[selectedRound - 1] || '';
+                const isInWinnersRound = isWinnersRound && prevStatus.startsWith('winner_');
                 const totalPts = parseFloat(d.points) || 0;
 
                 let actBtns = '';
-                if (currentStatus === 'playing') {
+
+                // Winners round: show winner rank from previous round, no buttons
+                if (isInWinnersRound) {
+                    const wRank = parseInt(prevStatus.split('_')[1]);
+                    actBtns = `
+                        <span style="font-size:12px; font-weight:bold; color:#8b5cf6; margin-right:10px; text-transform:uppercase;">🏆 Winner ${wRank}</span>
+                    `;
+                } else if (currentStatus === 'playing') {
                     actBtns = `
                         <button class="action-btn" style="color:#10b981; border-color:#10b981; padding:4px 8px; font-size:11px;" onclick="updateMatchStatus('${d.docId}', ${selectedRound}, 'won')">Won</button>
                         <button class="action-btn" style="color:#f59e0b; border-color:#f59e0b; padding:4px 8px; font-size:11px;" onclick="updateMatchStatus('${d.docId}', ${selectedRound}, 'draw')">Draw</button>
                         <button class="action-btn" style="color:#ef4444; border-color:#ef4444; padding:4px 8px; font-size:11px;" onclick="updateMatchStatus('${d.docId}', ${selectedRound}, 'lose')">Lose</button>
+                        <button class="action-btn" title="Mark as Winner (ranked by click order)" style="color:#8b5cf6; border-color:#8b5cf6; padding:4px 8px; font-size:11px;" onclick="updateMatchStatus('${d.docId}', ${selectedRound}, 'winner')">Winner</button>
                     `;
                 } else {
-                    let stColor = currentStatus === 'won' ? '#10b981' : (currentStatus === 'draw' ? '#f59e0b' : '#ef4444');
+                    let stColor = '#ef4444';
+                    let displayStatus = currentStatus;
+                    if (currentStatus === 'won') { stColor = '#10b981'; displayStatus = 'Won'; }
+                    else if (currentStatus === 'draw') { stColor = '#f59e0b'; displayStatus = 'Draw'; }
+                    else if (currentStatus === 'lose') { stColor = '#ef4444'; displayStatus = 'Lose'; }
+                    else if (currentStatus === 'lose_next') { stColor = '#ef4444'; displayStatus = 'Eliminated (Next)'; }
+                    else if (currentStatus.startsWith('winner_')) {
+                        // In the round where winner was clicked: show 'Won'
+                        stColor = '#10b981';
+                        displayStatus = 'Won ⭐';
+                    }
+
                     actBtns = `
-                        <span style="font-size:12px; font-weight:bold; color:${stColor}; margin-right:10px; text-transform:uppercase;">${currentStatus}</span>
+                        <span style="font-size:12px; font-weight:bold; color:${stColor}; margin-right:10px; text-transform:uppercase;">${displayStatus}</span>
+                        ${currentStatus === 'lose' ? `<button class="action-btn" title="Force advance to next round" style="color:#3b82f6; border-color:#3b82f6; padding:4px 8px; font-size:11px;" onclick="updateMatchStatus('${d.docId}', ${selectedRound}, 'lose_next')">Next →</button>` : ''}
                         <button class="action-btn" style="color:#a1a1aa; border-color:#a1a1aa; padding:4px 8px; font-size:11px;" onclick="updateMatchStatus('${d.docId}', ${selectedRound}, 'reset')">Undo</button>
                     `;
                 }
@@ -1640,6 +1695,17 @@
             // 2. Apply the change
             if (newStatus === 'reset') {
                 delete matchStatusMap[round];
+            } else if (newStatus === 'winner') {
+                // Find current max winner rank for this round
+                let maxRank = 0;
+                window.allPlayersRaw.forEach(other => {
+                    const theirStatus = (other.matchStatus || {})[round];
+                    if (theirStatus && theirStatus.startsWith('winner_')) {
+                        let r = parseInt(theirStatus.split('_')[1]);
+                        if (r > maxRank) maxRank = r;
+                    }
+                });
+                matchStatusMap[round] = 'winner_' + (maxRank + 1);
             } else {
                 matchStatusMap[round] = newStatus;
             }
@@ -1655,6 +1721,9 @@
                 
                 if (status === 'won') newPts += 1;
                 if (status === 'draw') newPts += 0.5;
+                if (status && status.startsWith('winner_')) {
+                    newPts += 1; // Winner gets 1 point like a normal win
+                }
                 
                 if (rNum > maxRoundPlayed) maxRoundPlayed = rNum;
             }
@@ -1662,13 +1731,16 @@
             // Determine current round based on progression history
             for (let i = 1; i <= maxRoundPlayed; i++) {
                 const status = matchStatusMap[i];
-                if (status === 'won' || status === 'draw') {
+                if (status === 'won' || status === 'draw' || status === 'lose_next') {
                     newCurrentRound = i + 1; // Advance to next round
+                } else if (status && status.startsWith('winner_')) {
+                    newCurrentRound = i + 1; // Winner also advances to 'Winners' round
+                    break;
                 } else if (status === 'lose') {
-                    newCurrentRound = i;     // Stuck at this round
-                    break; 
+                    newCurrentRound = i;     // Lose: stays at this round (eliminated, not advanced)
+                    break;
                 } else {
-                    newCurrentRound = i;     // Missing result, can't advance past this
+                    newCurrentRound = i;     // Missing result, can't advance
                     break;
                 }
             }
