@@ -1614,6 +1614,7 @@
                 if (docIds.size === 0) {
                     list.innerHTML = '<div class="empty-msg">No registrations found.</div>';
                     window.allPlayersRaw = [];
+                    renderAnalytics([]);
                     renderTournamentManager();
                     return;
                 }
