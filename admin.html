@@ -470,6 +470,255 @@
             .toast { min-width: unset; }
         }
 
+        /* ── Analytics Card ── */
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .analytics-stat {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            transition: border-color 0.2s, transform 0.2s;
+        }
+        .analytics-stat:hover {
+            border-color: rgba(198,168,124,0.3);
+            transform: translateY(-2px);
+        }
+        .analytics-stat-icon {
+            font-size: 18px;
+            margin-bottom: 4px;
+        }
+        .analytics-stat-val {
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--text);
+            line-height: 1;
+        }
+        .analytics-stat-val.gold { color: var(--gold); }
+        .analytics-stat-val.green { color: var(--success); }
+        .analytics-stat-val.blue  { color: #3b82f6; }
+        .analytics-stat-label {
+            font-size: 11px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+            margin-top: 2px;
+        }
+        .analytics-chart-wrap {
+            margin-top: 4px;
+        }
+        .analytics-chart-title {
+            font-size: 12px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+        .rating-bars {
+            display: flex;
+            gap: 8px;
+            align-items: flex-end;
+            height: 90px;
+        }
+        .rating-bar-col {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            height: 100%;
+            justify-content: flex-end;
+        }
+        .rating-bar-fill {
+            width: 100%;
+            border-radius: 4px 4px 0 0;
+            background: linear-gradient(180deg, rgba(198,168,124,0.9), rgba(198,168,124,0.4));
+            min-height: 4px;
+            transition: height 0.5s cubic-bezier(0.34,1.56,0.64,1);
+            position: relative;
+        }
+        .rating-bar-fill:hover::after {
+            content: attr(data-count);
+            position: absolute;
+            top: -22px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--card);
+            border: 1px solid var(--border);
+            color: var(--text);
+            font-size: 11px;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 4px;
+            white-space: nowrap;
+        }
+        .rating-bar-label {
+            font-size: 9px;
+            color: var(--muted);
+            text-align: center;
+            white-space: nowrap;
+        }
+        .rating-bar-count {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--gold);
+        }
+
+        /* ── Edit Player Modal ── */
+        .edit-modal-overlay {
+            display: none;
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 1002;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .edit-modal-overlay.active { display: flex; }
+        .edit-modal-box {
+            background: #1c1c1f;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 28px;
+            max-width: 480px;
+            width: 100%;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.6);
+            animation: slideUp 0.3s cubic-bezier(0.34,1.56,0.64,1);
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px) scale(0.95); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .edit-modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .edit-modal-title {
+            font-size: 17px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .edit-modal-title i { color: var(--gold); }
+        .edit-modal-close {
+            background: none; border: none;
+            color: var(--muted); cursor: pointer;
+            font-size: 18px; padding: 4px;
+            transition: color 0.2s;
+        }
+        .edit-modal-close:hover { color: var(--text); }
+        .edit-form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            margin-bottom: 20px;
+        }
+        .edit-form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .edit-form-group.full { grid-column: 1 / -1; }
+        .edit-form-group label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .edit-form-group input {
+            padding: 10px 12px;
+            background: #111113;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .edit-form-group input:focus { border-color: var(--gold); }
+        .edit-modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+        .edit-save-btn {
+            padding: 10px 24px;
+            background: var(--gold);
+            border: none;
+            border-radius: 8px;
+            color: #111;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            transition: background 0.2s;
+            display: flex; align-items: center; gap: 7px;
+        }
+        .edit-save-btn:hover { background: var(--gold-hover); }
+        .edit-save-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .edit-cancel-btn {
+            padding: 10px 18px;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--muted);
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.2s;
+        }
+        .edit-cancel-btn:hover { border-color: var(--text); color: var(--text); }
+        @media (max-width: 480px) {
+            .edit-form-grid { grid-template-columns: 1fr; }
+        }
+
+        /* ── Reg Item Action Buttons ── */
+        .reg-actions {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+        .reg-action-btns {
+            display: flex;
+            gap: 6px;
+        }
+        .reg-edit-btn, .reg-del-btn {
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid;
+            font-family: 'Inter', sans-serif;
+            display: flex; align-items: center; gap: 4px;
+            transition: all 0.2s;
+        }
+        .reg-edit-btn {
+            color: var(--gold); border-color: rgba(198,168,124,0.4);
+            background: rgba(198,168,124,0.08);
+        }
+        .reg-edit-btn:hover { background: rgba(198,168,124,0.18); }
+        .reg-del-btn {
+            color: #f87171; border-color: rgba(239,68,68,0.35);
+            background: rgba(239,68,68,0.07);
+        }
+        .reg-del-btn:hover { background: rgba(239,68,68,0.16); }
+
         /* Mobile Responsiveness */
         /* Promo Code Manager */
         .promo-tag {
@@ -747,6 +996,51 @@
                 </div>
             </div>
 
+            <!-- 📊 Registration Analytics -->
+            <div class="card-box" id="analyticsCard">
+                <div class="section-title" style="margin-bottom:16px;"><i class="fas fa-chart-bar" style="color:var(--gold);"></i> &nbsp;Registration Analytics</div>
+
+                <div class="analytics-grid" id="analyticsGrid">
+                    <div class="analytics-stat">
+                        <div class="analytics-stat-icon">👥</div>
+                        <div class="analytics-stat-val" id="an-total">—</div>
+                        <div class="analytics-stat-label">Total Players</div>
+                    </div>
+                    <div class="analytics-stat">
+                        <div class="analytics-stat-icon">💰</div>
+                        <div class="analytics-stat-val gold" id="an-revenue">—</div>
+                        <div class="analytics-stat-label">Est. Revenue</div>
+                    </div>
+                    <div class="analytics-stat">
+                        <div class="analytics-stat-icon">⭐</div>
+                        <div class="analytics-stat-val blue" id="an-avg-rating">—</div>
+                        <div class="analytics-stat-label">Avg. Rating</div>
+                    </div>
+                    <div class="analytics-stat">
+                        <div class="analytics-stat-icon">🏆</div>
+                        <div class="analytics-stat-val green" id="an-max-rating">—</div>
+                        <div class="analytics-stat-label">Top Rating</div>
+                    </div>
+                    <div class="analytics-stat">
+                        <div class="analytics-stat-icon">🎟️</div>
+                        <div class="analytics-stat-val" id="an-promo">—</div>
+                        <div class="analytics-stat-label">Used Promo</div>
+                    </div>
+                    <div class="analytics-stat">
+                        <div class="analytics-stat-icon">💳</div>
+                        <div class="analytics-stat-val green" id="an-paid">—</div>
+                        <div class="analytics-stat-label">Paid Players</div>
+                    </div>
+                </div>
+
+                <div class="analytics-chart-wrap">
+                    <div class="analytics-chart-title"><i class="fas fa-signal" style="color:var(--gold);"></i> &nbsp;Rating Distribution</div>
+                    <div class="rating-bars" id="ratingBars">
+                        <!-- Rendered by JS -->
+                    </div>
+                </div>
+            </div>
+
             <!-- Registrations -->
             <div class="card-box">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:12px;">
@@ -902,6 +1196,48 @@
             <div class="modal-btns">
                 <button class="modal-cancel" onclick="closeModal()">Cancel</button>
                 <button class="modal-confirm" id="modalConfirmBtn">Yes, Do it</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Edit Player Modal ── -->
+    <div class="edit-modal-overlay" id="editPlayerModal">
+        <div class="edit-modal-box">
+            <div class="edit-modal-header">
+                <div class="edit-modal-title">
+                    <i class="fas fa-user-pen"></i>
+                    Edit Player
+                </div>
+                <button class="edit-modal-close" onclick="closeEditModal()"><i class="fas fa-xmark"></i></button>
+            </div>
+            <div class="edit-form-grid">
+                <div class="edit-form-group full">
+                    <label>Full Name</label>
+                    <input type="text" id="edit-name" placeholder="Player Name">
+                </div>
+                <div class="edit-form-group">
+                    <label>Chess.com Username</label>
+                    <input type="text" id="edit-username" placeholder="magnusc">
+                </div>
+                <div class="edit-form-group">
+                    <label>Phone Number</label>
+                    <input type="tel" id="edit-phone" placeholder="9876543210">
+                </div>
+                <div class="edit-form-group">
+                    <label>Rating (ELO)</label>
+                    <input type="number" id="edit-rating" placeholder="Auto-detected">
+                </div>
+                <div class="edit-form-group">
+                    <label>Email Address</label>
+                    <input type="email" id="edit-email" placeholder="player@email.com">
+                </div>
+            </div>
+            <input type="hidden" id="edit-docId">
+            <div class="edit-modal-actions">
+                <button class="edit-cancel-btn" onclick="closeEditModal()">Cancel</button>
+                <button class="edit-save-btn" id="editSaveBtn" onclick="savePlayerEdit()">
+                    <i class="fas fa-save"></i> Save Changes
+                </button>
             </div>
         </div>
     </div>
@@ -1301,20 +1637,30 @@
                 window.allPlayersRaw = mergedArray;
 
                 mergedArray.forEach((d) => {
+                    const safeId = CSS.escape(d.docId);
                     list.innerHTML += `
-                        <div class="reg-item">
+                        <div class="reg-item" id="regitem-${escHtml(d.docId)}">
                             <div class="reg-left">
                                 <strong>${escHtml(d.name || '—')}</strong>
                                 <span>@${escHtml(d.username || '—')} &nbsp;|&nbsp; ${escHtml(d.phone || '—')} &nbsp;|&nbsp; Rating: ${escHtml(String(d.rating || '—'))}</span>
                                 <span style="color:#a1a1aa; margin-top:2px;">${escHtml(d.email || '—')}</span>
                             </div>
-                            <div style="display:flex; flex-direction:column; align-items:flex-end; gap:5px;">
+                            <div class="reg-actions">
                                 <span class="reg-id">${escHtml(d.cardId || 'No ID')}</span>
                                 ${d.paymentId ? `<span style="font-size:11px; color:var(--success); background:rgba(34,197,94,0.1); padding:2px 6px; border-radius:4px;"><i class="fas fa-check-circle"></i> ${escHtml(d.paymentId)}</span>` : ''}
+                                <div class="reg-action-btns">
+                                    <button class="reg-edit-btn" onclick="openEditPlayer('${escHtml(d.docId)}')">
+                                        <i class="fas fa-pen"></i> Edit
+                                    </button>
+                                    <button class="reg-del-btn" onclick="deletePlayer('${escHtml(d.docId)}')">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </button>
+                                </div>
                             </div>
                         </div>`;
                 });
-                
+
+                renderAnalytics(mergedArray);
                 renderTournamentManager();
             }
 
@@ -1560,6 +1906,176 @@
                 btn.innerHTML = '<i class="fas fa-save"></i> Save Fee';
             }
         }
+
+        // ─── Analytics Renderer ───────────────────────────────────────
+        function renderAnalytics(players) {
+            if (!players || players.length === 0) {
+                document.getElementById('an-total').textContent = '0';
+                document.getElementById('an-revenue').textContent = '₹0';
+                document.getElementById('an-avg-rating').textContent = '—';
+                document.getElementById('an-max-rating').textContent = '—';
+                document.getElementById('an-promo').textContent = '0';
+                document.getElementById('an-paid').textContent = '0';
+                document.getElementById('ratingBars').innerHTML = '<span style="color:var(--muted);font-size:13px;">No data yet.</span>';
+                return;
+            }
+
+            // Total
+            document.getElementById('an-total').textContent = players.length;
+
+            // Paid players (have paymentId)
+            const paidCount = players.filter(p => p.paymentId).length;
+            document.getElementById('an-paid').textContent = paidCount;
+
+            // Revenue estimate (fetch current fee from settings)
+            let currentFee = parseInt(document.getElementById('feeInput')?.value) || 29;
+            document.getElementById('an-revenue').textContent = '₹' + (paidCount * currentFee).toLocaleString('en-IN');
+
+            // Ratings
+            const ratings = players.map(p => parseInt(p.rating)).filter(r => !isNaN(r) && r > 0);
+            if (ratings.length > 0) {
+                const avg = Math.round(ratings.reduce((a, b) => a + b, 0) / ratings.length);
+                const max = Math.max(...ratings);
+                document.getElementById('an-avg-rating').textContent = avg;
+                document.getElementById('an-max-rating').textContent = max;
+            } else {
+                document.getElementById('an-avg-rating').textContent = '—';
+                document.getElementById('an-max-rating').textContent = '—';
+            }
+
+            // Promo usage
+            const promoCount = players.filter(p => p.promoCode).length;
+            document.getElementById('an-promo').textContent = promoCount + (players.length > 0 ? ` (${Math.round(promoCount/players.length*100)}%)` : '');
+
+            // Rating Distribution Bar Chart
+            const bands = [
+                { label: '<600',       min: 0,    max: 599  },
+                { label: '600–800',    min: 600,  max: 799  },
+                { label: '800–1000',   min: 800,  max: 999  },
+                { label: '1000–1200',  min: 1000, max: 1199 },
+                { label: '1200–1500',  min: 1200, max: 1499 },
+                { label: '1500+',      min: 1500, max: 99999 },
+            ];
+            const counts = bands.map(b => players.filter(p => {
+                const r = parseInt(p.rating);
+                return !isNaN(r) && r >= b.min && r <= b.max;
+            }).length);
+            const maxCount = Math.max(...counts, 1);
+
+            const barsEl = document.getElementById('ratingBars');
+            barsEl.innerHTML = '';
+            bands.forEach((b, i) => {
+                const pct = Math.round((counts[i] / maxCount) * 100);
+                const col = document.createElement('div');
+                col.className = 'rating-bar-col';
+                col.innerHTML = `
+                    <div class="rating-bar-count">${counts[i]}</div>
+                    <div class="rating-bar-fill" style="height:${pct}%;" data-count="${counts[i]} players"></div>
+                    <div class="rating-bar-label">${b.label}</div>
+                `;
+                barsEl.appendChild(col);
+            });
+        }
+
+        // ─── Edit Player Functions ────────────────────────────────────
+        let _editDocId = null;
+
+        function openEditPlayer(docId) {
+            const player = (window.allPlayersRaw || []).find(p => p.docId === docId);
+            if (!player) return showToast('error', 'Player Not Found', 'Could not load player data.');
+
+            _editDocId = docId;
+            document.getElementById('edit-docId').value  = docId;
+            document.getElementById('edit-name').value     = player.name     || '';
+            document.getElementById('edit-username').value = player.username  || '';
+            document.getElementById('edit-phone').value    = player.phone     || '';
+            document.getElementById('edit-rating').value   = player.rating    || '';
+            document.getElementById('edit-email').value    = player.email     || '';
+
+            const btn = document.getElementById('editSaveBtn');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-save"></i> Save Changes';
+
+            document.getElementById('editPlayerModal').classList.add('active');
+        }
+
+        function closeEditModal() {
+            document.getElementById('editPlayerModal').classList.remove('active');
+            _editDocId = null;
+        }
+
+        async function savePlayerEdit() {
+            const docId    = document.getElementById('edit-docId').value;
+            const name     = document.getElementById('edit-name').value.trim();
+            const username = document.getElementById('edit-username').value.trim();
+            const phone    = document.getElementById('edit-phone').value.trim();
+            const rating   = document.getElementById('edit-rating').value.trim();
+            const email    = document.getElementById('edit-email').value.trim();
+
+            if (!docId || !name) {
+                showToast('error', 'Name Required', 'Player name cannot be empty.');
+                return;
+            }
+
+            const btn = document.getElementById('editSaveBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;margin-right:6px;border-top-color:#111;"></span> Saving...';
+
+            try {
+                const pubUpdate = { name, username, rating: rating || '' };
+                const privUpdate = {};
+                if (phone)  privUpdate.phone  = phone;
+                if (email)  privUpdate.email  = email;
+
+                const writes = [
+                    db.collection('registrations').doc(docId).update(pubUpdate)
+                ];
+                if (Object.keys(privUpdate).length > 0) {
+                    writes.push(
+                        db.collection('registrations_private').doc(docId).update(privUpdate)
+                            .catch(() => db.collection('registrations_private').doc(docId).set(privUpdate, { merge: true }))
+                    );
+                }
+
+                await Promise.all(writes);
+                showToast('success', 'Player Updated! ✅', `${name}'s details have been saved.`);
+                closeEditModal();
+            } catch (err) {
+                showToast('error', 'Save Failed', err.message);
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-save"></i> Save Changes';
+            }
+        }
+
+        // ─── Delete Single Player ─────────────────────────────────────
+        function deletePlayer(docId) {
+            const player = (window.allPlayersRaw || []).find(p => p.docId === docId);
+            const name = player ? player.name : docId;
+
+            showSoftConfirm({
+                icon: '<i class="fas fa-user-xmark" style="color:#ef4444;"></i>',
+                title: `Delete "${escHtml(name)}"?`,
+                desc: 'This will permanently remove the player from all collections. Tournament data (match status) will also be deleted. This cannot be undone.',
+                confirmText: 'Yes, Delete Player',
+                onConfirm: async () => {
+                    try {
+                        const batch = db.batch();
+                        batch.delete(db.collection('registrations').doc(docId));
+                        batch.delete(db.collection('registrations_private').doc(docId));
+                        batch.delete(db.collection('pass_attempts').doc(player?.phone || docId));
+                        await batch.commit();
+                        showToast('success', 'Player Deleted', `"${escHtml(name)}" has been removed.`);
+                    } catch (err) {
+                        showToast('error', 'Delete Failed', err.message);
+                    }
+                }
+            });
+        }
+
+        // ─── Close edit modal on overlay click ───────────────────────
+        document.getElementById('editPlayerModal').addEventListener('click', function(e) {
+            if (e.target === this) closeEditModal();
+        });
 
         // ─── Tournament Manager Logic ─────────────────────────────────
         function renderTournamentManager() {
