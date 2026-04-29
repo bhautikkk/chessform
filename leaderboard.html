@@ -474,7 +474,7 @@
 <body>
 
     <div class="hero-section">
-        <img src="header_logo.png" alt="Chess Bird" style="height: 64px; margin-bottom: 12px; filter: drop-shadow(0 0 12px rgba(245, 158, 11, 0.4));">
+        <img id="siteLogoImg" src="header_logo.png" alt="Chess Bird" style="height: 64px; margin-bottom: 12px; filter: drop-shadow(0 0 12px rgba(245, 158, 11, 0.4));">
         <h1>Leaderboard</h1>
         <p>Live Tournament Standings</p>
         <div class="live-indicator">
@@ -818,6 +818,19 @@
                     </tr>`;
             });
         }
+        // ── Load Custom Logo from Firestore ──────────────────────────
+        (function loadSiteLogo() {
+            function tryLoad() {
+                if (typeof db === 'undefined') { setTimeout(tryLoad, 400); return; }
+                db.collection('settings').doc('global').get().then(function(doc) {
+                    if (doc.exists && doc.data().logoBase64) {
+                        var img = document.getElementById('siteLogoImg');
+                        if (img) img.src = doc.data().logoBase64;
+                    }
+                }).catch(function(){});
+            }
+            tryLoad();
+        })();
     </script>
 </body>
 </html>

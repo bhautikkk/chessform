@@ -324,7 +324,7 @@
     <!-- Header -->
     <header class="page-header">
         <div class="header-brand">
-            <img src="header_logo.png" alt="ChessBird">
+            <img id="siteLogoImg" src="header_logo.png" alt="ChessBird">
             <span>ChessBird</span>
         </div>
         <div class="live-badge">
@@ -421,8 +421,15 @@
             db.collection('settings').doc('global').get()
                 .then(doc => {
                     const videoId = doc.exists ? (doc.data().qrVideoId || '') : '';
+                    const logoB64 = doc.exists ? (doc.data().logoBase64 || '') : '';
                     const player  = document.getElementById('yt-player');
                     const loader  = document.getElementById('video-loading');
+
+                    // Load custom logo
+                    if (logoB64) {
+                        var logoImg = document.getElementById('siteLogoImg');
+                        if (logoImg) logoImg.src = logoB64;
+                    }
 
                     if (videoId && player) {
                         player.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1&color=white`;

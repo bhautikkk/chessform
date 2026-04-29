@@ -720,6 +720,63 @@
         .reg-del-btn:hover { background: rgba(239,68,68,0.16); }
 
         /* Mobile Responsiveness */
+
+        /* ── Logo Manager ── */
+        .logo-upload-area {
+            border: 2px dashed var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.25s;
+            position: relative;
+            background: rgba(255,255,255,0.02);
+        }
+        .logo-upload-area:hover, .logo-upload-area.drag-over {
+            border-color: var(--gold);
+            background: rgba(198,168,124,0.05);
+        }
+        .logo-upload-area input[type=file] {
+            position: absolute; inset: 0;
+            opacity: 0; cursor: pointer;
+            width: 100%; height: 100%;
+        }
+        .logo-preview-row {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+        .logo-preview-box {
+            width: 90px; height: 90px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        .logo-preview-box img {
+            max-width: 100%; max-height: 100%;
+            object-fit: contain;
+        }
+        .logo-preview-info {
+            flex: 1;
+        }
+        .logo-preview-info strong {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .logo-preview-info span {
+            font-size: 12px;
+            color: var(--muted);
+        }
+
         /* Promo Code Manager */
         .promo-tag {
             display: inline-flex;
@@ -799,7 +856,7 @@
     <div id="loginScreen">
         <div class="login-card">
             <div class="login-logo">
-                <img src="header_logo.png" alt="Chess Bird" style="height: 64px; margin-bottom: 12px; filter: drop-shadow(0 0 12px rgba(198,168,124,0.3));">
+                <img data-site-logo src="header_logo.png" alt="Chess Bird" style="height: 64px; margin-bottom: 12px; filter: drop-shadow(0 0 12px rgba(198,168,124,0.3));">
                 <h1>Admin Login</h1>
                 <p>ChessBird Tournament Panel</p>
             </div>
@@ -829,7 +886,7 @@
     <div id="adminPanel">
         <div class="panel-header">
             <div class="panel-title">
-                <img src="header_logo.png" alt="Chess Bird" style="height: 36px; filter: drop-shadow(0 0 10px rgba(198,168,124,0.3));"> Admin Dashboard
+                <img data-site-logo src="header_logo.png" alt="Chess Bird" style="height: 36px; filter: drop-shadow(0 0 10px rgba(198,168,124,0.3));"> Admin Dashboard
             </div>
             <div style="display:flex; align-items:center; gap:10px;">
                 <span class="admin-email-tag" id="adminEmailTag"></span>
@@ -939,6 +996,55 @@
                     </button>
                 </div>
                 <div id="formVideoStatus" style="margin-top:10px; font-size:12px; color:var(--muted);">Loading...</div>
+            </div>
+
+            <!-- 🖼️ Logo Manager -->
+            <div class="card-box">
+                <div class="section-title" style="margin-bottom:12px;"><i class="fas fa-image" style="color:var(--gold);"></i> &nbsp;Site Logo</div>
+                <p style="font-size:13px; color:var(--muted); margin-bottom:16px;">Yahan apna logo upload karo. Yeh sab pages (Registration, Get Pass, Leaderboard) par automatically update ho jayega.</p>
+
+                <!-- Current Logo Preview -->
+                <div class="logo-preview-row">
+                    <div class="logo-preview-box" id="currentLogoBox">
+                        <img id="currentLogoPreview" src="header_logo.png" alt="Current Logo" style="max-width:80px; max-height:80px; object-fit:contain;">
+                    </div>
+                    <div class="logo-preview-info">
+                        <strong>Current Logo</strong>
+                        <span id="logoSourceLabel">Local file (header_logo.png)</span>
+                        <div style="margin-top:8px;">
+                            <button id="clearLogoBtn" onclick="resetLogo()" disabled style="padding:5px 12px; background:transparent; border:1px solid rgba(239,68,68,0.3); border-radius:6px; color:#f87171; font-size:11px; cursor:pointer; font-family:'Inter',sans-serif; display:inline-flex; align-items:center; gap:5px; transition:all 0.2s; opacity:0.4;" onmouseover="if(!this.disabled)this.style.background='rgba(239,68,68,0.12)'" onmouseout="this.style.background='transparent'">
+                                <i class="fas fa-times-circle"></i> Clear Logo
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Upload New Logo -->
+                <div class="logo-upload-area" id="logoDropZone"
+                    ondragover="event.preventDefault(); this.classList.add('drag-over');"
+                    ondragleave="this.classList.remove('drag-over');"
+                    ondrop="handleLogoDrop(event)">
+                    <input type="file" id="logoFileInput" accept="image/*" onchange="handleLogoFileSelect(event)">
+                    <div style="pointer-events:none;">
+                        <i class="fas fa-cloud-upload-alt" style="font-size:28px; color:var(--gold); margin-bottom:10px; display:block;"></i>
+                        <p style="font-size:14px; font-weight:600; margin-bottom:4px;">Click to upload or drag & drop</p>
+                        <p style="font-size:12px; color:var(--muted);">PNG, JPG, SVG, WEBP — recommended: 200×200px or square</p>
+                    </div>
+                </div>
+
+                <!-- Selected file preview -->
+                <div id="logoSelectedPreview" style="display:none; margin-top:16px; padding:14px; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:10px; display:none; align-items:center; gap:14px;">
+                    <img id="logoNewImg" src="" alt="New Logo" style="width:60px; height:60px; object-fit:contain; border-radius:8px; background:rgba(255,255,255,0.05); padding:4px;">
+                    <div style="flex:1;">
+                        <div id="logoNewName" style="font-size:13px; font-weight:600; word-break:break-all;"></div>
+                        <div id="logoNewSize" style="font-size:12px; color:var(--muted); margin-top:2px;"></div>
+                    </div>
+                    <button onclick="uploadLogo()" id="uploadLogoBtn" class="login-btn" style="width:auto; padding:10px 20px; font-size:13px; display:flex; align-items:center; gap:7px; flex-shrink:0;">
+                        <i class="fas fa-upload"></i> Upload
+                    </button>
+                </div>
+
+                <div id="logoStatus" style="margin-top:12px; font-size:12px; color:var(--muted);"></div>
             </div>
 
             <!-- Leaderboard Feature Toggle -->
@@ -1294,6 +1400,22 @@
             setTimeout(() => toast.remove(), 300);
         }
 
+        // ─── Startup: Load logo even before login ────────────────────
+        (function loadLogoOnStartup() {
+            function tryLoad() {
+                if (typeof db === 'undefined') { setTimeout(tryLoad, 400); return; }
+                db.collection('settings').doc('global').get().then(function(doc) {
+                    if (doc.exists && doc.data().logoBase64) {
+                        var logo64 = doc.data().logoBase64;
+                        document.querySelectorAll('img[data-site-logo]').forEach(function(img) {
+                            img.src = logo64;
+                        });
+                    }
+                }).catch(function(){});
+            }
+            tryLoad();
+        })();
+
         // ─── Firebase refs ───────────────────────────────────────────
         const auth = firebase.auth();
 
@@ -1572,6 +1694,26 @@
                             : '<span style="color:#f59e0b;"><i class="fas fa-exclamation-triangle"></i> No video set — Form page video section will show a placeholder.</span>';
                     }
 
+                    // Load Logo
+                    const logoBase64 = data.logoBase64 || '';
+                    const logoStatus = document.getElementById('logoStatus');
+                    const currentLogoPreview = document.getElementById('currentLogoPreview');
+                    const logoSourceLabel = document.getElementById('logoSourceLabel');
+                    const clearLogoBtn = document.getElementById('clearLogoBtn');
+                    if (logoBase64) {
+                        if (currentLogoPreview) currentLogoPreview.src = logoBase64;
+                        // Also update admin header logos
+                        document.querySelectorAll('img[data-site-logo]').forEach(img => img.src = logoBase64);
+                        if (logoSourceLabel) logoSourceLabel.innerHTML = '<span style="color:var(--success);"><i class="fas fa-check-circle"></i> Custom logo (Firestore)</span>';
+                        if (clearLogoBtn) { clearLogoBtn.disabled = false; clearLogoBtn.style.opacity = '1'; clearLogoBtn.style.cursor = 'pointer'; }
+                        if (logoStatus) logoStatus.innerHTML = '<i class="fas fa-check-circle" style="color:var(--success);"></i> Custom logo active — all pages use this logo.';
+                    } else {
+                        if (currentLogoPreview) currentLogoPreview.src = 'header_logo.png';
+                        if (logoSourceLabel) logoSourceLabel.textContent = 'Local file (header_logo.png) — no custom logo set';
+                        if (clearLogoBtn) { clearLogoBtn.disabled = true; clearLogoBtn.style.opacity = '0.4'; clearLogoBtn.style.cursor = 'not-allowed'; }
+                        if (logoStatus) logoStatus.innerHTML = '<span style="color:var(--muted);">No custom logo — using default header_logo.png</span>';
+                    }
+
                     // Load registration deadline
                     const deadlineInput = document.getElementById('deadlineInput');
                     const deadlineStatus = document.getElementById('deadlineStatus');
@@ -1777,6 +1919,109 @@
                 showToast('error', 'Save Failed', err.message);
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fas fa-save"></i> Save';
+            }
+        }
+
+        // ─── Logo Manager ────────────────────────────────────────────
+        let _pendingLogoBase64 = null;
+
+        function handleLogoFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            _processLogoFile(file);
+        }
+
+        function handleLogoDrop(event) {
+            event.preventDefault();
+            document.getElementById('logoDropZone').classList.remove('drag-over');
+            const file = event.dataTransfer.files[0];
+            if (!file || !file.type.startsWith('image/')) {
+                showToast('error', 'Invalid File', 'Please drop an image file (PNG, JPG, SVG, WEBP).');
+                return;
+            }
+            _processLogoFile(file);
+        }
+
+        function _processLogoFile(file) {
+            // Check size — Firestore doc limit is 1MB, base64 expands by ~33%
+            const maxBytes = 700 * 1024; // 700 KB recommended
+            if (file.size > maxBytes) {
+                showToast('error', 'File Too Large', `Image is ${(file.size/1024).toFixed(0)} KB. Please use an image under 700 KB for Firestore storage.`);
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                _pendingLogoBase64 = e.target.result;
+
+                const preview = document.getElementById('logoSelectedPreview');
+                const img     = document.getElementById('logoNewImg');
+                const name    = document.getElementById('logoNewName');
+                const size    = document.getElementById('logoNewSize');
+
+                img.src  = _pendingLogoBase64;
+                name.textContent = file.name;
+                size.textContent = `${(file.size / 1024).toFixed(1)} KB · ${file.type}`;
+                preview.style.display = 'flex';
+
+                showToast('info', 'Image Ready', 'Click "Upload" to save this logo to Firestore.');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function uploadLogo() {
+            if (!_pendingLogoBase64) {
+                showToast('error', 'No Image', 'Please select an image first.');
+                return;
+            }
+            const btn = document.getElementById('uploadLogoBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;margin-right:5px;border-top-color:currentColor;"></span> Uploading...';
+
+            try {
+                await db.collection('settings').doc('global').update({ logoBase64: _pendingLogoBase64 });
+
+                // Update previews immediately
+                document.getElementById('currentLogoPreview').src = _pendingLogoBase64;
+                document.querySelectorAll('img[data-site-logo]').forEach(img => img.src = _pendingLogoBase64);
+                document.getElementById('logoSourceLabel').innerHTML = '<span style="color:var(--success);"><i class="fas fa-check-circle"></i> Custom logo (Firestore)</span>';
+                const clb = document.getElementById('clearLogoBtn');
+                if (clb) { clb.disabled = false; clb.style.opacity = '1'; clb.style.cursor = 'pointer'; }
+                document.getElementById('logoStatus').innerHTML = '<i class="fas fa-check-circle" style="color:var(--success);"></i> Custom logo saved! All pages will now use this logo.';
+                document.getElementById('logoSelectedPreview').style.display = 'none';
+
+                // Reset file input
+                document.getElementById('logoFileInput').value = '';
+                _pendingLogoBase64 = null;
+
+                showToast('success', 'Logo Updated! 🖼️', 'New logo is now live on all pages.');
+                btn.innerHTML = '<i class="fas fa-check"></i> Uploaded!';
+                btn.style.background = 'var(--success)';
+                setTimeout(() => {
+                    btn.disabled = false;
+                    btn.style.background = '';
+                    btn.innerHTML = '<i class="fas fa-upload"></i> Upload';
+                }, 2500);
+            } catch (err) {
+                showToast('error', 'Upload Failed', err.message);
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-upload"></i> Upload';
+            }
+        }
+
+        async function resetLogo() {
+            if (!confirm('Clear custom logo? All pages will revert to the default header_logo.png file.')) return;
+            try {
+                await db.collection('settings').doc('global').update({ logoBase64: firebase.firestore.FieldValue.delete() });
+                document.getElementById('currentLogoPreview').src = 'header_logo.png';
+                document.querySelectorAll('img[data-site-logo]').forEach(img => img.src = 'header_logo.png');
+                document.getElementById('logoSourceLabel').textContent = 'Local file (header_logo.png) — no custom logo set';
+                const clb2 = document.getElementById('clearLogoBtn');
+                if (clb2) { clb2.disabled = true; clb2.style.opacity = '0.4'; clb2.style.cursor = 'not-allowed'; }
+                document.getElementById('logoStatus').innerHTML = '<span style="color:var(--muted);">Cleared — pages now use default header_logo.png</span>';
+                showToast('success', 'Logo Cleared', 'All pages now use the default logo.');
+            } catch (err) {
+                showToast('error', 'Reset Failed', err.message);
             }
         }
 

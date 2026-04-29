@@ -730,18 +730,21 @@
     </section>
 
     <script>
-        // Load Form Guide Video from Firestore
-        (function loadFormVideo() {
+        // Load Form Guide Video + Logo from Firestore
+        (function loadFormVideoAndLogo() {
             function tryLoad() {
                 if (typeof db === 'undefined') {
                     setTimeout(tryLoad, 500);
                     return;
                 }
                 db.collection('settings').doc('global').get().then(function(doc) {
-                    var videoId = doc.exists ? (doc.data().formVideoId || '') : '';
+                    var data    = doc.exists ? doc.data() : {};
+                    var videoId = data.formVideoId || '';
                     var section = document.getElementById('formVideoSection');
                     var player  = document.getElementById('fvsPlayer');
                     var loader  = document.getElementById('fvsLoading');
+
+                    // ── Load form video ──
                     if (videoId && section && player) {
                         section.style.display = 'flex';
                         player.src = 'https://www.youtube.com/embed/' + videoId + '?rel=0&modestbranding=1&color=white';
@@ -753,6 +756,14 @@
                             if (loader) loader.style.display = 'none';
                             player.style.opacity = '1';
                         }, 2500);
+                    }
+
+                    // ── Load custom logo ──
+                    var logoBase64 = data.logoBase64 || '';
+                    if (logoBase64) {
+                        document.querySelectorAll('img.brand-logo').forEach(function(img) {
+                            img.src = logoBase64;
+                        });
                     }
                 }).catch(function() { /* silent fail */ });
             }

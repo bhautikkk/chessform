@@ -400,7 +400,7 @@
 
     <!-- PHASE 1: Form to verify -->
     <div class="search-container" id="searchPhase">
-        <img src="header_logo.png" alt="Chess Bird" style="height: 64px; margin-bottom: 12px; filter: drop-shadow(0 0 12px rgba(198,168,124,0.3));">
+        <img id="siteLogoImg" src="header_logo.png" alt="Chess Bird" style="height: 64px; margin-bottom: 12px; filter: drop-shadow(0 0 12px rgba(198,168,124,0.3));">
         <h2>Download Your Pass</h2>
         <p>Enter details used during registration to find your premium tournament pass.</p>
         
@@ -765,6 +765,19 @@
                 });
             }, 300);
         }
+        // ── Load Custom Logo from Firestore ──────────────────────────
+        (function loadSiteLogo() {
+            function tryLoad() {
+                if (typeof db === 'undefined') { setTimeout(tryLoad, 400); return; }
+                db.collection('settings').doc('global').get().then(function(doc) {
+                    if (doc.exists && doc.data().logoBase64) {
+                        var img = document.getElementById('siteLogoImg');
+                        if (img) img.src = doc.data().logoBase64;
+                    }
+                }).catch(function(){});
+            }
+            tryLoad();
+        })();
     </script>
 </body>
 </html>
