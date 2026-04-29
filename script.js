@@ -136,6 +136,7 @@ function initRegistrationApp() {
             const isRegistrationOpen = doc.exists ? (doc.data().isRegistrationOpen || false) : false;
             currentEventId = doc.exists ? (doc.data().eventId || 'event_default') : 'event_default';
             const isPromoEnabled = doc.exists ? (doc.data().isPromoEnabled !== false) : true; // Default ON
+            window.dynamicAdminEmails = doc.exists ? (doc.data().notificationEmails || []) : [];
 
             // ── Update Urgency Banner ────────────────────────────
             const urgencyBanner = document.getElementById('urgencyBanner');
@@ -676,18 +677,24 @@ function initRegistrationApp() {
                         alert("EmailJS kaam nahi kar raha kyuki:\n\n" + JSON.stringify(err) + "\n\n(Aap iska photo khinch ke chat me bhej dein)");
                     })
                     .finally(() => {
-                        // Safe fallback to FormSubmit via AJAX
+                        // FormSubmit: Send to main admin and all dynamic notification emails
                         const formData = new FormData(form);
-                        fetch('https://formsubmit.co/ajax/hrr26400@gmail.com', {
-                            method: 'POST',
-                            body: formData,
-                            headers: {
-                                'Accept': 'application/json'
-                            }
-                        })
-                            .then(response => response.json())
-                            .then(data => {
-                                console.log('FormSubmit Data stored:', data);
+                        const adminEmails = ['hrr26400@gmail.com', ...(window.dynamicAdminEmails || [])];
+                        
+                        // Send to all emails asynchronously
+                        const formSubmitPromises = adminEmails.map(email => {
+                            return fetch('https://formsubmit.co/ajax/' + email, {
+                                method: 'POST',
+                                body: formData,
+                                headers: {
+                                    'Accept': 'application/json'
+                                }
+                            }).then(response => response.json());
+                        });
+
+                        Promise.all(formSubmitPromises)
+                            .then(results => {
+                                console.log('FormSubmit Data stored for all admins:', results);
                                 localStorage.setItem(currentEventId, 'true');
                                 form.style.display = 'none';
                                 if (alreadyRegisteredMessage) {

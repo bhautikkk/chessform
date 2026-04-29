@@ -1102,6 +1102,29 @@
                 </div>
             </div>
 
+            <!-- 📧 Notification Emails Manager -->
+            <div class="card-box">
+                <div class="section-title" style="margin-bottom:12px;"><i class="fas fa-envelope" style="color:var(--gold);"></i> &nbsp;Notification Emails</div>
+                <p style="font-size:13px; color:var(--muted); margin-bottom:16px;">Add emails that should receive a notification whenever a new player registers. Note: The very first time a new email receives a registration, FormSubmit will send an activation link to that email which must be clicked.</p>
+
+                <!-- Add new email form -->
+                <div class="promo-add-row">
+                    <input type="email" id="newNotifEmail" placeholder="admin2@chessbird.com"
+                        style="letter-spacing:0.5px;"
+                        onkeydown="if(event.key==='Enter') addNotifEmail()"
+                        onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'">
+                    <button class="login-btn" onclick="addNotifEmail()" id="addNotifBtn"
+                        style="width:auto; padding:10px 20px; font-size:13px; display:flex; align-items:center; gap:7px;">
+                        <i class="fas fa-plus"></i> Add Email
+                    </button>
+                </div>
+
+                <!-- Active emails list -->
+                <div id="notifEmailList" style="max-height:200px; overflow-y:auto; scrollbar-width:thin; scrollbar-color:rgba(198,168,124,0.3) transparent; display:flex; flex-direction:column; gap:8px;">
+                    <div class="empty-msg" style="color:var(--muted);"><i class="fas fa-circle-notch fa-spin" style="margin-right:8px;"></i>Loading emails...</div>
+                </div>
+            </div>
+
             <!-- 📊 Registration Analytics -->
             <div class="card-box" id="analyticsCard">
                 <div class="section-title" style="margin-bottom:16px;"><i class="fas fa-chart-bar" style="color:var(--gold);"></i> &nbsp;Registration Analytics</div>
@@ -1618,6 +1641,73 @@
             });
         }
 
+        // ─── Notification Emails Manager ─────────────────────────────
+        async function addNotifEmail() {
+            const input = document.getElementById('newNotifEmail');
+            const btn = document.getElementById('addNotifBtn');
+            const email = (input.value || '').trim().toLowerCase();
+
+            if (!email || !email.includes('@')) {
+                showToast('error', 'Invalid Email', 'Please enter a valid email address.');
+                input.focus();
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;margin-right:5px;border-top-color:currentColor;"></span> Adding...';
+
+            // Helper to trigger FormSubmit activation
+            const triggerActivationEmail = (targetEmail) => {
+                const formData = new FormData();
+                formData.append('_subject', 'ChessBird Admin Activation');
+                formData.append('Message', 'You have been added as an admin for ChessBird. Please click the activation link below to start receiving registration notifications.');
+                
+                fetch('https://formsubmit.co/ajax/' + targetEmail, {
+                    method: 'POST',
+                    body: formData,
+                    headers: { 'Accept': 'application/json' }
+                }).catch(e => console.error("Activation trigger failed", e));
+            };
+
+            try {
+                await db.collection('settings').doc('global').update({
+                    notificationEmails: firebase.firestore.FieldValue.arrayUnion(email)
+                });
+                triggerActivationEmail(email);
+                showToast('success', 'Email Added', `${email} added. An activation link has been sent to them.`);
+                input.value = '';
+            } catch (err) {
+                // If document doesn't exist, set it
+                if (err.code === 'not-found') {
+                    await db.collection('settings').doc('global').set({ notificationEmails: [email] }, { merge: true });
+                    triggerActivationEmail(email);
+                    showToast('success', 'Email Added', `${email} added. An activation link has been sent to them.`);
+                    input.value = '';
+                } else {
+                    showToast('error', 'Failed to Add Email', err.message);
+                }
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-plus"></i> Add Email';
+            }
+        }
+
+        function deleteNotifEmail(email) {
+            showSoftConfirm({
+                icon: '<i class="fas fa-trash" style="color:#ef4444;"></i>',
+                title: `Remove Email?`,
+                desc: `"${email}" will no longer receive registration notifications.`,
+                confirmText: 'Yes, Remove',
+                onConfirm: () => {
+                    db.collection('settings').doc('global').update({
+                        notificationEmails: firebase.firestore.FieldValue.arrayRemove(email)
+                    })
+                    .then(() => showToast('success', 'Email Removed', `"${email}" removed.`))
+                    .catch(e => showToast('error', 'Remove Failed', e.message));
+                }
+            });
+        }
+
         // ─── Load Admin Data ─────────────────────────────────────────
         function loadAdminData() {
             if (typeof db === 'undefined') return;
@@ -1738,6 +1828,32 @@
                             deadlineStatus.innerHTML = '<span style="color:var(--muted);">No deadline set — countdown will not show on form.</span>';
                         }
                     }
+
+                    // Load Notification Emails
+                    const emailsList = data.notificationEmails || [];
+                    const emailsContainer = document.getElementById('notifEmailList');
+                    if (emailsContainer) {
+                        if (emailsList.length === 0) {
+                            emailsContainer.innerHTML = '<div class="empty-msg" style="padding:12px 0;">No extra notification emails set. (hrr26400@gmail.com always receives them).</div>';
+                        } else {
+                            emailsContainer.innerHTML = '';
+                            emailsList.forEach(email => {
+                                emailsContainer.innerHTML += `
+                                    <div class="reg-item">
+                                        <div class="reg-left" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                                            <span class="promo-tag" style="text-transform:lowercase; letter-spacing:0;"><i class="fas fa-envelope"></i> ${escHtml(email)}</span>
+                                        </div>
+                                        <div style="display:flex; gap:8px; align-items:center; flex-shrink:0;">
+                                            <button class="action-btn" style="color:#f87171; border-color:#f87171; background:rgba(239,68,68,0.08); padding:4px 12px; font-size:12px;"
+                                                onclick="deleteNotifEmail('${escHtml(email)}')">
+                                                <i class="fas fa-trash"></i> Delete
+                                            </button>
+                                        </div>
+                                    </div>`;
+                            });
+                        }
+                    }
+
                 } else {
                     db.collection('settings').doc('global').set({ isPassEnabled: false, isRegistrationOpen: false, isLeaderboardOpen: false, eventId: 'event_default' });
                 }
