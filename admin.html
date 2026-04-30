@@ -1125,6 +1125,42 @@
                 </div>
             </div>
 
+            <!-- 🕵️ Email Data Privacy -->
+            <div class="card-box">
+                <div class="section-title" style="margin-bottom:12px;"><i class="fas fa-user-secret" style="color:var(--gold);"></i> &nbsp;Email Data Privacy</div>
+                <p style="font-size:13px; color:var(--muted); margin-bottom:16px;">Control which player details are sent in full via email notifications. If unchecked, the data will be masked (e.g., 9876****10).</p>
+                
+                <div style="display:flex; flex-direction:column; gap:16px;">
+                    <div class="toggle-row" style="padding-bottom:12px; border-bottom:1px solid var(--border);">
+                        <div class="toggle-info">
+                            <h3 style="font-size:14px;">Send Full Phone Number</h3>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="sendFullPhoneToggle" onchange="toggleEmailMasking('phone')">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="toggle-row" style="padding-bottom:12px; border-bottom:1px solid var(--border);">
+                        <div class="toggle-info">
+                            <h3 style="font-size:14px;">Send Full Email Address</h3>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="sendFullEmailToggle" onchange="toggleEmailMasking('email')">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="toggle-row">
+                        <div class="toggle-info">
+                            <h3 style="font-size:14px;">Send Full Chess Username</h3>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="sendFullUsernameToggle" onchange="toggleEmailMasking('username')">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
             <!-- 📊 Registration Analytics -->
             <div class="card-box" id="analyticsCard">
                 <div class="section-title" style="margin-bottom:16px;"><i class="fas fa-chart-bar" style="color:var(--gold);"></i> &nbsp;Registration Analytics</div>
@@ -1854,6 +1890,11 @@
                         }
                     }
 
+                    // Email Data Privacy
+                    document.getElementById('sendFullPhoneToggle').checked = data.sendFullPhone !== false; // default true
+                    document.getElementById('sendFullEmailToggle').checked = data.sendFullEmail !== false; // default true
+                    document.getElementById('sendFullUsernameToggle').checked = data.sendFullUsername !== false; // default true
+
                 } else {
                     db.collection('settings').doc('global').set({ isPassEnabled: false, isRegistrationOpen: false, isLeaderboardOpen: false, eventId: 'event_default' });
                 }
@@ -2233,6 +2274,17 @@
             const isEnabled = document.getElementById('promoToggle').checked;
             db.collection('settings').doc('global')
               .update({ isPromoEnabled: isEnabled })
+              .catch(e => showToast('error', 'Update Failed', e.message));
+        }
+
+        // ─── Toggle Email Privacy Feature ───────────────────────────
+        function toggleEmailMasking(field) {
+            const isEnabled = document.getElementById(`sendFull${field.charAt(0).toUpperCase() + field.slice(1)}Toggle`).checked;
+            const updateData = {};
+            updateData[`sendFull${field.charAt(0).toUpperCase() + field.slice(1)}`] = isEnabled;
+            db.collection('settings').doc('global')
+              .update(updateData)
+              .then(() => showToast('success', 'Privacy Settings Updated', `${field} will now be ${isEnabled ? 'sent in full' : 'masked'}.`))
               .catch(e => showToast('error', 'Update Failed', e.message));
         }
 

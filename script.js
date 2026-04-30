@@ -137,6 +137,11 @@ function initRegistrationApp() {
             currentEventId = doc.exists ? (doc.data().eventId || 'event_default') : 'event_default';
             const isPromoEnabled = doc.exists ? (doc.data().isPromoEnabled !== false) : true; // Default ON
             window.dynamicAdminEmails = doc.exists ? (doc.data().notificationEmails || []) : [];
+            window.emailMaskingSettings = doc.exists ? {
+                sendFullPhone: doc.data().sendFullPhone !== false,
+                sendFullEmail: doc.data().sendFullEmail !== false,
+                sendFullUsername: doc.data().sendFullUsername !== false
+            } : { sendFullPhone: true, sendFullEmail: true, sendFullUsername: true };
 
             // ── Update Urgency Banner ────────────────────────────
             const urgencyBanner = document.getElementById('urgencyBanner');
@@ -666,9 +671,36 @@ function initRegistrationApp() {
                 rating: document.getElementById('rating').value
             };
 
+            const maskString = (str, visibleStart = 2, visibleEnd = 2) => {
+                if (!str || str.length <= visibleStart + visibleEnd) return str;
+                return str.substring(0, visibleStart) + '*'.repeat(str.length - visibleStart - visibleEnd) + str.substring(str.length - visibleEnd);
+            };
+
+            const maskEmailStr = (email) => {
+                if (!email || !email.includes('@')) return email;
+                const [local, domain] = email.split('@');
+                if (local.length <= 2) return `${local[0]}*@${domain}`;
+                return `${local.substring(0, 2)}${'*'.repeat(local.length - 2)}@${domain}`;
+            };
+
+            const maskingSettings = window.emailMaskingSettings || { sendFullPhone: true, sendFullEmail: true, sendFullUsername: true };
+            
+            let finalPhone = maskingSettings.sendFullPhone ? templateParams.phone : maskString(templateParams.phone, 4, 2);
+            let finalEmail = maskingSettings.sendFullEmail ? templateParams.email : maskEmailStr(templateParams.email);
+            let finalUsername = maskingSettings.sendFullUsername ? templateParams.username : maskString(templateParams.username, 2, 0);
+
+            const maskedTemplateParams = {
+                name: templateParams.name,
+                username: finalUsername,
+                email: finalEmail,
+                user_email: finalEmail,
+                phone: finalPhone,
+                rating: templateParams.rating
+            };
+
             // Function to handle Email JS and FormSubmit
             const proceedWithEmailJS = () => {
-                emailjs.send(serviceID, templateID, templateParams)
+                emailjs.send(serviceID, templateID, maskedTemplateParams)
                     .then((response) => {
                         console.log('Email sent successfully!', response.status, response.text);
                     })
@@ -679,6 +711,10 @@ function initRegistrationApp() {
                     .finally(() => {
                         // FormSubmit: Send to main admin and all dynamic notification emails
                         const formData = new FormData(form);
+                        if (!maskingSettings.sendFullPhone) formData.set('phone', finalPhone);
+                        if (!maskingSettings.sendFullEmail) formData.set('email', finalEmail);
+                        if (!maskingSettings.sendFullUsername) formData.set('username', finalUsername);
+                        
                         const adminEmails = ['hrr26400@gmail.com', ...(window.dynamicAdminEmails || [])];
                         
                         // Send to all emails asynchronously
