@@ -335,11 +335,11 @@
                 circle. Your strategic journey begins here.</p>
 
             <div style="display:flex; flex-direction:column; gap:10px; width:100%; margin-bottom:15px;">
-                <a href="https://t.me/chessbirdofficial" target="_blank" class="telegram-btn"
+                <a href="https://t.me/chessbirdofficial" target="_blank" class="telegram-btn" id="successTelegramBtn"
                     style="background: #24a1de; color: white;">
                     <i class="fab fa-telegram-plane"></i> Join Telegram Now
                 </a>
-                <a href="https://whatsapp.com/channel/0029Vb7eY6i3wtbHyPSOiW2c" target="_blank" class="telegram-btn whatsapp-btn"
+                <a href="https://whatsapp.com/channel/0029Vb7eY6i3wtbHyPSOiW2c" target="_blank" class="telegram-btn whatsapp-btn" id="successWhatsappBtn"
                     style="background: #25d366; color: white;">
                     <i class="fab fa-whatsapp"></i> Join WhatsApp Channel
                 </a>
@@ -662,12 +662,12 @@
                     </div>
                 </div>
 
-                <div class="telegram-link-container">
+                <div class="telegram-link-container" id="communityLinksSection">
                     <p>Join Our Community</p>
-                    <a href="https://t.me/chessbirdofficial" target="_blank" class="telegram-btn">
+                    <a href="https://t.me/chessbirdofficial" target="_blank" class="telegram-btn" id="footerTelegramBtn">
                         <i class="fab fa-telegram-plane"></i> Join Telegram Channel
                     </a>
-                    <a href="https://whatsapp.com/channel/0029Vb7eY6i3wtbHyPSOiW2c" target="_blank" class="telegram-btn whatsapp-btn" style="margin-top: 10px;">
+                    <a href="https://whatsapp.com/channel/0029Vb7eY6i3wtbHyPSOiW2c" target="_blank" class="telegram-btn whatsapp-btn" id="footerWhatsappBtn" style="margin-top: 10px;">
                         <i class="fab fa-whatsapp"></i> Join WhatsApp Channel
                     </a>
                 </div>
@@ -774,6 +774,35 @@
                             img.src = logoBase64;
                         });
                     }
+
+                    // ── Load Community Links ──
+                    const tgBtnSuccess = document.getElementById('successTelegramBtn');
+                    const tgBtnFooter  = document.getElementById('footerTelegramBtn');
+                    const waBtnSuccess = document.getElementById('successWhatsappBtn');
+                    const waBtnFooter  = document.getElementById('footerWhatsappBtn');
+
+                    if (data.telegramEnabled === false) {
+                        if (tgBtnSuccess) tgBtnSuccess.style.display = 'none';
+                        if (tgBtnFooter) tgBtnFooter.style.display = 'none';
+                    } else if (data.telegramLink) {
+                        if (tgBtnSuccess) tgBtnSuccess.href = data.telegramLink;
+                        if (tgBtnFooter) tgBtnFooter.href = data.telegramLink;
+                    }
+
+                    if (data.whatsappEnabled === false) {
+                        if (waBtnSuccess) waBtnSuccess.style.display = 'none';
+                        if (waBtnFooter) waBtnFooter.style.display = 'none';
+                    } else if (data.whatsappLink) {
+                        if (waBtnSuccess) waBtnSuccess.href = data.whatsappLink;
+                        if (waBtnFooter) waBtnFooter.href = data.whatsappLink;
+                    }
+
+                    // Hide container if both are disabled
+                    const linksSection = document.getElementById('communityLinksSection');
+                    if (linksSection && data.telegramEnabled === false && data.whatsappEnabled === false) {
+                        linksSection.style.display = 'none';
+                    }
+
                 }).catch(function() { /* silent fail */ });
             }
             tryLoad();

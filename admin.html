@@ -1047,6 +1047,64 @@
                 <div id="logoStatus" style="margin-top:12px; font-size:12px; color:var(--muted);"></div>
             </div>
 
+            <!-- 🔗 Community Links Manager -->
+            <div class="card-box">
+                <div class="section-title" style="margin-bottom:4px;"><i class="fas fa-share-alt" style="color:var(--gold);"></i> &nbsp;Community Links</div>
+                <p style="font-size:13px; color:var(--muted); margin-bottom:20px;">Telegram aur WhatsApp channel ka link yahan set karo. On/Off toggle se button site pe show ya hide hoga.</p>
+
+                <!-- Telegram Row -->
+                <div style="background:rgba(36,161,222,0.06); border:1px solid rgba(36,161,222,0.2); border-radius:12px; padding:18px 20px; margin-bottom:14px;">
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; flex-wrap:wrap; gap:10px;">
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <i class="fab fa-telegram-plane" style="font-size:20px; color:#24a1de;"></i>
+                            <div>
+                                <div style="font-size:14px; font-weight:600; color:var(--text);">Telegram Channel</div>
+                                <div style="font-size:12px; color:var(--muted); margin-top:2px;">Show/hide Telegram button on site</div>
+                            </div>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="telegramToggle" onchange="saveCommunityLinks()">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                        <input type="url" id="telegramLinkInput" placeholder="https://t.me/yourchannel"
+                            style="flex:1; min-width:200px; padding:10px 14px; background:#111113; border:1px solid rgba(36,161,222,0.3); border-radius:8px; color:var(--text); font-family:'Inter',sans-serif; font-size:13px; outline:none; transition: border-color 0.2s;"
+                            onfocus="this.style.borderColor='#24a1de'" onblur="this.style.borderColor='rgba(36,161,222,0.3)'"
+                            onkeydown="if(event.key==='Enter') saveCommunityLinks()">
+                    </div>
+                </div>
+
+                <!-- WhatsApp Row -->
+                <div style="background:rgba(37,211,102,0.06); border:1px solid rgba(37,211,102,0.2); border-radius:12px; padding:18px 20px; margin-bottom:18px;">
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; flex-wrap:wrap; gap:10px;">
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <i class="fab fa-whatsapp" style="font-size:20px; color:#25d366;"></i>
+                            <div>
+                                <div style="font-size:14px; font-weight:600; color:var(--text);">WhatsApp Channel</div>
+                                <div style="font-size:12px; color:var(--muted); margin-top:2px;">Show/hide WhatsApp button on site</div>
+                            </div>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="whatsappToggle" onchange="saveCommunityLinks()">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                        <input type="url" id="whatsappLinkInput" placeholder="https://whatsapp.com/channel/..."
+                            style="flex:1; min-width:200px; padding:10px 14px; background:#111113; border:1px solid rgba(37,211,102,0.3); border-radius:8px; color:var(--text); font-family:'Inter',sans-serif; font-size:13px; outline:none; transition: border-color 0.2s;"
+                            onfocus="this.style.borderColor='#25d366'" onblur="this.style.borderColor='rgba(37,211,102,0.3)'"
+                            onkeydown="if(event.key==='Enter') saveCommunityLinks()">
+                    </div>
+                </div>
+
+                <!-- Save Button -->
+                <button class="login-btn" onclick="saveCommunityLinks()" id="saveCommunityBtn" style="width:auto; padding:10px 24px; font-size:13px; display:flex; align-items:center; gap:8px;">
+                    <i class="fas fa-save"></i> Save Community Links
+                </button>
+                <div id="communityStatus" style="margin-top:12px; font-size:12px; color:var(--muted);">Loading...</div>
+            </div>
+
             <!-- Leaderboard Feature Toggle -->
             <div class="card-box">
                 <div class="toggle-row">
@@ -1677,6 +1735,64 @@
             });
         }
 
+        // ─── Community Links (Telegram + WhatsApp) ───────────────────
+        async function saveCommunityLinks() {
+            const btn = document.getElementById('saveCommunityBtn');
+            const statusEl = document.getElementById('communityStatus');
+
+            const telegramEnabled = document.getElementById('telegramToggle').checked;
+            const whatsappEnabled = document.getElementById('whatsappToggle').checked;
+            const telegramLink    = (document.getElementById('telegramLinkInput').value || '').trim();
+            const whatsappLink    = (document.getElementById('whatsappLinkInput').value || '').trim();
+
+            if (telegramEnabled && !telegramLink) {
+                showToast('error', 'Telegram Link Missing', 'Please enter a Telegram link or turn off the toggle.');
+                return;
+            }
+            if (whatsappEnabled && !whatsappLink) {
+                showToast('error', 'WhatsApp Link Missing', 'Please enter a WhatsApp link or turn off the toggle.');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;margin-right:6px;border-top-color:currentColor;"></span> Saving...';
+
+            try {
+                await db.collection('settings').doc('global').set({
+                    telegramEnabled: telegramEnabled,
+                    telegramLink:    telegramLink,
+                    whatsappEnabled: whatsappEnabled,
+                    whatsappLink:    whatsappLink
+                }, { merge: true });
+
+                showToast('success', 'Community Links Saved ✅', 'Changes are live on the site immediately.');
+                if (statusEl) statusEl.textContent = 'Last saved: ' + new Date().toLocaleTimeString();
+            } catch (err) {
+                showToast('error', 'Save Failed', err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-save"></i> Save Community Links';
+            }
+        }
+
+        function loadCommunityLinks() {
+            const statusEl = document.getElementById('communityStatus');
+            if (!statusEl) return;
+            db.collection('settings').doc('global').get().then(doc => {
+                const data = doc.exists ? doc.data() : {};
+                // Telegram
+                document.getElementById('telegramToggle').checked   = data.telegramEnabled !== false;
+                document.getElementById('telegramLinkInput').value   = data.telegramLink    || 'https://t.me/chessbirdofficial';
+                // WhatsApp
+                document.getElementById('whatsappToggle').checked   = data.whatsappEnabled !== false;
+                document.getElementById('whatsappLinkInput').value   = data.whatsappLink    || 'https://whatsapp.com/channel/0029Vb7eY6i3wtbHyPSOiW2c';
+
+                statusEl.textContent = 'Loaded from Firestore.';
+            }).catch(() => {
+                statusEl.textContent = 'Could not load settings.';
+            });
+        }
+
         // ─── Notification Emails Manager ─────────────────────────────
         async function addNotifEmail() {
             const input = document.getElementById('newNotifEmail');
@@ -1749,6 +1865,8 @@
             if (typeof db === 'undefined') return;
 
             loadPromoCodes(); // Load promo codes list
+            loadCommunityLinks(); // Load Community Links
+
 
             // 1. Settings toggles (pass + registration)
             db.collection('settings').doc('global').onSnapshot((doc) => {
