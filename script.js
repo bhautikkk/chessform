@@ -836,6 +836,7 @@ function initRegistrationApp() {
                 // Yeh ensure karta hai ki DevTools se BASE_AMOUNT_PAISE
                 // change karne par bhi Razorpay correct amount charge kare.
                 let secureAmountPaise = BASE_AMOUNT_PAISE; // fallback: display value
+                let fetchedRazorpayKey = "rzp_test_SdF2J3WDCQa5Ko"; // fallback: test key
                 try {
                     if (typeof db !== 'undefined') {
                         const settingsSnap = await db.collection('settings').doc('global').get();
@@ -844,10 +845,13 @@ function initRegistrationApp() {
                             if (!isNaN(rawFee) && rawFee >= 1 && rawFee <= 10000) {
                                 secureAmountPaise = rawFee * 100;
                             }
+                            if (settingsSnap.data().razorpayKey) {
+                                fetchedRazorpayKey = settingsSnap.data().razorpayKey.trim();
+                            }
                         }
                     }
                 } catch (feeErr) {
-                    console.warn('Fee re-fetch failed, using cached display value:', feeErr);
+                    console.warn('Settings re-fetch failed, using cached display value:', feeErr);
                 }
 
                 // ── Step 2: Re-verify promo code LIVE from Firestore ──────
@@ -879,7 +883,7 @@ function initRegistrationApp() {
 
                 // ── Normal / Discounted payment via Razorpay ──
                 const options = {
-                    "key": "rzp_test_SdF2J3WDCQa5Ko",
+                    "key": fetchedRazorpayKey,
                     "amount": finalAmountPaise,
                     "currency": "INR",
                     "name": "Chess Bird",
@@ -897,6 +901,24 @@ function initRegistrationApp() {
                         "contact": templateParams.phone
                     },
                     "theme": { "color": "#c6a87c" },
+                    "config": {
+                        "display": {
+                            "blocks": {
+                                "upi": {
+                                    "name": "Pay via UPI",
+                                    "instruments": [
+                                        {
+                                            "method": "upi"
+                                        }
+                                    ]
+                                }
+                            },
+                            "sequence": ["block.upi"],
+                            "preferences": {
+                                "show_default_blocks": false
+                            }
+                        }
+                    },
                     "modal": {
                         "ondismiss": function() {
                             updateSubmitBtn(); // Restore correct button text

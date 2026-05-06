@@ -932,6 +932,25 @@
                 <div id="feeStatus" style="margin-top:10px; font-size:12px; color:var(--muted);"></div>
             </div>
 
+            <!-- Razorpay API Key Control -->
+            <div class="card-box">
+                <div class="section-title"><i class="fas fa-key" style="color:var(--gold);"></i> &nbsp;Razorpay API Key</div>
+                <p style="font-size:13px; color:var(--muted); margin-bottom:16px;">Set your Razorpay API Key (Test or Live). This will be used at checkout.</p>
+                <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                    <div style="flex:1; min-width:160px;">
+                        <input type="text" id="razorpayKeyInput" placeholder="e.g. rzp_test_..."
+                            style="width:100%; padding:10px 14px; background:#111113; border:1px solid var(--border); border-radius:8px; color:var(--text); font-family:'Inter',sans-serif; font-size:14px; outline:none; transition: border-color 0.2s;"
+                            onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'"
+                            onkeydown="if(event.key==='Enter') saveRazorpayKey()">
+                    </div>
+                    <button class="login-btn" onclick="saveRazorpayKey()" id="saveRazorpayKeyBtn" style="width:auto; padding:10px 20px; font-size:13px;">
+                        <i class="fas fa-save"></i> Save Key
+                    </button>
+                </div>
+                <div id="razorpayKeyStatus" style="margin-top:10px; font-size:12px; color:var(--muted);"></div>
+            </div>
+
+
             <!-- Registration Deadline (Countdown) -->
             <div class="card-box">
                 <div class="section-title"><i class="fas fa-hourglass-half" style="color:var(--gold);"></i> &nbsp;Registration Deadline</div>
@@ -1892,6 +1911,22 @@
                     if (feeStatus) {
                         feeStatus.innerHTML = `<i class="fas fa-lock" style="color:var(--gold);"></i> Current fee: <strong style="color:var(--gold);">₹${currentFee}</strong> &nbsp;·&nbsp; <span style="color:var(--muted);">Fetched securely from Firestore at payment time.</span>`;
                     }
+
+                    // Load Razorpay API Key
+                    const razorpayKeyInput = document.getElementById('razorpayKeyInput');
+                    const razorpayKeyStatus = document.getElementById('razorpayKeyStatus');
+                    const currentRazorpayKey = data.razorpayKey || '';
+                    if (razorpayKeyInput && razorpayKeyInput !== document.activeElement) {
+                        razorpayKeyInput.value = currentRazorpayKey;
+                    }
+                    if (razorpayKeyStatus) {
+                        if (currentRazorpayKey) {
+                            const maskedKey = currentRazorpayKey.substring(0, 8) + '••••••••' + currentRazorpayKey.slice(-4);
+                            razorpayKeyStatus.innerHTML = `<i class="fas fa-check-circle" style="color:var(--success);"></i> Active Key: <strong style="font-family:monospace;">${maskedKey}</strong>`;
+                        } else {
+                            razorpayKeyStatus.innerHTML = `<i class="fas fa-exclamation-triangle" style="color:var(--gold);"></i> Using default test key.`;
+                        }
+                    }
                     // Show registration status hint
                     const statusEl = document.getElementById('regToggleStatus');
                     if (data.isRegistrationOpen) {
@@ -2438,6 +2473,44 @@
                 showToast('error', 'Save Failed', err.message);
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fas fa-save"></i> Save Fee';
+            }
+        }
+
+        // ─── Save Razorpay API Key ───────────────────────────────────
+        async function saveRazorpayKey() {
+            const input = document.getElementById('razorpayKeyInput');
+            const btn   = document.getElementById('saveRazorpayKeyBtn');
+            const statusEl = document.getElementById('razorpayKeyStatus');
+
+            const key = input.value.trim();
+
+            if (!key) {
+                showToast('error', 'Invalid Key', 'API Key cannot be empty.');
+                input.focus();
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span>';
+
+            try {
+                await db.collection('settings').doc('global').update({ razorpayKey: key });
+                showToast('success', 'API Key Updated! 🔑', `Razorpay API Key has been successfully updated.`);
+                btn.innerHTML = '<i class="fas fa-check"></i> Saved!';
+                btn.style.background = 'var(--success)';
+                
+                const maskedKey = key.substring(0, 8) + '••••••••' + key.slice(-4);
+                statusEl.innerHTML = `<i class="fas fa-check-circle" style="color:var(--success);"></i> Active Key: <strong style="font-family:monospace;">${maskedKey}</strong>`;
+                
+                setTimeout(() => {
+                    btn.disabled = false;
+                    btn.style.background = '';
+                    btn.innerHTML = '<i class="fas fa-save"></i> Save Key';
+                }, 2500);
+            } catch (err) {
+                showToast('error', 'Save Failed', err.message);
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-save"></i> Save Key';
             }
         }
 
