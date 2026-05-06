@@ -754,69 +754,64 @@ function initRegistrationApp() {
                     });
             };
 
-            // Database Handling — SECURITY HARDENED
-            const handleFinalSave = (paymentId, usedPromoCode, discountApplied, finalAmountPaise) => {
-                // 🔒 SECURITY: Validate paymentId format before writing
+            // Database Handling — SECURITY HARDENED via BACKEND
+            const handleFinalSave = async (paymentId, usedPromoCode, discountApplied, finalAmountPaise) => {
                 // Free registrations (100% off) use 'FREE_<timestamp>' format
                 const isFreeReg = paymentId && /^FREE_\d+$/.test(paymentId);
                 const isRazorpay = paymentId && /^pay_[A-Za-z0-9]{14,}$/.test(paymentId);
 
                 if (!isFreeReg && !isRazorpay) {
                     console.error("Invalid paymentId format. Aborting save.", paymentId);
-                    proceedWithEmailJS();
+                    alert("Invalid payment reference. Aborting.");
                     return;
                 }
 
-                if (typeof db !== 'undefined') {
-                    const userPhone = templateParams.phone;
-                    db.collection("registrations").doc(userPhone).get()
-                        .then(docSnap => {
-                            if (docSnap.exists) {
-                                console.log("User already exists. Skipping re-save.");
-                                proceedWithEmailJS();
-                            } else {
-                                // 🔒 SECURITY: Only write EXPLICITLY whitelisted fields
-                                // 🔒 SECURITY: Split data into PUBLIC and PRIVATE collections
-                                // Public (for leaderboard/get-pass)
-                                const publicData = {
-                                    name:      String(templateParams.name  || '').trim().substring(0, 100),
-                                    username:  String(templateParams.username || '').trim().substring(0, 50),
-                                    phone:     String(templateParams.phone || '').trim(),
-                                    rating:    templateParams.rating === 'N/A' ? 'N/A' : (parseInt(templateParams.rating, 10) || 'N/A'),
-                                    cardId:    'Pending'
-                                };
+                try {
+                    const response = await fetch('/api/verifyPayment', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            razorpay_payment_id: paymentId,
+                            name: templateParams.name,
+                            username: templateParams.username,
+                            email: templateParams.email,
+                            phone: templateParams.phone,
+                            rating: templateParams.rating,
+                            promoCode: usedPromoCode,
+                            discountApplied: discountApplied,
+                            amountPaid: finalAmountPaise
+                        })
+                    });
 
-                                // Private (admin only) — includes promo code used
-                                const privateData = {
-                                    email:           String(templateParams.email || '').trim().substring(0, 200),
-                                    paymentId:       paymentId,
-                                    timestamp:       firebase.firestore.FieldValue.serverTimestamp(),
-                                    // Promo code audit trail
-                                    promoCode:       usedPromoCode   || null,
-                                    discountApplied: discountApplied || 0,
-                                    amountPaid:      finalAmountPaise || BASE_AMOUNT_PAISE
-                                };
-
-                                // Write to both collections simultaneously
-                                Promise.all([
-                                    db.collection("registrations").doc(userPhone).set(publicData),
-                                    db.collection("registrations_private").doc(userPhone).set(privateData)
-                                ])
-                                .then(() => {
-                                    console.log("Registration saved securely (Split).");
-                                    proceedWithEmailJS();
-                                })
-                                .catch((error) => {
-                                    console.error("Save failed:", error);
-                                    proceedWithEmailJS();
-                                });
-                            }
-                        }).catch(error => {
-                            console.error("DB check failed:", error);
-                            proceedWithEmailJS();
-                        });
-                } else {
-                    proceedWithEmailJS();
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        console.log("Registration securely saved via backend!");
+                        proceedWithEmailJS();
+                    } else {
+                        console.error("Backend validation failed:", data.error);
+                        alert("Payment verification failed: " + data.error);
+                        
+                        // Re-enable button
+                        const btn = form.querySelector('.submit-btn');
+                        if (btn) {
+                            btn.innerHTML = '<span class="btn-text">Register Now <i class="fas fa-arrow-right arrow-icon"></i></span><div class="btn-glow"></div>';
+                            btn.style.opacity = '1';
+                            btn.style.pointerEvents = 'all';
+                        }
+                    }
+                } catch (error) {
+                    console.error("Error calling backend:", error);
+                    alert("A network error occurred while verifying the payment. Please contact support if money was deducted.");
+                    
+                    const btn = form.querySelector('.submit-btn');
+                    if (btn) {
+                        btn.innerHTML = '<span class="btn-text">Register Now <i class="fas fa-arrow-right arrow-icon"></i></span><div class="btn-glow"></div>';
+                        btn.style.opacity = '1';
+                        btn.style.pointerEvents = 'all';
+                    }
                 }
             };
 

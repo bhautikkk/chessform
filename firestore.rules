@@ -30,28 +30,9 @@ service cloud.firestore {
     match /registrations/{docId} {
 
       // ── CREATE ───────────────────────────────────────────────
-      allow create: if isAdmin() || (
-        // 1. Required public fields
-        request.resource.data.keys().hasAll(['name', 'phone', 'username', 'rating']) &&
-
-        // 2. phone must match document ID (prevents spoofing other people's data)
-        request.resource.data.phone == docId &&
-
-        // 3. BLOCK admin-only fields at creation (leaderboard injection prevention)
-        !request.resource.data.keys().hasAny(['points', 'matchStatus', 'currentRound']) &&
-
-        // 4. cardId must be 'Pending' only (admin assigns real IDs later)
-        (
-          !request.resource.data.keys().hasAll(['cardId']) ||
-          request.resource.data.cardId == 'Pending'
-        ) &&
-
-        // 5. NO email or paymentId in public collection (goes to _private)
-        !request.resource.data.keys().hasAny(['email', 'paymentId']) &&
-
-        request.resource.data.name is string &&
-        request.resource.data.name.size() > 0
-      );
+      // Creation is now ONLY allowed via the secure Vercel backend API (which uses Admin SDK and bypasses these rules)
+      // or by the Admin manually.
+      allow create: if isAdmin();
 
       // ── UPDATE: admin only ───────────────────────────────────
       allow update: if isAdmin();
@@ -74,37 +55,9 @@ service cloud.firestore {
     // ══════════════════════════════════════════════════════════
     match /registrations_private/{docId} {
 
-      // ── CREATE: public can create their own private doc ──────
-      allow create: if isAdmin() || (
-        // Must be for the same phone as docId
-        request.resource.data.keys().hasAll(['email', 'paymentId']) &&
-
-        // paymentId MUST match either:
-        //   - Razorpay format: pay_XXXXXXXXXXXXXX
-        //   - Free registration (100% promo): FREE_<timestamp>
-        request.resource.data.paymentId is string &&
-        (
-          // Case 1: Paid via Razorpay
-          request.resource.data.paymentId.matches('^pay_[A-Za-z0-9]{14,}$') 
-          ||
-          // Case 2: 100% Free Registration (Must have a valid 100% active promo code)
-          (
-            request.resource.data.paymentId.matches('^FREE_[0-9]{10,}$') &&
-            request.resource.data.promoCode is string &&
-            // Check that the code exists, is active, and discount is exactly 100
-            exists(/databases/$(database)/documents/promo_codes/$(request.resource.data.promoCode)) &&
-            get(/databases/$(database)/documents/promo_codes/$(request.resource.data.promoCode)).data.active == true &&
-            get(/databases/$(database)/documents/promo_codes/$(request.resource.data.promoCode)).data.discount == 100
-          )
-        ) &&
-
-        // email must be non-empty
-        request.resource.data.email is string &&
-        request.resource.data.email.size() > 4 &&
-
-        // No extra fields allowed
-        !request.resource.data.keys().hasAny(['points', 'matchStatus', 'currentRound', 'cardId'])
-      );
+      // ── CREATE ───────────────────────────────────────────────
+      // Creation is now ONLY allowed via the secure Vercel backend API
+      allow create: if isAdmin();
 
       // ── ALL READS AND UPDATES: admin only ────────────────────
       // Nobody can read/update/delete private data except admin
