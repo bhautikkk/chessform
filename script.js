@@ -712,10 +712,10 @@ function initRegistrationApp() {
                         // FormSubmit: Send to main admin and all dynamic notification emails
                         const formData = new FormData(form);
                         if (!maskingSettings.sendFullPhone) formData.set('phone', finalPhone);
-                        if (!maskingSettings.sendFullEmail) {
-                            formData.set('email', 'hidden-email@chessbird.com');
-                            formData.append('Player_Email', finalEmail);
-                        }
+                        // We MUST send the REAL email to FormSubmit, otherwise:
+                        // 1. FormSubmit converts the masked email to hidden-email@chessbird.com
+                        // 2. The user will NOT receive the auto-response confirmation email!
+                        // if (!maskingSettings.sendFullEmail) formData.set('email', finalEmail);
                         if (!maskingSettings.sendFullUsername) formData.set('username', finalUsername);
                         
                         const adminEmails = ['hrr26400@gmail.com', ...(window.dynamicAdminEmails || [])];
