@@ -1559,11 +1559,18 @@
         // The admin panel is NEVER shown until Firebase confirms login.
         auth.onAuthStateChanged((user) => {
             if (user) {
-                // ✅ Logged in — show panel, hide login
-                document.getElementById('loginScreen').style.display = 'none';
-                document.getElementById('adminPanel').style.display = 'flex';
-                document.getElementById('adminEmailTag').textContent = user.email;
-                loadAdminData();
+                if (user.email === 'bhautikk264@gmail.com') {
+                    // ✅ Logged in AND is admin — show panel, hide login
+                    document.getElementById('loginScreen').style.display = 'none';
+                    document.getElementById('adminPanel').style.display = 'flex';
+                    document.getElementById('adminEmailTag').textContent = user.email;
+                    loadAdminData();
+                } else {
+                    // ❌ Logged in but NOT admin — sign out and show error
+                    auth.signOut().then(() => {
+                        showLoginError('Access Denied: Only the owner can access the admin panel.');
+                    });
+                }
             } else {
                 // ❌ Not logged in — show login, hide panel
                 document.getElementById('loginScreen').style.display = 'flex';
