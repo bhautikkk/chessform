@@ -119,7 +119,7 @@ export default async function handler(req, res) {
             timestamp: admin.firestore.FieldValue.serverTimestamp(),
             promoCode: promoCode || null,
             discountApplied: discountApplied || 0,
-            amountPaid: payment.amount // Save the REAL amount from Razorpay
+            amountPaid: paymentAmount // Save the REAL amount
         };
 
         const batch = db.batch();
