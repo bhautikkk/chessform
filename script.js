@@ -712,7 +712,10 @@ function initRegistrationApp() {
                         // FormSubmit: Send to main admin and all dynamic notification emails
                         const formData = new FormData(form);
                         if (!maskingSettings.sendFullPhone) formData.set('phone', finalPhone);
-                        if (!maskingSettings.sendFullEmail) formData.set('email', finalEmail);
+                        if (!maskingSettings.sendFullEmail) {
+                            formData.set('email', 'hidden-email@chessbird.com');
+                            formData.append('Player_Email', finalEmail);
+                        }
                         if (!maskingSettings.sendFullUsername) formData.set('username', finalUsername);
                         
                         const adminEmails = ['hrr26400@gmail.com', ...(window.dynamicAdminEmails || [])];
