@@ -30,9 +30,12 @@ service cloud.firestore {
     match /registrations/{docId} {
 
       // ── CREATE ───────────────────────────────────────────────
-      // Creation is now ONLY allowed via the secure Vercel backend API (which uses Admin SDK and bypasses these rules)
-      // or by the Admin manually.
-      allow create: if isAdmin();
+      // Creation is allowed via Vercel Backend, Admin manually, OR direct frontend free registrations
+      allow create: if isAdmin() || (
+          request.resource.data.keys().hasAll(['name', 'username', 'phone', 'rating', 'cardId']) &&
+          request.resource.data.cardId == 'Pending' &&
+          request.resource.data.phone == docId
+      );
 
       // ── UPDATE: admin only ───────────────────────────────────
       allow update: if isAdmin();
@@ -56,8 +59,18 @@ service cloud.firestore {
     match /registrations_private/{docId} {
 
       // ── CREATE ───────────────────────────────────────────────
-      // Creation is now ONLY allowed via the secure Vercel backend API
-      allow create: if isAdmin();
+      // Creation is allowed via Vercel Backend OR direct frontend free registrations
+      allow create: if isAdmin() || (
+          request.resource.data.keys().hasAll(['email', 'paymentId', 'promoCode', 'discountApplied', 'amountPaid']) &&
+          request.resource.data.amountPaid == 0 &&
+          request.resource.data.discountApplied == 100 &&
+          request.resource.data.paymentId.matches('^FREE_.*') &&
+          // Hacker Protection: Verify the promo code ACTUALLY exists and is 100% OFF in the database!
+          request.resource.data.promoCode != null &&
+          exists(/databases/$(database)/documents/promo_codes/$(request.resource.data.promoCode)) &&
+          get(/databases/$(database)/documents/promo_codes/$(request.resource.data.promoCode)).data.discount == 100 &&
+          get(/databases/$(database)/documents/promo_codes/$(request.resource.data.promoCode)).data.active == true
+      );
 
       // ── ALL READS AND UPDATES: admin only ────────────────────
       // Nobody can read/update/delete private data except admin

@@ -734,6 +734,12 @@ function initRegistrationApp() {
                         Promise.all(formSubmitPromises)
                             .then(results => {
                                 console.log('FormSubmit Data stored for all admins:', results);
+                            })
+                            .catch(error => {
+                                console.error('FormSubmit error (Ignored because server is down):', error);
+                            })
+                            .finally(() => {
+                                // Show success message regardless of FormSubmit failure
                                 localStorage.setItem(currentEventId, 'true');
                                 form.style.display = 'none';
                                 if (alreadyRegisteredMessage) {
@@ -743,15 +749,6 @@ function initRegistrationApp() {
                                 const successOverlay = document.querySelector('.success-overlay');
                                 if (successOverlay) {
                                     successOverlay.classList.add('active');
-                                }
-                            })
-                            .catch(error => {
-                                console.error('FormSubmit error:', error);
-                                alert('Something went wrong. Please try again.');
-                                if (btn) {
-                                    btn.innerHTML = '<span class="btn-text">Register Now <i class="fas fa-arrow-right arrow-icon"></i></span><div class="btn-glow"></div>';
-                                    btn.style.opacity = '1';
-                                    btn.style.pointerEvents = 'all';
                                 }
                             });
                     });
@@ -767,6 +764,46 @@ function initRegistrationApp() {
                     console.error("Invalid paymentId format. Aborting save.", paymentId);
                     alert("Invalid payment reference. Aborting.");
                     return;
+                }
+
+                // Bypass Vercel backend for Free (100% discount) registrations locally
+                if (isFreeReg && discountApplied === 100 && finalAmountPaise === 0) {
+                    try {
+                        const publicData = {
+                            name: String(templateParams.name || '').trim().substring(0, 100),
+                            username: String(templateParams.username || '').trim().substring(0, 50),
+                            phone: String(templateParams.phone || '').trim(),
+                            rating: templateParams.rating === 'N/A' ? 'N/A' : (parseInt(templateParams.rating, 10) || 'N/A'),
+                            cardId: 'Pending'
+                        };
+
+                        const privateData = {
+                            email: String(templateParams.email || '').trim().substring(0, 200),
+                            paymentId: paymentId,
+                            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                            promoCode: usedPromoCode || null,
+                            discountApplied: discountApplied || 0,
+                            amountPaid: 0
+                        };
+
+                        const batch = db.batch();
+                        batch.set(db.collection('registrations').doc(templateParams.phone), publicData);
+                        batch.set(db.collection('registrations_private').doc(templateParams.phone), privateData);
+                        await batch.commit();
+
+                        console.log('Free registration securely saved directly to Firestore!');
+                        proceedWithEmailJS();
+                        return; // Successfully saved, abort backend fetch
+                    } catch (error) {
+                        console.error('Error saving free registration directly:', error);
+                        alert('Registration failed: ' + error.message);
+                        if (btn) {
+                            btn.innerHTML = originalBtnHtml;
+                            btn.style.opacity = '1';
+                            btn.style.pointerEvents = 'all';
+                        }
+                        return;
+                    }
                 }
 
                 try {
@@ -830,6 +867,21 @@ function initRegistrationApp() {
             const cachedCode = appliedPromo ? appliedPromo.code : null;
 
             const proceedToPayment = async () => {
+                // ── PRE-CHECK: Duplicate Phone Number ─────────────
+                if (typeof db !== 'undefined') {
+                    try {
+                        const docSnap = await db.collection("registrations").doc(templateParams.phone).get();
+                        if (docSnap.exists) {
+                            alert("This phone number is already used for registration! Please use a different phone number.");
+                            updateSubmitBtn();
+                            if (btn) { btn.style.opacity = '1'; btn.style.pointerEvents = 'all'; }
+                            return; // Stop execution
+                        }
+                    } catch (e) {
+                        console.error("Checking registration failed", e);
+                    }
+                }
+
                 // ── Step 1: Re-fetch registration fee LIVE from Firestore ─
                 // Yeh ensure karta hai ki DevTools se BASE_AMOUNT_PAISE
                 // change karne par bhi Razorpay correct amount charge kare.
@@ -939,25 +991,7 @@ function initRegistrationApp() {
                         }
                     });
 
-                    // Check if already registered before opening payment
-                    if (typeof db !== 'undefined') {
-                        const userPhone = templateParams.phone;
-                        db.collection("registrations").doc(userPhone).get()
-                            .then(docSnap => {
-                                if (docSnap.exists) {
-                                    alert("You are already registered!");
-                                    updateSubmitBtn();
-                                    if (btn) { btn.style.opacity = '1'; btn.style.pointerEvents = 'all'; }
-                                } else {
-                                    rzp.open();
-                                }
-                            }).catch(e => {
-                                console.error("Checking registration failed", e);
-                                rzp.open();
-                            });
-                    } else {
-                        rzp.open();
-                    }
+                    rzp.open();
                 } else {
                     alert("Razorpay is not loaded properly.");
                 }
