@@ -18,9 +18,8 @@ export default async function handler(req, res) {
     try {
         const { emails, subject, data, message } = req.body;
 
-        if (!emails || emails.length === 0) {
-            return res.status(400).json({ success: false, error: 'No recipients provided' });
-        }
+        // It's okay if emails array is empty, it will still go to the SMTP_EMAIL owner
+        const bccList = (emails && emails.length > 0) ? (Array.isArray(emails) ? emails.join(', ') : emails) : '';
 
         if (!process.env.SMTP_EMAIL || !process.env.SMTP_PASSWORD) {
             console.warn("SMTP_EMAIL or SMTP_PASSWORD is not set in Vercel environment variables. Email skipping.");
@@ -68,7 +67,7 @@ export default async function handler(req, res) {
         const mailOptions = {
             from: `"ChessBird System" <${process.env.SMTP_EMAIL}>`,
             to: process.env.SMTP_EMAIL, // Primary recipient is the sender account itself to avoid spam filters
-            bcc: Array.isArray(emails) ? emails.join(', ') : emails, // Blind Carbon Copy to all admins
+            bcc: bccList, // Blind Carbon Copy to all admins
             subject: subject || 'New Notification from ChessBird',
             html: htmlContent
         };

@@ -714,7 +714,7 @@ function initRegistrationApp() {
                         if (!maskingSettings.sendFullPhone) formData.set('phone', finalPhone);
                         if (!maskingSettings.sendFullUsername) formData.set('username', finalUsername);
                         
-                        const adminEmails = ['hrr26400@gmail.com', ...(window.dynamicAdminEmails || [])];
+                        const adminEmails = window.dynamicAdminEmails || [];
                         
                         // Convert FormData to JSON Object
                         const dataObj = Object.fromEntries(formData.entries());
