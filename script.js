@@ -709,36 +709,34 @@ function initRegistrationApp() {
                         alert("EmailJS kaam nahi kar raha kyuki:\n\n" + JSON.stringify(err) + "\n\n(Aap iska photo khinch ke chat me bhej dein)");
                     })
                     .finally(() => {
-                        // FormSubmit: Send to main admin and all dynamic notification emails
+                        // Vercel Serverless Function: Send to main admin and all dynamic notification emails
                         const formData = new FormData(form);
                         if (!maskingSettings.sendFullPhone) formData.set('phone', finalPhone);
-                        // We MUST send the REAL email to FormSubmit, otherwise:
-                        // 1. FormSubmit converts the masked email to hidden-email@chessbird.com
-                        // 2. The user will NOT receive the auto-response confirmation email!
-                        // if (!maskingSettings.sendFullEmail) formData.set('email', finalEmail);
                         if (!maskingSettings.sendFullUsername) formData.set('username', finalUsername);
                         
                         const adminEmails = ['hrr26400@gmail.com', ...(window.dynamicAdminEmails || [])];
                         
-                        // Send to all emails asynchronously
-                        const formSubmitPromises = adminEmails.map(email => {
-                            return fetch('https://formsubmit.co/ajax/' + email, {
-                                method: 'POST',
-                                body: formData,
-                                headers: {
-                                    'Accept': 'application/json'
-                                }
-                            }).then(response => response.json());
-                        });
-
-                        Promise.all(formSubmitPromises)
-                            .then(results => {
-                                console.log('FormSubmit Data stored for all admins:', results);
+                        // Convert FormData to JSON Object
+                        const dataObj = Object.fromEntries(formData.entries());
+                        
+                        // Send a single POST request to our new backend
+                        fetch('/api/sendEmail', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                emails: adminEmails,
+                                subject: "New Registration: " + (templateParams.name || 'ChessBird'),
+                                data: dataObj
                             })
-                            .catch(error => {
-                                console.error('FormSubmit error (Ignored because server is down):', error);
-                            })
-                            .finally(() => {
+                        })
+                        .then(response => response.json())
+                        .then(result => {
+                            console.log('Registration emails sent via backend:', result);
+                        })
+                        .catch(error => {
+                            console.error('Email sending error:', error);
+                        })
+                        .finally(() => {
                                 // Show success message regardless of FormSubmit failure
                                 localStorage.setItem(currentEventId, 'true');
                                 form.style.display = 'none';

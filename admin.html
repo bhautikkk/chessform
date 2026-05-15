@@ -1834,16 +1834,16 @@
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;margin-right:5px;border-top-color:currentColor;"></span> Adding...';
 
-            // Helper to trigger FormSubmit activation
+            // Helper to trigger activation email via Vercel backend
             const triggerActivationEmail = (targetEmail) => {
-                const formData = new FormData();
-                formData.append('_subject', 'ChessBird Admin Activation');
-                formData.append('Message', 'You have been added as an admin for ChessBird. Please click the activation link below to start receiving registration notifications.');
-                
-                fetch('https://formsubmit.co/ajax/' + targetEmail, {
+                fetch('/api/sendEmail', {
                     method: 'POST',
-                    body: formData,
-                    headers: { 'Accept': 'application/json' }
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        emails: [targetEmail],
+                        subject: 'ChessBird Admin Activation',
+                        message: 'You have been added as an admin for ChessBird. You will now receive notifications when someone registers.'
+                    })
                 }).catch(e => console.error("Activation trigger failed", e));
             };
 
