@@ -52,6 +52,12 @@ export default async function handler(req, res) {
     }
 
     try {
+        // --- SECURITY ENHANCEMENT: CHECK IF REGISTRATION IS OPEN ---
+        const settingsDoc = await db.collection('settings').doc('global').get();
+        if (settingsDoc.exists && settingsDoc.data().registrationOpen === false) {
+            return res.status(403).json({ success: false, error: 'Registration is currently closed.' });
+        }
+
         let paymentAmount = amountPaid; // Default to what frontend claims
 
         // 1. Verify Payment OR Promo Code
@@ -93,7 +99,6 @@ export default async function handler(req, res) {
             }
 
             // --- SECURITY ENHANCEMENT: VERIFY PRICE ---
-            const settingsDoc = await db.collection('settings').doc('global').get();
             let baseFeeRs = 29; // default fallback
             if (settingsDoc.exists && settingsDoc.data().registrationFee) {
                 baseFeeRs = parseInt(settingsDoc.data().registrationFee, 10) || 29;
