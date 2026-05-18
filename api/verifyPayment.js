@@ -91,6 +91,29 @@ export default async function handler(req, res) {
             if (payment.status !== 'captured' && payment.status !== 'authorized') {
                 return res.status(400).json({ success: false, error: `Payment not captured. Status: ${payment.status}` });
             }
+
+            // --- SECURITY ENHANCEMENT: VERIFY PRICE ---
+            const settingsDoc = await db.collection('settings').doc('global').get();
+            let baseFeeRs = 29; // default fallback
+            if (settingsDoc.exists && settingsDoc.data().registrationFee) {
+                baseFeeRs = parseInt(settingsDoc.data().registrationFee, 10) || 29;
+            }
+            
+            let expectedDiscount = 0;
+            if (promoCode) {
+                const promoDoc = await db.collection('promo_codes').doc(promoCode).get();
+                if (promoDoc.exists && promoDoc.data().active === true) {
+                    expectedDiscount = Number(promoDoc.data().discount) || 0;
+                }
+            }
+            
+            const expectedAmountPaise = Math.round((baseFeeRs * 100) * (1 - expectedDiscount / 100));
+
+            if (payment.amount < expectedAmountPaise) {
+                console.error(`PRICE TAMPERING DETECTED: Expected ${expectedAmountPaise} paise, but received ${payment.amount} paise.`);
+                return res.status(400).json({ success: false, error: `Security Error: Payment amount paid (₹${payment.amount/100}) is less than the required tournament fee (₹${expectedAmountPaise/100}).` });
+            }
+            // ------------------------------------------
             
             paymentAmount = payment.amount; // Save the REAL amount from Razorpay
         }

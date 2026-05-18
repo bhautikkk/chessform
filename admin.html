@@ -1432,9 +1432,18 @@
     <!-- Confirm Modal (for hard resets) -->
     <div class="modal-overlay" id="confirmModal">
         <div class="modal-box">
-            <i class="fas fa-triangle-exclamation"></i>
+            <i class="fas fa-triangle-exclamation" style="font-size:32px; color:var(--danger); margin-bottom:12px;"></i>
             <h3 id="modalTitle">Are you sure?</h3>
             <p id="modalDesc">This action is permanent.</p>
+            
+            <div style="margin: 16px 0 20px 0; text-align: left;">
+                <label for="resetPasswordInput" style="display:block; font-size:12px; color:var(--muted); margin-bottom:6px; font-weight:600;">Admin Password Required:</label>
+                <input type="password" id="resetPasswordInput" placeholder="Enter password to confirm"
+                    style="width:100%; padding:10px 14px; background:#111113; border:1px solid rgba(239,68,68,0.4); border-radius:8px; color:var(--text); font-family:'Inter',sans-serif; font-size:14px; outline:none; transition: border-color 0.2s;"
+                    onfocus="this.style.borderColor='var(--danger)'" onblur="this.style.borderColor='rgba(239,68,68,0.4)'"
+                    onkeydown="if(event.key==='Enter') executeReset()">
+            </div>
+
             <div class="modal-btns">
                 <button class="modal-cancel" onclick="closeModal()">Cancel</button>
                 <button class="modal-confirm" id="modalConfirmBtn">Yes, Do it</button>
@@ -1496,17 +1505,7 @@
             </div>
         </div>
     </div>
-    <div class="modal-overlay" id="confirmModal">
-        <div class="modal-box">
-            <i class="fas fa-triangle-exclamation"></i>
-            <h3 id="modalTitle">Are you sure?</h3>
-            <p id="modalDesc">This action is permanent.</p>
-            <div class="modal-btns">
-                <button class="modal-cancel" onclick="closeModal()">Cancel</button>
-                <button class="modal-confirm" id="modalConfirmBtn">Yes, Do it</button>
-            </div>
-        </div>
-    </div>
+    <!-- Duplicate confirmModal removed -->
 
     <script>
         // ─── Toast Notification System ───────────────────────────────
@@ -2929,6 +2928,8 @@
         function confirmReset(type) {
             _pendingAction = type;
             const modal = document.getElementById('confirmModal');
+            document.getElementById('resetPasswordInput').value = ''; // Reset password field
+            
             if (type === 'registrations') {
                 document.getElementById('modalTitle').textContent = 'Delete All Registrations?';
                 document.getElementById('modalDesc').textContent = 'All player data (names, phones, emails) will be permanently deleted. This cannot be undone!';
@@ -2937,6 +2938,12 @@
                 document.getElementById('modalDesc').textContent = 'Counter will reset to 0. Next registration will start from CB001. Current registrations are NOT deleted.';
             }
             modal.classList.add('active');
+            
+            // Focus on password input when modal opens
+            setTimeout(() => {
+                document.getElementById('resetPasswordInput').focus();
+            }, 100);
+            
             document.getElementById('modalConfirmBtn').onclick = executeReset;
         }
 
@@ -2946,8 +2953,35 @@
         }
 
         async function executeReset() {
-            const action = _pendingAction; // ← pehle save karo
-            closeModal();                  // ← ab close karo (null ho jaata hai yahan)
+            const password = document.getElementById('resetPasswordInput').value;
+            if (!password) {
+                showToast('error', 'Password Required', 'Please enter your admin password to confirm.');
+                return;
+            }
+
+            const btn = document.getElementById('modalConfirmBtn');
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;margin-right:5px;border-top-color:white;"></span> Verifying...';
+
+            try {
+                // Re-authenticate user to verify it's the admin and they know the password
+                const user = firebase.auth().currentUser;
+                if (!user) throw new Error('Not logged in');
+                const credential = firebase.auth.EmailAuthProvider.credential(user.email, password);
+                await user.reauthenticateWithCredential(credential);
+            } catch (err) {
+                showToast('error', 'Authentication Failed', 'Incorrect admin password. Action aborted.');
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+                return;
+            }
+
+            const action = _pendingAction;
+            closeModal();
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+
             if (action === 'registrations') {
                 await deleteAllRegistrations();
             } else if (action === 'counter') {
