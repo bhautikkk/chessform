@@ -497,55 +497,25 @@ function initRegistrationApp() {
     // ── Auto-Fetch Chess.com Data on Username Input (Live Typing with Debounce) ──
     const usernameInput = document.getElementById('username');
     const ratingInput = document.getElementById('rating');
-    const noChessAccountBtn = document.getElementById('noChessAccount');
+    const platformRadios = document.querySelectorAll('input[name="platformSelect"]');
+    const usernameLabel = document.getElementById('usernameLabel');
     let typingTimer;
     const typingInterval = 800; // Wait 800ms after user stops typing to trigger API
 
-    if (noChessAccountBtn && usernameInput && ratingInput) {
-        noChessAccountBtn.addEventListener('change', (e) => {
-            const userWrapper = usernameInput.closest('.input-wrapper');
-            const ratingWrapper = ratingInput.closest('.input-wrapper');
-            const rightCheckIcon = userWrapper.querySelector('.field-check');
-
-            if (e.target.checked) {
-                // "Disabled" state
-                usernameInput.value = 'No Account';
-                usernameInput.readOnly = true;
-                usernameInput.style.opacity = '0.5';
-                usernameInput.style.pointerEvents = 'none';
+    if (platformRadios.length > 0 && usernameInput) {
+        platformRadios.forEach(radio => {
+            radio.addEventListener('change', () => {
+                if (usernameLabel) {
+                    usernameLabel.textContent = radio.value === 'lichess' ? 'Lichess Username' : 'Chess.com Username';
+                }
                 
-                ratingInput.value = 'N/A';
-                ratingInput.readOnly = true;
-                ratingInput.style.opacity = '0.5';
-                ratingInput.style.pointerEvents = 'none';
-
-                // Visual updates
-                userWrapper.classList.remove('is-invalid', 'is-loading');
-                userWrapper.classList.add('is-valid');
-                const errText = document.getElementById('usernameError');
-                if (errText) errText.style.display = 'none';
-                if (rightCheckIcon) rightCheckIcon.className = 'fa-solid fa-circle-check field-check';
-                ratingWrapper.classList.remove('is-invalid');
-                ratingWrapper.classList.add('is-valid');
-            } else {
-                // Enabled state
-                usernameInput.value = '';
-                usernameInput.readOnly = false;
-                usernameInput.style.opacity = '1';
-                usernameInput.style.pointerEvents = 'auto';
-                
-                ratingInput.value = '';
-                ratingInput.style.opacity = '1';
-
-                // Visual reset
-                userWrapper.classList.remove('is-valid', 'is-invalid', 'is-loading');
-                const errText = document.getElementById('usernameError');
-                if (errText) errText.style.display = 'none';
-                if (rightCheckIcon) rightCheckIcon.className = 'fa-solid fa-circle-check field-check';
-                ratingWrapper.classList.remove('is-valid', 'is-invalid');
-            }
+                if (usernameInput.value.trim() !== '') {
+                    usernameInput.dispatchEvent(new Event('input'));
+                }
+            });
         });
     }
+    // Removed 'noChessAccount' logic to make Chess.com username mandatory
 
     if (usernameInput && ratingInput) {
         usernameInput.addEventListener('input', () => {
@@ -578,45 +548,82 @@ function initRegistrationApp() {
 
             typingTimer = setTimeout(async () => {
                 try {
-                    // 2. Check if user exists
-                    const userRes = await fetch(`https://api.chess.com/pub/player/${username}`);
+                    // 2. Check if user exists based on platform
+                    const checkedRadio = document.querySelector('input[name="platformSelect"]:checked');
+                    const platform = checkedRadio ? checkedRadio.value : 'chesscom';
                     
-                    userWrapper.classList.remove('is-loading'); // Stop loading state
+                    if (platform === 'chesscom') {
+                        const userRes = await fetch(`https://api.chess.com/pub/player/${username}`);
+                        userWrapper.classList.remove('is-loading');
 
-                    if (!userRes.ok) {
-                        userWrapper.classList.add('is-invalid');
-                        if (rightCheckIcon) rightCheckIcon.className = 'fa-solid fa-circle-xmark field-check'; // Right Icon Error
-                        const errText = document.getElementById('usernameError');
-                        if (errText) errText.style.display = 'block';
-                        return; // Stop here, no rating to fetch
-                    }
-
-                    // 3. User exists, fetch stats for auto-filling rating
-                    userWrapper.classList.add('is-valid');
-                    const errText = document.getElementById('usernameError');
-                    if (errText) errText.style.display = 'none';
-                    if (rightCheckIcon) rightCheckIcon.className = 'fa-solid fa-circle-check field-check'; // Right Icon Success
-
-                    const statsRes = await fetch(`https://api.chess.com/pub/player/${username}/stats`);
-                    if (statsRes.ok) {
-                        const stats = await statsRes.json();
-                        let bestRating = null; // null = no rating found
-
-                        // Prefer Rapid, then Blitz, then Bullet
-                        if (stats.chess_rapid && stats.chess_rapid.last) {
-                            bestRating = stats.chess_rapid.last.rating;
-                        } else if (stats.chess_blitz && stats.chess_blitz.last) {
-                            bestRating = stats.chess_blitz.last.rating;
-                        } else if (stats.chess_bullet && stats.chess_bullet.last) {
-                            bestRating = stats.chess_bullet.last.rating;
+                        if (!userRes.ok) {
+                            userWrapper.classList.add('is-invalid');
+                            if (rightCheckIcon) rightCheckIcon.className = 'fa-solid fa-circle-xmark field-check';
+                            const errText = document.getElementById('usernameError');
+                            if (errText) errText.style.display = 'block';
+                            return;
                         }
 
-                        // Auto-fill rating
+                        userWrapper.classList.add('is-valid');
+                        const errText = document.getElementById('usernameError');
+                        if (errText) errText.style.display = 'none';
+                        if (rightCheckIcon) rightCheckIcon.className = 'fa-solid fa-circle-check field-check';
+
+                        const statsRes = await fetch(`https://api.chess.com/pub/player/${username}/stats`);
+                        if (statsRes.ok) {
+                            const stats = await statsRes.json();
+                            let bestRating = null;
+
+                            if (stats.chess_rapid && stats.chess_rapid.last) {
+                                bestRating = stats.chess_rapid.last.rating;
+                            } else if (stats.chess_blitz && stats.chess_blitz.last) {
+                                bestRating = stats.chess_blitz.last.rating;
+                            } else if (stats.chess_bullet && stats.chess_bullet.last) {
+                                bestRating = stats.chess_bullet.last.rating;
+                            }
+
+                            ratingInput.value = bestRating !== null ? bestRating : 'N/A';
+                            ratingWrapper.classList.add('is-valid');
+                            ratingWrapper.classList.remove('is-invalid');
+                            
+                            ratingInput.style.transition = 'box-shadow 0.3s, background 0.3s';
+                            ratingInput.style.background = '#ecfdf5';
+                            setTimeout(() => { ratingInput.style.background = ''; }, 600);
+                        }
+                    } else if (platform === 'lichess') {
+                        const userRes = await fetch(`https://lichess.org/api/user/${username}`);
+                        userWrapper.classList.remove('is-loading');
+
+                        if (!userRes.ok) {
+                            userWrapper.classList.add('is-invalid');
+                            if (rightCheckIcon) rightCheckIcon.className = 'fa-solid fa-circle-xmark field-check';
+                            const errText = document.getElementById('usernameError');
+                            if (errText) errText.style.display = 'block';
+                            return;
+                        }
+
+                        userWrapper.classList.add('is-valid');
+                        const errText = document.getElementById('usernameError');
+                        if (errText) errText.style.display = 'none';
+                        if (rightCheckIcon) rightCheckIcon.className = 'fa-solid fa-circle-check field-check';
+
+                        const data = await userRes.json();
+                        let bestRating = null;
+
+                        if (data.perfs) {
+                            if (data.perfs.rapid && data.perfs.rapid.rating) {
+                                bestRating = data.perfs.rapid.rating;
+                            } else if (data.perfs.blitz && data.perfs.blitz.rating) {
+                                bestRating = data.perfs.blitz.rating;
+                            } else if (data.perfs.bullet && data.perfs.bullet.rating) {
+                                bestRating = data.perfs.bullet.rating;
+                            }
+                        }
+
                         ratingInput.value = bestRating !== null ? bestRating : 'N/A';
                         ratingWrapper.classList.add('is-valid');
                         ratingWrapper.classList.remove('is-invalid');
                         
-                        // Flash success glow
                         ratingInput.style.transition = 'box-shadow 0.3s, background 0.3s';
                         ratingInput.style.background = '#ecfdf5';
                         setTimeout(() => { ratingInput.style.background = ''; }, 600);
@@ -640,11 +647,14 @@ function initRegistrationApp() {
             // Prevent default to stop browser from redirecting before EmailJS finishes
             e.preventDefault();
 
+            const checkedRadio = document.querySelector('input[name="platformSelect"]:checked');
+            const platformName = checkedRadio && checkedRadio.value === 'lichess' ? 'Lichess' : 'Chess.com';
+            
             // Prevent submission if username is invalid or still loading API
             const usernameInput = document.getElementById('username');
             const userWrapper = usernameInput ? usernameInput.closest('.input-wrapper') : null;
             if (userWrapper && (userWrapper.classList.contains('is-invalid') || userWrapper.classList.contains('is-loading'))) {
-                alert("Please enter a valid Chess.com username, or check 'I don't have an account'.");
+                alert("Please enter a valid Chess Username.");
                 return;
             }
 
@@ -662,9 +672,12 @@ function initRegistrationApp() {
             const serviceID = 'service_nfjpyi6';
             const templateID = 'template_udal0hk';
 
+            const rawUsername = document.getElementById('username').value;
+            const fullUsername = `${rawUsername} (${platformName})`;
+
             const templateParams = {
                 name: document.getElementById('name').value,
-                username: document.getElementById('username').value,
+                username: fullUsername,
                 email: document.getElementById('email').value,
                 user_email: document.getElementById('email').value,
                 phone: document.getElementById('phone').value,
