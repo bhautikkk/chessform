@@ -85,8 +85,13 @@ service cloud.firestore {
     // ══════════════════════════════════════════════════════════
     match /pass_attempts/{docId} {
       // Anyone can create/update their own attempt record (keyed by phone)
-      allow get, create: if true;
-      allow update: if true; // needed to increment counter
+      allow get: if true;
+      allow create, update: if 
+        docId.matches('^\\\\+?[0-9]{7,15}$') &&
+        request.resource.data.keys().hasOnly(['count', 'lockedUntil']) &&
+        request.resource.data.count is number &&
+        request.resource.data.lockedUntil is number &&
+        exists(/databases/$(database)/documents/registrations/$(docId));
       allow delete: if isAdmin();
       allow list: if isAdmin();
     }
@@ -96,11 +101,7 @@ service cloud.firestore {
     // ══════════════════════════════════════════════════════════
     match /used_cards/{docId} {
       allow get: if true;
-      allow create: if
-        request.resource.data.keys().hasAll(['reserved']) &&
-        request.resource.data.reserved == true &&
-        request.resource.data.keys().size() == 1;
-      allow list, update, delete: if isAdmin();
+      allow create, list, update, delete: if isAdmin();
     }
 
     // ══════════════════════════════════════════════════════════
