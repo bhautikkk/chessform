@@ -32,7 +32,7 @@ service cloud.firestore {
       // ── CREATE ───────────────────────────────────────────────
       // Creation is allowed via Vercel Backend, Admin manually, OR direct frontend free registrations
       allow create: if isAdmin() || (
-          get(/databases/$(database)/documents/settings/global).data.registrationOpen == true &&
+          get(/databases/$(database)/documents/settings/global).data.isRegistrationOpen == true &&
           request.resource.data.keys().hasAll(['name', 'username', 'phone', 'rating', 'cardId']) &&
           request.resource.data.cardId == 'Pending' &&
           request.resource.data.phone == docId
@@ -62,7 +62,7 @@ service cloud.firestore {
       // ── CREATE ───────────────────────────────────────────────
       // Creation is allowed via Vercel Backend OR direct frontend free registrations
       allow create: if isAdmin() || (
-          get(/databases/$(database)/documents/settings/global).data.registrationOpen == true &&
+          get(/databases/$(database)/documents/settings/global).data.isRegistrationOpen == true &&
           request.resource.data.keys().hasAll(['email', 'paymentId', 'promoCode', 'discountApplied', 'amountPaid']) &&
           request.resource.data.amountPaid == 0 &&
           request.resource.data.discountApplied == 100 &&
