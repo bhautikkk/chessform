@@ -1,6 +1,7 @@
 const Razorpay = require('razorpay');
 const crypto = require('crypto');
 const admin = require('firebase-admin');
+const nodemailer = require('nodemailer');
 
 // Initialize Firebase Admin SDK
 // Uses Environment Variables configured in Vercel
@@ -21,6 +22,68 @@ if (!admin.apps.length) {
 }
 
 const db = admin.apps.length ? admin.firestore() : null;
+
+async function sendRegistrationEmail(publicData, privateData) {
+    if (!process.env.SMTP_EMAIL || !process.env.SMTP_PASSWORD) {
+        console.warn("SMTP_EMAIL or SMTP_PASSWORD is not set in environment. Email skipping.");
+        return;
+    }
+
+    try {
+        const settingsSnap = await admin.firestore().collection('settings').doc('global').get();
+        const emails = settingsSnap.exists ? (settingsSnap.data().notificationEmails || []) : [];
+        const bccList = emails.length > 0 ? (Array.isArray(emails) ? emails.join(', ') : emails) : '';
+
+        const transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+                user: process.env.SMTP_EMAIL,
+                pass: process.env.SMTP_PASSWORD
+            }
+        });
+
+        const dataObj = {
+            name: publicData.name,
+            username: publicData.username,
+            phone: publicData.phone,
+            rating: publicData.rating,
+            email: privateData.email,
+            paymentId: privateData.paymentId,
+            promoCode: privateData.promoCode || 'None',
+            discountApplied: `${privateData.discountApplied || 0}%`,
+            amountPaid: `₹${(privateData.amountPaid || 0) / 100}`
+        };
+
+        let htmlContent = `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eaeaea; border-radius: 8px; background-color: #ffffff;">
+            <h2 style="color: #333; border-bottom: 2px solid #eaeaea; padding-bottom: 15px; margin-top: 0; text-align: center;">New Registration Received</h2>
+            <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">`;
+        
+        for (const [key, value] of Object.entries(dataObj)) {
+            htmlContent += `
+                <tr>
+                    <td style="padding: 12px; border-bottom: 1px solid #eaeaea; background-color: #fcfcfc; font-weight: bold; width: 35%; color: #555; text-transform: capitalize;">${key}</td>
+                    <td style="padding: 12px; border-bottom: 1px solid #eaeaea; color: #333;">${value || '-'}</td>
+                </tr>
+            `;
+        }
+        htmlContent += `</table>
+        <p style="margin-top: 20px; font-size: 12px; color: #999; text-align: center;">This email was sent automatically from your ChessBird backend.</p>
+        </div>`;
+
+        const mailOptions = {
+            from: `"ChessBird System" <${process.env.SMTP_EMAIL}>`,
+            to: process.env.SMTP_EMAIL,
+            bcc: bccList,
+            subject: "New Registration: " + (publicData.name || 'ChessBird'),
+            html: htmlContent
+        };
+
+        const info = await transporter.sendMail(mailOptions);
+        console.log('Registration notification email sent: ', info.messageId);
+    } catch (err) {
+        console.error('Error sending registration notification email:', err);
+    }
+}
 
 export default async function handler(req, res) {
     if (req.method !== 'POST') {
@@ -155,6 +218,11 @@ export default async function handler(req, res) {
         batch.set(db.collection('registrations_private').doc(phone), privateData);
         
         await batch.commit();
+
+        // Send registration email in background
+        sendRegistrationEmail(publicData, privateData).catch(err => {
+            console.error("Async email error:", err);
+        });
 
         return res.status(200).json({ success: true, message: 'Registration successful' });
 

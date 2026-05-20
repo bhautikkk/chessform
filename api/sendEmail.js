@@ -1,4 +1,5 @@
 const nodemailer = require('nodemailer');
+const admin = require('firebase-admin');
 
 export default async function handler(req, res) {
     // Enable CORS for frontend calls
@@ -16,6 +17,32 @@ export default async function handler(req, res) {
     }
 
     try {
+        // ── Auth Token Verification ──
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({ success: false, error: 'Unauthorized: Missing or invalid authorization token.' });
+        }
+        const idToken = authHeader.split('Bearer ')[1];
+
+        if (!admin.apps.length) {
+            if (!process.env.FIREBASE_PROJECT_ID || !process.env.FIREBASE_CLIENT_EMAIL || !process.env.FIREBASE_PRIVATE_KEY) {
+                console.error("Missing Firebase Environment Variables in Vercel.");
+                return res.status(500).json({ success: false, error: 'Database configuration missing in Vercel.' });
+            }
+            admin.initializeApp({
+                credential: admin.credential.cert({
+                    projectId: process.env.FIREBASE_PROJECT_ID,
+                    clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+                    privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+                })
+            });
+        }
+
+        const decodedToken = await admin.auth().verifyIdToken(idToken);
+        if (decodedToken.email !== 'bhautikk264@gmail.com') {
+            return res.status(403).json({ success: false, error: 'Forbidden: Only the admin can call this endpoint.' });
+        }
+
         const { emails, subject, data, message } = req.body;
 
         // It's okay if emails array is empty, it will still go to the SMTP_EMAIL owner

@@ -1834,16 +1834,29 @@
             btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;margin-right:5px;border-top-color:currentColor;"></span> Adding...';
 
             // Helper to trigger activation email via Vercel backend
-            const triggerActivationEmail = (targetEmail) => {
-                fetch('/api/sendEmail', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        emails: [targetEmail],
-                        subject: 'ChessBird Admin Activation',
-                        message: 'You have been added as an admin for ChessBird. You will now receive notifications when someone registers.'
-                    })
-                }).catch(e => console.error("Activation trigger failed", e));
+            const triggerActivationEmail = async (targetEmail) => {
+                try {
+                    const currentUser = firebase.auth().currentUser;
+                    if (!currentUser) {
+                        console.error("No logged in user found to get ID token.");
+                        return;
+                    }
+                    const idToken = await currentUser.getIdToken(true);
+                    fetch('/api/sendEmail', {
+                        method: 'POST',
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${idToken}`
+                        },
+                        body: JSON.stringify({
+                            emails: [targetEmail],
+                            subject: 'ChessBird Admin Activation',
+                            message: 'You have been added as an admin for ChessBird. You will now receive notifications when someone registers.'
+                        })
+                    }).catch(e => console.error("Activation trigger failed", e));
+                } catch (err) {
+                    console.error("Failed to get ID token:", err);
+                }
             };
 
             try {

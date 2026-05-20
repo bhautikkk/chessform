@@ -722,46 +722,17 @@ function initRegistrationApp() {
                         alert("EmailJS kaam nahi kar raha kyuki:\n\n" + JSON.stringify(err) + "\n\n(Aap iska photo khinch ke chat me bhej dein)");
                     })
                     .finally(() => {
-                        // Vercel Serverless Function: Send to main admin and all dynamic notification emails
-                        const formData = new FormData(form);
-                        if (!maskingSettings.sendFullPhone) formData.set('phone', finalPhone);
-                        if (!maskingSettings.sendFullUsername) formData.set('username', finalUsername);
-                        
-                        const adminEmails = window.dynamicAdminEmails || [];
-                        
-                        // Convert FormData to JSON Object
-                        const dataObj = Object.fromEntries(formData.entries());
-                        
-                        // Send a single POST request to our new backend
-                        fetch('/api/sendEmail', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                emails: adminEmails,
-                                subject: "New Registration: " + (templateParams.name || 'ChessBird'),
-                                data: dataObj
-                            })
-                        })
-                        .then(response => response.json())
-                        .then(result => {
-                            console.log('Registration emails sent via backend:', result);
-                        })
-                        .catch(error => {
-                            console.error('Email sending error:', error);
-                        })
-                        .finally(() => {
-                                // Show success message regardless of FormSubmit failure
-                                localStorage.setItem(currentEventId, 'true');
-                                form.style.display = 'none';
-                                if (alreadyRegisteredMessage) {
-                                    alreadyRegisteredMessage.style.display = 'block';
-                                    alreadyRegisteredMessage.style.animation = 'slideUpFade 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards';
-                                }
-                                const successOverlay = document.querySelector('.success-overlay');
-                                if (successOverlay) {
-                                    successOverlay.classList.add('active');
-                                }
-                            });
+                        // Show success message and transition UI
+                        localStorage.setItem(currentEventId, 'true');
+                        form.style.display = 'none';
+                        if (alreadyRegisteredMessage) {
+                            alreadyRegisteredMessage.style.display = 'block';
+                            alreadyRegisteredMessage.style.animation = 'slideUpFade 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards';
+                        }
+                        const successOverlay = document.querySelector('.success-overlay');
+                        if (successOverlay) {
+                            successOverlay.classList.add('active');
+                        }
                     });
             };
 
@@ -777,8 +748,10 @@ function initRegistrationApp() {
                     return;
                 }
 
-                // Bypass Vercel backend for Free (100% discount) registrations locally
-                if (isFreeReg && discountApplied === 100 && finalAmountPaise === 0) {
+                const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
+                // Bypass Vercel backend for Free (100% discount) registrations ONLY when running locally
+                if (isLocalhost && isFreeReg && discountApplied === 100 && finalAmountPaise === 0) {
                     try {
                         const publicData = {
                             name: String(templateParams.name || '').trim().substring(0, 100),
