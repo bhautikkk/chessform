@@ -219,10 +219,12 @@ export default async function handler(req, res) {
         
         await batch.commit();
 
-        // Send registration email in background
-        sendRegistrationEmail(publicData, privateData).catch(err => {
-            console.error("Async email error:", err);
-        });
+        // Send registration email and wait for it to complete before closing the Vercel function
+        try {
+            await sendRegistrationEmail(publicData, privateData);
+        } catch (err) {
+            console.error("Failed to send registration email:", err);
+        }
 
         return res.status(200).json({ success: true, message: 'Registration successful' });
 
