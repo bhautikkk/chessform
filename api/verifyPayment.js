@@ -55,7 +55,7 @@ async function sendRegistrationEmail(publicData, privateData) {
         };
 
         let htmlContent = `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eaeaea; border-radius: 8px; background-color: #ffffff;">
-            <h2 style="color: #333; border-bottom: 2px solid #eaeaea; padding-bottom: 15px; margin-top: 0; text-align: center;">New Registration Received</h2>
+            <h2 style="color: #333; border-bottom: 2px solid #eaeaea; padding-bottom: 15px; margin-top: 0; text-align: center;">New Enrollment Received</h2>
             <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">`;
         
         for (const [key, value] of Object.entries(dataObj)) {
@@ -67,14 +67,14 @@ async function sendRegistrationEmail(publicData, privateData) {
             `;
         }
         htmlContent += `</table>
-        <p style="margin-top: 20px; font-size: 12px; color: #999; text-align: center;">This email was sent automatically from your ChessBird backend.</p>
+        <p style="margin-top: 20px; font-size: 12px; color: #999; text-align: center;">This email was sent automatically from your ChessBird Academy backend.</p>
         </div>`;
 
         const mailOptions = {
-            from: `"ChessBird System" <${process.env.SMTP_EMAIL}>`,
+            from: `"ChessBird Academy" <${process.env.SMTP_EMAIL}>`,
             to: process.env.SMTP_EMAIL,
             bcc: bccList,
-            subject: "New Registration: " + (publicData.name || 'ChessBird'),
+            subject: "New Enrollment: " + (publicData.name || 'ChessBird'),
             html: htmlContent
         };
 
@@ -119,7 +119,7 @@ export default async function handler(req, res) {
         // --- SECURITY ENHANCEMENT: CHECK IF REGISTRATION IS OPEN ---
         const settingsDoc = await db.collection('settings').doc('global').get();
         if (!settingsDoc.exists || settingsDoc.data().isRegistrationOpen !== true) {
-            return res.status(403).json({ success: false, error: 'Registration is currently closed.' });
+            return res.status(403).json({ success: false, error: 'Enrollment is currently closed.' });
         }
 
         let paymentAmount = amountPaid; // Default to what frontend claims
@@ -130,7 +130,7 @@ export default async function handler(req, res) {
         if (isFreeReg) {
             // Validate 100% Promo Code securely via Firestore
             if (!promoCode) {
-                return res.status(400).json({ success: false, error: 'Promo code required for free registration' });
+                return res.status(400).json({ success: false, error: 'Promo code required for free enrollment' });
             }
             
             const promoDoc = await db.collection('promo_codes').doc(promoCode).get();
@@ -204,7 +204,7 @@ export default async function handler(req, res) {
 
             if (payment.amount < expectedAmountPaise) {
                 console.error(`PRICE TAMPERING DETECTED: Expected ${expectedAmountPaise} paise, but received ${payment.amount} paise.`);
-                return res.status(400).json({ success: false, error: `Security Error: Payment amount paid (₹${payment.amount/100}) is less than the required tournament fee (₹${expectedAmountPaise/100}).` });
+                return res.status(400).json({ success: false, error: `Security Error: Payment amount paid (₹${payment.amount/100}) is less than the required enrollment fee (₹${expectedAmountPaise/100}).` });
             }
             // ------------------------------------------
             
@@ -251,7 +251,7 @@ export default async function handler(req, res) {
             console.error("Failed to send registration email:", err);
         }
 
-        return res.status(200).json({ success: true, message: 'Registration successful' });
+        return res.status(200).json({ success: true, message: 'Enrollment successful' });
 
     } catch (error) {
         console.error("Backend Error:", error);

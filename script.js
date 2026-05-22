@@ -151,10 +151,10 @@ function initRegistrationApp() {
                 urgencyBanner.style.display = '';
                 if (isRegistrationOpen) {
                     if (urgencyPulse) urgencyPulse.style.display = 'block';
-                    urgencyText.innerHTML = '<strong style="color: var(--primary);">Registrations Open</strong> — Join India\'s Most Exclusive Chess Community';
+                    urgencyText.innerHTML = '<strong style="color: var(--primary);">Enrollments Open</strong> — Join India\'s Premier Chess Academy';
                 } else {
                     if (urgencyPulse) urgencyPulse.style.display = 'none';
-                    urgencyText.innerHTML = '<strong style="color: #ef4444;">Registration Closed</strong> — Stay tuned for the next tournament';
+                    urgencyText.innerHTML = '<strong style="color: #ef4444;">Enrollment Closed</strong> — Stay tuned for the next coaching batch';
                 }
             }
             // ─────────────────────────────────────────────────────────
@@ -302,7 +302,7 @@ function initRegistrationApp() {
             discBadge.innerHTML = `<i class="fas fa-tag"></i> <span>${appliedPromo.discount}% OFF</span>`;
             discBadge.style.display = 'inline-flex';
             
-            btnText.innerHTML = `Register & Proceed to Pay <i class="fas fa-arrow-right arrow-icon"></i>`;
+            btnText.innerHTML = `Enroll & Proceed to Pay <i class="fas fa-arrow-right arrow-icon"></i>`;
         } else if (appliedPromo && appliedPromo.discount === 100) {
             mainPrice.innerHTML = `<span style="color:#4ade80;">FREE</span>`;
             origPrice.innerHTML = `&#x20B9;${BASE_AMOUNT_RS}`;
@@ -310,13 +310,13 @@ function initRegistrationApp() {
             discBadge.innerHTML = `<i class="fas fa-tag"></i> <span>100% OFF</span>`;
             discBadge.style.display = 'inline-flex';
 
-            btnText.innerHTML = `Submit Free Registration <i class="fas fa-arrow-right arrow-icon"></i>`;
+            btnText.innerHTML = `Submit Free Enrollment <i class="fas fa-arrow-right arrow-icon"></i>`;
         } else {
             mainPrice.innerHTML = `&#x20B9;${BASE_AMOUNT_RS}`;
             origPrice.style.display = 'none';
             discBadge.style.display = 'none';
 
-            btnText.innerHTML = `Register & Proceed to Pay <i class="fas fa-arrow-right arrow-icon"></i>`;
+            btnText.innerHTML = `Enroll & Proceed to Pay <i class="fas fa-arrow-right arrow-icon"></i>`;
         }
     }
 
@@ -420,11 +420,11 @@ function initRegistrationApp() {
         const finalEl  = document.getElementById('promoFinalPrice');
         const priceRow = document.getElementById('promoPriceRow');
 
-        if (titleEl) titleEl.textContent = discount === 100 ? 'Free Registration! 🚀' : 'Code Applied!';
+        if (titleEl) titleEl.textContent = discount === 100 ? 'Free Enrollment! 🚀' : 'Code Applied!';
         if (descEl) {
             descEl.textContent = discount === 100
-                ? `Code "${code}" gives you 100% off — register completely FREE!`
-                : `Code "${code}" gives you ${discount}% off your registration fee.`;
+                ? `Code "${code}" gives you 100% off — enroll completely FREE!`
+                : `Code "${code}" gives you ${discount}% off your enrollment fee.`;
         }
         if (discEl) discEl.textContent = `${discount}% OFF`;
         if (origEl) origEl.textContent = `\u20B9${BASE_AMOUNT_RS}`;
@@ -822,7 +822,7 @@ function initRegistrationApp() {
                         // Re-enable button
                         const btn = form.querySelector('.submit-btn');
                         if (btn) {
-                            btn.innerHTML = '<span class="btn-text">Register Now <i class="fas fa-arrow-right arrow-icon"></i></span><div class="btn-glow"></div>';
+                            btn.innerHTML = '<span class="btn-text">Enroll Now <i class="fas fa-arrow-right arrow-icon"></i></span><div class="btn-glow"></div>';
                             btn.style.opacity = '1';
                             btn.style.pointerEvents = 'all';
                         }
@@ -833,7 +833,7 @@ function initRegistrationApp() {
                     
                     const btn = form.querySelector('.submit-btn');
                     if (btn) {
-                        btn.innerHTML = '<span class="btn-text">Register Now <i class="fas fa-arrow-right arrow-icon"></i></span><div class="btn-glow"></div>';
+                        btn.innerHTML = '<span class="btn-text">Enroll Now <i class="fas fa-arrow-right arrow-icon"></i></span><div class="btn-glow"></div>';
                         btn.style.opacity = '1';
                         btn.style.pointerEvents = 'all';
                     }
@@ -857,7 +857,7 @@ function initRegistrationApp() {
                     try {
                         const docSnap = await db.collection("registrations").doc(templateParams.phone).get();
                         if (docSnap.exists) {
-                            alert("This phone number is already used for registration! Please use a different phone number.");
+                            alert("This phone number is already used for enrollment! Please use a different phone number.");
                             updateSubmitBtn();
                             if (btn) { btn.style.opacity = '1'; btn.style.pointerEvents = 'all'; }
                             return; // Stop execution
@@ -921,10 +921,10 @@ function initRegistrationApp() {
                     "key": fetchedRazorpayKey,
                     "amount": finalAmountPaise,
                     "currency": "INR",
-                    "name": "Chess Bird",
+                    "name": "Chess Bird Academy",
                     "description": verifiedCode
-                        ? `Tournament Registration (${verifiedCode} — ${verifiedDiscount}% off)`
-                        : "Tournament Registration Fee",
+                        ? `Academy Enrollment (${verifiedCode} — ${verifiedDiscount}% off)`
+                        : "Academy Enrollment Fee",
                     "handler": function (response) {
                         console.log("Payment Successful!", response.razorpay_payment_id);
                         if (btn) btn.innerHTML = '<span class="btn-text">Verifying... <i class="fas fa-spinner fa-spin"></i></span><div class="btn-glow"></div>';
