@@ -750,8 +750,8 @@ function initRegistrationApp() {
 
                 const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
-                // Bypass Vercel backend for Free (100% discount) registrations ONLY when running locally
-                if (isLocalhost && isFreeReg && discountApplied === 100 && finalAmountPaise === 0) {
+                // Bypass Vercel backend for all registrations ONLY when running locally (since python local server doesn't run Vercel serverless /api functions)
+                if (isLocalhost) {
                     try {
                         const publicData = {
                             name: String(templateParams.name || '').trim().substring(0, 100),
@@ -767,7 +767,7 @@ function initRegistrationApp() {
                             timestamp: firebase.firestore.FieldValue.serverTimestamp(),
                             promoCode: usedPromoCode || null,
                             discountApplied: discountApplied || 0,
-                            amountPaid: 0
+                            amountPaid: finalAmountPaise
                         };
 
                         const batch = db.batch();
@@ -775,7 +775,7 @@ function initRegistrationApp() {
                         batch.set(db.collection('registrations_private').doc(templateParams.phone), privateData);
                         await batch.commit();
 
-                        console.log('Free registration securely saved directly to Firestore!');
+                        console.log('Registration securely saved directly to Firestore (localhost mode)!');
                         proceedWithEmailJS();
                         return; // Successfully saved, abort backend fetch
                     } catch (error) {
@@ -936,6 +936,8 @@ function initRegistrationApp() {
                         "contact": templateParams.phone
                     },
                     "theme": { "color": "#c6a87c" },
+                    /*
+                    // Temporarily commented out: UPI-only mode fails in standard checkout without server-generated order_id.
                     "config": {
                         "display": {
                             "blocks": {
@@ -954,6 +956,7 @@ function initRegistrationApp() {
                             }
                         }
                     },
+                    */
                     "modal": {
                         "ondismiss": function() {
                             updateSubmitBtn(); // Restore correct button text
