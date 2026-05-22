@@ -118,7 +118,7 @@ export default async function handler(req, res) {
     try {
         // --- SECURITY ENHANCEMENT: CHECK IF REGISTRATION IS OPEN ---
         const settingsDoc = await db.collection('settings').doc('global').get();
-        if (settingsDoc.exists && settingsDoc.data().registrationOpen === false) {
+        if (settingsDoc.exists && settingsDoc.data().isRegistrationOpen === false) {
             return res.status(403).json({ success: false, error: 'Registration is currently closed.' });
         }
 
