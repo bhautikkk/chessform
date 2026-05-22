@@ -204,15 +204,9 @@ export default async function handler(req, res) {
         const batch = db.batch();
         batch.set(db.collection('registrations').doc(phone), publicData);
         batch.set(db.collection('registrations_private').doc(phone), privateData);
-        
         await batch.commit();
 
-        // Send registration email notification TO ADMIN ONLY
-        try {
-            await sendRegistrationEmail(publicData, privateData);
-        } catch (err) {
-            console.error("Failed to send registration email to Admin:", err);
-        }
+        // No emails sent on registration as requested by the user.
 
         return res.status(200).json({ success: true, message: 'Registration successful' });
 
