@@ -21,6 +21,8 @@
     <!-- jsPDF for PDF Export -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    <!-- EmailJS SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 
     <style>
         :root {
@@ -843,6 +845,113 @@
             .danger-btn { width: 100%; justify-content: center; }
             .promo-add-row { flex-direction: column; }
         }
+
+        /* --- Dashboard Tab Navigation Styles --- */
+        .tabs-nav {
+            display: flex;
+            gap: 8px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 24px;
+            overflow-x: auto;
+            scrollbar-width: none; /* Hide scrollbar */
+            -ms-overflow-style: none;
+            padding-bottom: 2px;
+        }
+        .tabs-nav::-webkit-scrollbar {
+            display: none;
+        }
+        .tab-link {
+            padding: 12px 20px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--muted);
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'Inter', sans-serif;
+        }
+        .tab-link:hover {
+            color: var(--text);
+            background: rgba(255, 255, 255, 0.02);
+        }
+        .tab-link.active {
+            color: var(--gold);
+            border-bottom-color: var(--gold);
+            text-shadow: 0 0 10px rgba(198, 168, 124, 0.2);
+        }
+        .tab-content-panel {
+            display: none;
+            animation: tabFadeIn 0.4s ease forwards;
+        }
+        .tab-content-panel.active {
+            display: block;
+        }
+        @keyframes tabFadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .pending-badge {
+            background: #ef4444;
+            color: #ffffff;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 10px;
+            margin-left: 6px;
+            line-height: 1;
+            display: inline-block;
+        }
+
+        /* --- Pending Approvals Card Actions --- */
+        .pending-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 8px;
+        }
+        .approve-btn {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.4);
+            color: #4ade80;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-family: 'Inter', sans-serif;
+        }
+        .approve-btn:hover {
+            background: rgba(34, 197, 94, 0.2);
+            box-shadow: 0 0 12px rgba(34, 197, 94, 0.2);
+        }
+        .reject-btn {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            color: #f87171;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-family: 'Inter', sans-serif;
+        }
+        .reject-btn:hover {
+            background: rgba(239, 68, 68, 0.2);
+            box-shadow: 0 0 12px rgba(239, 68, 68, 0.2);
+        }
     </style>
 </head>
 
@@ -897,8 +1006,24 @@
         </div>
 
         <div class="panel-body">
+            <!-- Premium 4-Tab Navigation Bar -->
+            <div class="tabs-nav">
+                <button class="tab-link active" id="tablink-config" onclick="switchTab('config')">
+                    <i class="fas fa-sliders"></i> Config & Settings
+                </button>
+                <button class="tab-link" id="tablink-registrations" onclick="switchTab('registrations')">
+                    <i class="fas fa-users"></i> Registrations
+                </button>
+                <button class="tab-link" id="tablink-pending" onclick="switchTab('pending')">
+                    <i class="fas fa-clock-rotate-left"></i> Pending Approvals <span id="pendingBadge" class="pending-badge" style="display:none;">0</span>
+                </button>
+                <button class="tab-link" id="tablink-tournament" onclick="switchTab('tournament')">
+                    <i class="fas fa-chess-board"></i> Tournament Manager
+                </button>
+            </div>
 
-            <!-- Registration Open/Close Toggle -->
+            <div class="tab-content-panel active" id="tab-config">
+                <!-- Registration Open/Close Toggle -->
             <div class="card-box">
                 <div class="toggle-row">
                     <div class="toggle-info">
@@ -932,22 +1057,40 @@
                 <div id="feeStatus" style="margin-top:10px; font-size:12px; color:var(--muted);"></div>
             </div>
 
-            <!-- Razorpay API Key Control -->
+            <!-- UPI ID Settings -->
             <div class="card-box">
-                <div class="section-title"><i class="fas fa-key" style="color:var(--gold);"></i> &nbsp;Razorpay API Key</div>
-                <p style="font-size:13px; color:var(--muted); margin-bottom:16px;">Set your Razorpay API Key (Test or Live). This will be used at checkout.</p>
+                <div class="section-title"><i class="fas fa-wallet" style="color:var(--gold);"></i> &nbsp;UPI VPA Address</div>
+                <p style="font-size:13px; color:var(--muted); margin-bottom:16px;">Set your UPI VPA ID (e.g. UPI ID where users will pay). This will generate the payment QR code.</p>
                 <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
                     <div style="flex:1; min-width:160px;">
-                        <input type="text" id="razorpayKeyInput" placeholder="e.g. rzp_test_..."
+                        <input type="text" id="upiIdInput" placeholder="e.g. chessbird@ybl"
                             style="width:100%; padding:10px 14px; background:#111113; border:1px solid var(--border); border-radius:8px; color:var(--text); font-family:'Inter',sans-serif; font-size:14px; outline:none; transition: border-color 0.2s;"
                             onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'"
-                            onkeydown="if(event.key==='Enter') saveRazorpayKey()">
+                            onkeydown="if(event.key==='Enter') saveUpiId()">
                     </div>
-                    <button class="login-btn" onclick="saveRazorpayKey()" id="saveRazorpayKeyBtn" style="width:auto; padding:10px 20px; font-size:13px;">
-                        <i class="fas fa-save"></i> Save Key
+                    <button class="login-btn" onclick="saveUpiId()" id="saveUpiIdBtn" style="width:auto; padding:10px 20px; font-size:13px;">
+                        <i class="fas fa-save"></i> Save UPI ID
                     </button>
                 </div>
-                <div id="razorpayKeyStatus" style="margin-top:10px; font-size:12px; color:var(--muted);"></div>
+                <div id="upiIdStatus" style="margin-top:10px; font-size:12px; color:var(--muted);"></div>
+            </div>
+
+            <!-- Vercel Live URL Settings (for Localhost Testing) -->
+            <div class="card-box">
+                <div class="section-title"><i class="fas fa-link" style="color:var(--gold);"></i> &nbsp;Vercel Live URL (for Localhost testing)</div>
+                <p style="font-size:13px; color:var(--muted); margin-bottom:16px;">Configure your live Vercel domain URL (e.g. <code>https://chessform.vercel.app</code>). When running on localhost, the registration form will send payment verification requests to this live API backend instead of direct client-side Firestore writes (which fail due to security rules).</p>
+                <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                    <div style="flex:1; min-width:160px;">
+                        <input type="text" id="vercelUrlInput" placeholder="e.g. https://chessform.vercel.app"
+                            style="width:100%; padding:10px 14px; background:#111113; border:1px solid var(--border); border-radius:8px; color:var(--text); font-family:'Inter',sans-serif; font-size:14px; outline:none; transition: border-color 0.2s;"
+                            onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'"
+                            onkeydown="if(event.key==='Enter') saveVercelUrl()">
+                    </div>
+                    <button class="login-btn" onclick="saveVercelUrl()" id="saveVercelUrlBtn" style="width:auto; padding:10px 20px; font-size:13px;">
+                        <i class="fas fa-save"></i> Save URL
+                    </button>
+                </div>
+                <div id="vercelUrlStatus" style="margin-top:10px; font-size:12px; color:var(--muted);"></div>
             </div>
 
 
@@ -1238,7 +1381,45 @@
                 </div>
             </div>
 
-            <!-- 📊 Registration Analytics -->
+            <!-- ⚠️ New Tournament Reset -->
+            <div class="danger-box">
+                <div class="section-title"><i class="fas fa-rotate-right"></i> &nbsp;New Tournament Setup</div>
+                <p style="font-size:13px; color:var(--muted); margin-top:4px;">Clear old data to start a new tournament. This action cannot be undone.</p>
+
+                <div class="reset-grid">
+                    <button class="danger-btn" id="deleteRegBtn" onclick="confirmReset('registrations')">
+                        <i class="fas fa-trash-can"></i> Delete All Registrations
+                    </button>
+                    <button class="danger-btn" id="resetCounterBtn" onclick="confirmReset('counter')">
+                        <i class="fas fa-arrow-rotate-left"></i> Reset Card ID Counter
+                    </button>
+                </div>
+
+                <!-- EventID Control -->
+                <div class="event-id-row" style="flex-direction:column; align-items:stretch;">
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:12px;">
+                        <div>
+                            <span style="color:var(--text); font-weight:600;"><i class="fas fa-key" style="color:var(--gold);"></i> &nbsp;Event ID</span><br>
+                            <span style="font-size:12px;">Change this for a new tournament so past users can register again</span>
+                        </div>
+                    </div>
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        <input type="text" id="eventIdInput" placeholder="e.g. tournament_april_2026" 
+                            style="flex:1; padding:10px 14px; background:#111113; border:1px solid var(--border); border-radius:8px; color:var(--text); font-family:monospace; font-size:14px; outline:none; transition: border-color 0.2s;"
+                            onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'"
+                            onkeydown="if(event.key==='Enter') saveEventId()">
+                        <button class="login-btn" onclick="saveEventId()" id="saveEventIdBtn" style="width:auto; padding:10px 20px; font-size:13px;">
+                            <i class="fas fa-save"></i> Save
+                        </button>
+                    </div>
+                    <div id="eventIdStatus" style="margin-top:8px; font-size:12px; color:var(--muted);"></div>
+                </div>
+            </div>
+
+            </div> <!-- Closing #tab-config -->
+
+            <div class="tab-content-panel" id="tab-registrations">
+                <!-- 📊 Registration Analytics -->
             <div class="card-box" id="analyticsCard">
                 <div class="section-title" style="margin-bottom:16px;"><i class="fas fa-chart-bar" style="color:var(--gold);"></i> &nbsp;Registration Analytics</div>
 
@@ -1302,9 +1483,23 @@
                 <div class="reg-list" id="userList" style="max-height:340px; overflow-y:auto; scrollbar-width:thin; scrollbar-color:rgba(198,168,124,0.3) transparent;">
                     <div class="empty-msg"><span class="spinner"></span></div>
                 </div>
+            </div> <!-- Closing #tab-registrations -->
+
+            <div class="tab-content-panel" id="tab-pending">
+                <!-- Pending Approvals -->
+                <div class="card-box">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:12px;">
+                        <div class="section-title" style="margin-bottom:0;"><i class="fas fa-clock"></i> &nbsp;Pending Approvals</div>
+                    </div>
+                    <p style="font-size:13px; color:var(--muted); margin-bottom:16px;">These players have registered but require payment verification. Verify the UTR / transaction first, then Approve or Reject.</p>
+                    <div class="reg-list" id="pendingList" style="max-height:450px; overflow-y:auto; scrollbar-width:thin; scrollbar-color:rgba(198,168,124,0.3) transparent;">
+                        <div class="empty-msg">No pending registrations.</div>
+                    </div>
+                </div>
             </div>
 
-            <!-- Tournament Mode Toggle -->
+            <div class="tab-content-panel" id="tab-tournament">
+                <!-- Tournament Mode Toggle -->
             <div class="card-box">
                 <div class="toggle-row">
                     <div class="toggle-info">
@@ -1391,40 +1586,7 @@
                 </div>
             </div>
 
-            <!-- ⚠️ New Tournament Reset -->
-            <div class="danger-box">
-                <div class="section-title"><i class="fas fa-rotate-right"></i> &nbsp;New Tournament Setup</div>
-                <p style="font-size:13px; color:var(--muted); margin-top:4px;">Clear old data to start a new tournament. This action cannot be undone.</p>
-
-                <div class="reset-grid">
-                    <button class="danger-btn" id="deleteRegBtn" onclick="confirmReset('registrations')">
-                        <i class="fas fa-trash-can"></i> Delete All Registrations
-                    </button>
-                    <button class="danger-btn" id="resetCounterBtn" onclick="confirmReset('counter')">
-                        <i class="fas fa-arrow-rotate-left"></i> Reset Card ID Counter
-                    </button>
-                </div>
-
-                <!-- EventID Control -->
-                <div class="event-id-row" style="flex-direction:column; align-items:stretch;">
-                    <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:12px;">
-                        <div>
-                            <span style="color:var(--text); font-weight:600;"><i class="fas fa-key" style="color:var(--gold);"></i> &nbsp;Event ID</span><br>
-                            <span style="font-size:12px;">Change this for a new tournament so past users can register again</span>
-                        </div>
-                    </div>
-                    <div style="display:flex; gap:10px; align-items:center;">
-                        <input type="text" id="eventIdInput" placeholder="e.g. tournament_april_2026" 
-                            style="flex:1; padding:10px 14px; background:#111113; border:1px solid var(--border); border-radius:8px; color:var(--text); font-family:monospace; font-size:14px; outline:none; transition: border-color 0.2s;"
-                            onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'"
-                            onkeydown="if(event.key==='Enter') saveEventId()">
-                        <button class="login-btn" onclick="saveEventId()" id="saveEventIdBtn" style="width:auto; padding:10px 20px; font-size:13px;">
-                            <i class="fas fa-save"></i> Save
-                        </button>
-                    </div>
-                    <div id="eventIdStatus" style="margin-top:8px; font-size:12px; color:var(--muted);"></div>
-                </div>
-            </div>
+            </div> <!-- Closing #tab-tournament -->
 
         </div>
     </div>
@@ -1508,6 +1670,22 @@
     <!-- Duplicate confirmModal removed -->
 
     <script>
+        // Initialize EmailJS
+        emailjs.init("RigOHkJ8jBL9S7079");
+
+        // ─── Dashboard Tab Switching Logic ───────────────────────────
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-link').forEach(link => link.classList.remove('active'));
+            document.querySelectorAll('.tab-content-panel').forEach(panel => panel.classList.remove('active'));
+
+            const activeLink = document.getElementById(`tablink-${tabId}`);
+            const activePanel = document.getElementById(`tab-${tabId}`);
+            if (activeLink) activeLink.classList.add('active');
+            if (activePanel) activePanel.classList.add('active');
+
+            localStorage.setItem('adminActiveTab', tabId);
+        }
+
         // ─── Toast Notification System ───────────────────────────────
         function showToast(type, title, message, duration = 3500) {
             const container = document.getElementById('toastContainer');
@@ -1842,7 +2020,13 @@
                         return;
                     }
                     const idToken = await currentUser.getIdToken(true);
-                    fetch('/api/sendEmail', {
+                    
+                    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                    const vercelUrlInputVal = (document.getElementById('vercelUrlInput') ? document.getElementById('vercelUrlInput').value : '').trim();
+                    const fallbackUrl = vercelUrlInputVal || 'https://chessform.vercel.app';
+                    const apiEndpoint = isLocalhost ? `${fallbackUrl.replace(/\/$/, '')}/api/sendEmail` : '/api/sendEmail';
+                    
+                    fetch(apiEndpoint, {
                         method: 'POST',
                         headers: { 
                             'Content-Type': 'application/json',
@@ -1902,6 +2086,9 @@
         function loadAdminData() {
             if (typeof db === 'undefined') return;
 
+            // Initialize tabs
+            switchTab(localStorage.getItem('adminActiveTab') || 'config');
+
             loadPromoCodes(); // Load promo codes list
             loadCommunityLinks(); // Load Community Links
 
@@ -1931,20 +2118,28 @@
                         feeStatus.innerHTML = `<i class="fas fa-lock" style="color:var(--gold);"></i> Current fee: <strong style="color:var(--gold);">₹${currentFee}</strong> &nbsp;·&nbsp; <span style="color:var(--muted);">Fetched securely from Firestore at payment time.</span>`;
                     }
 
-                    // Load Razorpay API Key
-                    const razorpayKeyInput = document.getElementById('razorpayKeyInput');
-                    const razorpayKeyStatus = document.getElementById('razorpayKeyStatus');
-                    const currentRazorpayKey = data.razorpayKey || '';
-                    if (razorpayKeyInput && razorpayKeyInput !== document.activeElement) {
-                        razorpayKeyInput.value = currentRazorpayKey;
+                    // Load UPI VPA ID
+                    const upiIdInput = document.getElementById('upiIdInput');
+                    const upiIdStatus = document.getElementById('upiIdStatus');
+                    const currentUpiId = data.upiId || 'chessbird@ybl';
+                    if (upiIdInput && upiIdInput !== document.activeElement) {
+                        upiIdInput.value = currentUpiId;
                     }
-                    if (razorpayKeyStatus) {
-                        if (currentRazorpayKey) {
-                            const maskedKey = currentRazorpayKey.substring(0, 8) + '••••••••' + currentRazorpayKey.slice(-4);
-                            razorpayKeyStatus.innerHTML = `<i class="fas fa-check-circle" style="color:var(--success);"></i> Active Key: <strong style="font-family:monospace;">${maskedKey}</strong>`;
-                        } else {
-                            razorpayKeyStatus.innerHTML = `<i class="fas fa-exclamation-triangle" style="color:var(--gold);"></i> Using default test key.`;
-                        }
+                    if (upiIdStatus) {
+                        upiIdStatus.innerHTML = `<i class="fas fa-check-circle" style="color:var(--success);"></i> Active UPI ID: <strong style="color:var(--gold);">${escHtml(currentUpiId)}</strong>`;
+                    }
+
+                    // Load Vercel Live URL
+                    const vercelUrlInput = document.getElementById('vercelUrlInput');
+                    const vercelUrlStatus = document.getElementById('vercelUrlStatus');
+                    const currentVercelUrl = data.vercelUrl || '';
+                    if (vercelUrlInput && vercelUrlInput !== document.activeElement) {
+                        vercelUrlInput.value = currentVercelUrl;
+                    }
+                    if (vercelUrlStatus) {
+                        vercelUrlStatus.innerHTML = currentVercelUrl 
+                            ? `<i class="fas fa-link" style="color:var(--success);"></i> Active Vercel URL: <strong style="color:var(--gold);">${escHtml(currentVercelUrl)}</strong>`
+                            : `<span style="color:var(--muted);"><i class="fas fa-exclamation-circle"></i> No Vercel URL configured. Defaulting to production same-origin calls.</span>`;
                     }
                     // Show registration status hint
                     const statusEl = document.getElementById('regToggleStatus');
@@ -2080,13 +2275,18 @@
                 const list = document.getElementById('userList');
                 list.innerHTML = '';
                 
+                const pendingList = document.getElementById('pendingList');
+                if (pendingList) pendingList.innerHTML = '';
+                
                 const docIds = new Set([...Object.keys(publicPlayers), ...Object.keys(privatePlayers)]);
                 
                 if (docIds.size === 0) {
                     list.innerHTML = '<div class="empty-msg">No registrations found.</div>';
+                    if (pendingList) pendingList.innerHTML = '<div class="empty-msg">No pending registrations.</div>';
                     window.allPlayersRaw = [];
                     renderAnalytics([]);
                     renderTournamentManager();
+                    updatePendingBadge(0);
                     return;
                 }
 
@@ -2108,34 +2308,97 @@
 
                 window.allPlayersRaw = mergedArray;
 
-                mergedArray.forEach((d) => {
-                    const safeId = CSS.escape(d.docId);
-                    list.innerHTML += `
-                        <div class="reg-item" id="regitem-${escHtml(d.docId)}">
-                            <div class="reg-left">
-                                <strong>${escHtml(d.name || '—')}</strong>
-                                <span>@${escHtml(d.username || '—')} &nbsp;|&nbsp; ${escHtml(d.phone || '—')} &nbsp;|&nbsp; Rating: ${escHtml(String(d.rating || '—'))}</span>
-                                <span style="color:#a1a1aa; margin-top:2px;">${escHtml(d.email || '—')}</span>
-                            </div>
-                            <div class="reg-actions">
-                                <span class="reg-id">${escHtml(d.cardId || 'No ID')}</span>
-                                ${d.paymentId ? `<span style="font-size:11px; color:var(--success); background:rgba(34,197,94,0.1); padding:2px 6px; border-radius:4px;"><i class="fas fa-check-circle"></i> ${escHtml(d.paymentId)}</span>` : ''}
-                                ${d.amountPaid !== undefined ? `<span style="font-size:11px; color:var(--gold); background:rgba(212,175,55,0.1); padding:2px 6px; border-radius:4px;"><i class="fas fa-rupee-sign"></i> ${parseFloat(d.amountPaid)/100}</span>` : ''}
-                                ${d.promoCode ? `<span style="font-size:11px; color:var(--primary); background:rgba(0,123,255,0.1); padding:2px 6px; border-radius:4px;"><i class="fas fa-tag"></i> ${escHtml(d.promoCode)}</span>` : ''}
-                                <div class="reg-action-btns">
-                                    <button class="reg-edit-btn" onclick="openEditPlayer('${escHtml(d.docId)}')">
-                                        <i class="fas fa-pen"></i> Edit
-                                    </button>
-                                    <button class="reg-del-btn" onclick="deletePlayer('${escHtml(d.docId)}')">
-                                        <i class="fas fa-trash"></i> Delete
-                                    </button>
-                                </div>
-                            </div>
-                        </div>`;
-                });
+                // Split into approved and pending players
+                const approvedPlayers = mergedArray.filter(p => p.cardId !== 'Pending');
+                const pendingPlayers = mergedArray.filter(p => p.cardId === 'Pending');
 
-                renderAnalytics(mergedArray);
+                // Update pending badge
+                updatePendingBadge(pendingPlayers.length);
+
+                // Render approved players in registrations tab
+                if (approvedPlayers.length === 0) {
+                    list.innerHTML = '<div class="empty-msg">No registrations found.</div>';
+                } else {
+                    approvedPlayers.forEach((d) => {
+                        const safeId = CSS.escape(d.docId);
+                        list.innerHTML += `
+                            <div class="reg-item" id="regitem-${escHtml(d.docId)}">
+                                <div class="reg-left">
+                                    <strong>${escHtml(d.name || '—')}</strong>
+                                    <span>@${escHtml(d.username || '—')} &nbsp;|&nbsp; ${escHtml(d.phone || '—')} &nbsp;|&nbsp; Rating: ${escHtml(String(d.rating || '—'))}</span>
+                                    <span style="color:#a1a1aa; margin-top:2px;">${escHtml(d.email || '—')}</span>
+                                </div>
+                                <div class="reg-actions">
+                                    <span class="reg-id">${escHtml(d.cardId || 'No ID')}</span>
+                                    ${d.paymentId ? `<span style="font-size:11px; color:var(--success); background:rgba(34,197,94,0.1); padding:2px 6px; border-radius:4px;"><i class="fas fa-check-circle"></i> ${escHtml(d.paymentId)}</span>` : ''}
+                                    ${d.amountPaid !== undefined ? `<span style="font-size:11px; color:var(--gold); background:rgba(212,175,55,0.1); padding:2px 6px; border-radius:4px;"><i class="fas fa-rupee-sign"></i> ${parseFloat(d.amountPaid)/100}</span>` : ''}
+                                    ${d.promoCode ? `<span style="font-size:11px; color:var(--primary); background:rgba(0,123,255,0.1); padding:2px 6px; border-radius:4px;"><i class="fas fa-tag"></i> ${escHtml(d.promoCode)}</span>` : ''}
+                                    <div class="reg-action-btns">
+                                        <button class="reg-edit-btn" onclick="openEditPlayer('${escHtml(d.docId)}')">
+                                            <i class="fas fa-pen"></i> Edit
+                                        </button>
+                                        <button class="reg-del-btn" onclick="deletePlayer('${escHtml(d.docId)}')">
+                                            <i class="fas fa-trash"></i> Delete
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>`;
+                    });
+                }
+
+                // Render pending players in pending approvals tab
+                if (pendingList) {
+                    if (pendingPlayers.length === 0) {
+                        pendingList.innerHTML = '<div class="empty-msg">No pending registrations.</div>';
+                    } else {
+                        pendingPlayers.forEach((d) => {
+                            const utr = d.paymentId ? d.paymentId.replace('UPI_', '') : '—';
+                            const amountStr = d.amountPaid !== undefined ? `₹${parseFloat(d.amountPaid) / 100}` : '—';
+                            pendingList.innerHTML += `
+                                <div class="reg-item" id="pendingitem-${escHtml(d.docId)}">
+                                    <div class="reg-left">
+                                        <strong>${escHtml(d.name || '—')}</strong>
+                                        <span>@${escHtml(d.username || '—')} &nbsp;|&nbsp; ${escHtml(d.phone || '—')} &nbsp;|&nbsp; Rating: ${escHtml(String(d.rating || '—'))}</span>
+                                        <span style="color:#a1a1aa; margin-top:2px;">${escHtml(d.email || '—')}</span>
+                                        <div style="margin-top:8px; display:flex; gap:10px; flex-wrap:wrap; font-size:12px;">
+                                            <span style="color:var(--gold); background:rgba(212,175,55,0.1); padding:2px 8px; border-radius:4px;">
+                                                <i class="fas fa-receipt"></i> UTR: <strong>${escHtml(utr)}</strong>
+                                            </span>
+                                            <span style="color:var(--success); background:rgba(34,197,94,0.1); padding:2px 8px; border-radius:4px;">
+                                                <i class="fas fa-rupee-sign"></i> Amount: <strong>${amountStr}</strong>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="reg-actions" style="margin-top:8px;">
+                                        <div class="pending-actions">
+                                            <button class="approve-btn" onclick="approvePlayer('${escHtml(d.docId)}')">
+                                                <i class="fas fa-check"></i> Approve
+                                            </button>
+                                            <button class="reject-btn" onclick="rejectPlayer('${escHtml(d.docId)}')">
+                                                <i class="fas fa-times"></i> Reject
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>`;
+                        });
+                    }
+                }
+
+                // Render analytics using approved players only
+                renderAnalytics(approvedPlayers);
                 renderTournamentManager();
+            }
+
+            function updatePendingBadge(count) {
+                const pendingBadge = document.getElementById('pendingBadge');
+                if (pendingBadge) {
+                    if (count > 0) {
+                        pendingBadge.textContent = count;
+                        pendingBadge.style.display = 'inline-block';
+                    } else {
+                        pendingBadge.style.display = 'none';
+                    }
+                }
             }
 
             db.collection('registrations').onSnapshot((snapshot) => {
@@ -2496,40 +2759,73 @@
         }
 
         // ─── Save Razorpay API Key ───────────────────────────────────
-        async function saveRazorpayKey() {
-            const input = document.getElementById('razorpayKeyInput');
-            const btn   = document.getElementById('saveRazorpayKeyBtn');
-            const statusEl = document.getElementById('razorpayKeyStatus');
+        async function saveUpiId() {
+            const input = document.getElementById('upiIdInput');
+            const btn   = document.getElementById('saveUpiIdBtn');
+            const statusEl = document.getElementById('upiIdStatus');
 
-            const key = input.value.trim();
+            const upiId = input.value.trim();
 
-            if (!key) {
-                showToast('error', 'Invalid Key', 'API Key cannot be empty.');
+            if (!upiId) {
+                showToast('error', 'Invalid UPI ID', 'UPI VPA address cannot be empty.');
                 input.focus();
                 return;
             }
 
             btn.disabled = true;
-            btn.innerHTML = '<span class="spinner"></span>';
+            btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;margin-right:5px;border-top-color:currentColor;"></span> Saving...';
 
             try {
-                await db.collection('settings').doc('global').update({ razorpayKey: key });
-                showToast('success', 'API Key Updated! 🔑', `Razorpay API Key has been successfully updated.`);
+                await db.collection('settings').doc('global').update({ upiId: upiId });
+                showToast('success', 'UPI ID Updated! 🔑', `UPI VPA Address has been successfully updated.`);
                 btn.innerHTML = '<i class="fas fa-check"></i> Saved!';
                 btn.style.background = 'var(--success)';
                 
-                const maskedKey = key.substring(0, 8) + '••••••••' + key.slice(-4);
-                statusEl.innerHTML = `<i class="fas fa-check-circle" style="color:var(--success);"></i> Active Key: <strong style="font-family:monospace;">${maskedKey}</strong>`;
+                statusEl.innerHTML = `<i class="fas fa-check-circle" style="color:var(--success);"></i> Active UPI ID: <strong style="font-family:monospace; color:var(--gold);">${upiId}</strong>`;
                 
                 setTimeout(() => {
                     btn.disabled = false;
                     btn.style.background = '';
-                    btn.innerHTML = '<i class="fas fa-save"></i> Save Key';
+                    btn.innerHTML = '<i class="fas fa-save"></i> Save UPI ID';
                 }, 2500);
             } catch (err) {
                 showToast('error', 'Save Failed', err.message);
                 btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-save"></i> Save Key';
+                btn.innerHTML = '<i class="fas fa-save"></i> Save UPI ID';
+            }
+        }
+
+        async function saveVercelUrl() {
+            const input = document.getElementById('vercelUrlInput');
+            const btn   = document.getElementById('saveVercelUrlBtn');
+            const statusEl = document.getElementById('vercelUrlStatus');
+
+            let vercelUrl = input.value.trim();
+            // Remove trailing slash if present
+            if (vercelUrl && vercelUrl.endsWith('/')) {
+                vercelUrl = vercelUrl.slice(0, -1);
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;margin-right:5px;border-top-color:currentColor;"></span> Saving...';
+
+            try {
+                await db.collection('settings').doc('global').update({ vercelUrl: vercelUrl });
+                showToast('success', 'Vercel Live URL Updated! 🔗', `Vercel URL has been successfully updated.`);
+                btn.innerHTML = '<i class="fas fa-check"></i> Saved!';
+                btn.style.background = 'var(--success)';
+                
+                statusEl.innerHTML = `<i class="fas fa-link" style="color:var(--success);"></i> Active Vercel URL: <strong style="font-family:monospace; color:var(--gold);">${vercelUrl}</strong>`;
+                
+                setTimeout(() => {
+                    btn.disabled = false;
+                    btn.style.background = '';
+                    btn.innerHTML = '<i class="fas fa-save"></i> Save URL';
+                }, 2500);
+            } catch (err) {
+                showToast('error', 'Save Failed', err.message);
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-save"></i> Save URL';
             }
         }
 
@@ -2701,7 +2997,127 @@
             });
         }
 
-        // ─── Close edit modal on overlay click ───────────────────────
+        
+
+        // ─── Approve Pending Player ───────────────────────────────────
+        async function approvePlayer(docId) {
+            const player = (window.allPlayersRaw || []).find(p => p.docId === docId);
+            if (!player) {
+                showToast('error', 'Player Not Found', 'Could not locate player in local state.');
+                return;
+            }
+
+            const btn = document.querySelector(`#pendingitem-${CSS.escape(docId)} .approve-btn`);
+            const rejectBtn = document.querySelector(`#pendingitem-${CSS.escape(docId)} .reject-btn`);
+            if (btn) btn.disabled = true;
+            if (rejectBtn) rejectBtn.disabled = true;
+
+            try {
+                // Read all approved players' IDs to avoid collisions
+                const snapshot = await db.collection('registrations').get();
+                const usedIds = new Set();
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    if (data.cardId && data.cardId !== 'Pending' && data.cardId !== 'No ID') {
+                        usedIds.add(data.cardId);
+                    }
+                });
+
+                // Generate random unique 3-digit ID (CB100 - CB999)
+                function getRandomId() {
+                    const num = Math.floor(Math.random() * 900) + 100;
+                    return 'CB' + num;
+                }
+
+                let cardId;
+                let attempts = 0;
+                do {
+                    cardId = getRandomId();
+                    attempts++;
+                    if (attempts > 900) throw new Error('Not enough unique IDs available.');
+                } while (usedIds.has(cardId));
+
+                // Update the registrations document
+                await db.collection('registrations').doc(docId).update({ cardId: cardId });
+
+                showToast('success', 'Player Approved! 🎉', `${player.name} has been approved with Card ID: ${cardId}`);
+
+                // Trigger EmailJS approval email
+                const templateParams = {
+                    name: player.name || '',
+                    username: player.username || '',
+                    email: player.email || '',
+                    user_email: player.email || '',
+                    phone: player.phone || '',
+                    rating: player.rating || '',
+                    cardId: cardId,
+                    status: 'approved'
+                };
+
+                await emailjs.send('service_nfjpyi6', 'template_udal0hk', templateParams);
+                showToast('info', 'Confirmation Sent ✉️', `Approval email sent to ${player.email}`);
+
+            } catch (err) {
+                console.error('Approve Failed:', err);
+                showToast('error', 'Approval Failed', err.message);
+                if (btn) btn.disabled = false;
+                if (rejectBtn) rejectBtn.disabled = false;
+            }
+        }
+
+        // ─── Reject Pending Player ───────────────────────────────────
+        async function rejectPlayer(docId) {
+            const player = (window.allPlayersRaw || []).find(p => p.docId === docId);
+            if (!player) {
+                showToast('error', 'Player Not Found', 'Could not locate player in local state.');
+                return;
+            }
+
+            showSoftConfirm({
+                icon: '<i class="fas fa-user-xmark" style="color:#ef4444;"></i>',
+                title: `Reject "${escHtml(player.name)}"?`,
+                desc: 'This will reject the payment and permanently delete their registration. They will receive a rejection email notice. This cannot be undone.',
+                confirmText: 'Yes, Reject',
+                onConfirm: async () => {
+                    const btn = document.querySelector(`#pendingitem-${CSS.escape(docId)} .approve-btn`);
+                    const rejectBtn = document.querySelector(`#pendingitem-${CSS.escape(docId)} .reject-btn`);
+                    if (btn) btn.disabled = true;
+                    if (rejectBtn) rejectBtn.disabled = true;
+
+                    try {
+                        const batch = db.batch();
+                        batch.delete(db.collection('registrations').doc(docId));
+                        batch.delete(db.collection('registrations_private').doc(docId));
+                        batch.delete(db.collection('pass_attempts').doc(player.phone || docId));
+                        await batch.commit();
+
+                        showToast('success', 'Player Rejected', `"${escHtml(player.name)}" has been rejected and deleted.`);
+
+                        // Trigger EmailJS rejection email
+                        const templateParams = {
+                            name: player.name || '',
+                            username: player.username || '',
+                            email: player.email || '',
+                            user_email: player.email || '',
+                            phone: player.phone || '',
+                            rating: player.rating || '',
+                            cardId: 'Rejected',
+                            status: 'rejected'
+                        };
+
+                        await emailjs.send('service_nfjpyi6', 'template_udal0hk', templateParams);
+                        showToast('info', 'Notice Sent ✉️', `Rejection email sent to ${player.email}`);
+
+                    } catch (err) {
+                        console.error('Reject Failed:', err);
+                        showToast('error', 'Rejection Failed', err.message);
+                        if (btn) btn.disabled = false;
+                        if (rejectBtn) rejectBtn.disabled = false;
+                    }
+                }
+            });
+        }
+// ─── Close edit modal on overlay click ───────────────────────
         document.getElementById('editPlayerModal').addEventListener('click', function(e) {
             if (e.target === this) closeEditModal();
         });
@@ -3355,9 +3771,10 @@
                     const data = doc.data();
                     if (data.cardId && data.cardId !== 'Pending' && data.cardId !== 'No ID') {
                         usedIds.add(data.cardId);
-                    } else {
+                    } else if (data.cardId === 'No ID' || !data.cardId) {
                         pendingDocs.push(doc);
                     }
+                    // Skip 'Pending' cardId as they require manual verification approval first
                 });
 
                 if (pendingDocs.length === 0) {

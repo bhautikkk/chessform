@@ -1,5 +1,3 @@
-const Razorpay = require('razorpay');
-const crypto = require('crypto');
 const admin = require('firebase-admin');
 const nodemailer = require('nodemailer');
 
@@ -86,6 +84,16 @@ async function sendRegistrationEmail(publicData, privateData) {
 }
 
 export default async function handler(req, res) {
+    // Enable CORS for frontend calls
+    res.setHeader('Access-Control-Allow-Credentials', true);
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
+    res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
+
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
+    }
+
     if (req.method !== 'POST') {
         return res.status(405).json({ success: false, error: 'Method Not Allowed' });
     }
@@ -95,12 +103,7 @@ export default async function handler(req, res) {
     }
 
     const { 
-        razorpay_payment_id, 
-        razorpay_order_id, 
-        razorpay_signature,
-        razorpay_key_id, // Sent from frontend to dynamically identify key
-        
-        // Registration details sent from frontend
+        paymentId, 
         name,
         username,
         email,
@@ -111,7 +114,7 @@ export default async function handler(req, res) {
         amountPaid
     } = req.body;
 
-    if (!razorpay_payment_id || !phone) {
+    if (!paymentId || !phone) {
         return res.status(400).json({ success: false, error: 'Missing payment or user details' });
     }
 
@@ -122,10 +125,15 @@ export default async function handler(req, res) {
             return res.status(403).json({ success: false, error: 'Enrollment is currently closed.' });
         }
 
-        let paymentAmount = amountPaid; // Default to what frontend claims
+        let paymentAmount = 0;
 
         // 1. Verify Payment OR Promo Code
-        const isFreeReg = razorpay_payment_id.startsWith('FREE_');
+        const isFreeReg = paymentId.startsWith('FREE_');
+        const isUpiReg = paymentId.startsWith('UPI_');
+
+        if (!isFreeReg && !isUpiReg) {
+            return res.status(400).json({ success: false, error: 'Invalid paymentId format.' });
+        }
 
         if (isFreeReg) {
             // Validate 100% Promo Code securely via Firestore
@@ -140,53 +148,19 @@ export default async function handler(req, res) {
             
             paymentAmount = 0; // Verified free
         } else {
-            // Verify Razorpay Payment (100% Secure Backend Verification)
-            let activeKeyId = razorpay_key_id || process.env.RAZORPAY_KEY_ID || 'rzp_test_SdF2J3WDCQa5Ko';
-            let activeSecret = process.env.RAZORPAY_KEY_SECRET;
-
-            // Dynamically switch secret if a test key is used
-            if (activeKeyId.startsWith('rzp_test_')) {
-                activeSecret = process.env.RAZORPAY_TEST_KEY_SECRET || process.env.RAZORPAY_KEY_SECRET;
+            // UPI Payment verification
+            const utr = paymentId.substring(4); // remove "UPI_" prefix
+            if (utr.length !== 12 || !/^\d{12}$/.test(utr)) {
+                return res.status(400).json({ success: false, error: 'UTR must be exactly 12 digits.' });
             }
 
-            if (!activeSecret) {
-                return res.status(500).json({ 
-                    success: false, 
-                    error: `Razorpay Secret Key is missing in Vercel. (Key ID: ${activeKeyId}). Please set it in Vercel environment variables.` 
-                });
+            // Check duplicate UTR in Firestore to prevent replay attacks
+            const duplicateCheck = await db.collection('registrations_private').where('paymentId', '==', paymentId).get();
+            if (!duplicateCheck.empty) {
+                return res.status(400).json({ success: false, error: 'This UTR has already been submitted.' });
             }
 
-            const razorpay = new Razorpay({
-                key_id: activeKeyId,
-                key_secret: activeSecret,
-            });
-
-            let payment;
-            try {
-                payment = await razorpay.payments.fetch(razorpay_payment_id);
-            } catch (fetchErr) {
-                console.error("Razorpay Fetch Error:", fetchErr);
-                let helpfulError = "Invalid Payment ID or Key mismatch.";
-                if (fetchErr.statusCode === 401) {
-                    helpfulError = "Unauthorized: The Secret Key (RAZORPAY_KEY_SECRET or RAZORPAY_TEST_KEY_SECRET) in Vercel environment variables is incorrect or does not match the Key ID used by the frontend (" + activeKeyId + ").";
-                } else if (fetchErr.description) {
-                    helpfulError = fetchErr.description;
-                }
-                return res.status(400).json({ 
-                    success: false, 
-                    error: `${helpfulError} (Backend Key ID: ${activeKeyId})` 
-                });
-            }
-            
-            if (!payment) {
-                return res.status(400).json({ success: false, error: 'Invalid Payment ID' });
-            }
-            
-            if (payment.status !== 'captured' && payment.status !== 'authorized') {
-                return res.status(400).json({ success: false, error: `Payment not captured. Status: ${payment.status}` });
-            }
-
-            // --- SECURITY ENHANCEMENT: VERIFY PRICE ---
+            // Calculate correct expected fee amount based on settings configuration and applied promo code
             let baseFeeRs = 29; // default fallback
             if (settingsDoc.exists && settingsDoc.data().registrationFee) {
                 baseFeeRs = parseInt(settingsDoc.data().registrationFee, 10) || 29;
@@ -199,24 +173,13 @@ export default async function handler(req, res) {
                     expectedDiscount = Number(promoDoc.data().discount) || 0;
                 }
             }
-            
-            const expectedAmountPaise = Math.round((baseFeeRs * 100) * (1 - expectedDiscount / 100));
-
-            if (payment.amount < expectedAmountPaise) {
-                console.error(`PRICE TAMPERING DETECTED: Expected ${expectedAmountPaise} paise, but received ${payment.amount} paise.`);
-                return res.status(400).json({ success: false, error: `Security Error: Payment amount paid (₹${payment.amount/100}) is less than the required enrollment fee (₹${expectedAmountPaise/100}).` });
-            }
-            // ------------------------------------------
-            
-            paymentAmount = payment.amount; // Save the REAL amount from Razorpay
+            paymentAmount = Math.round((baseFeeRs * 100) * (1 - expectedDiscount / 100));
         }
 
-        // 2. Save securely to Firestore bypassing client-side rules
-        
         // Check if user already exists
         const userDoc = await db.collection('registrations').doc(phone).get();
         if (userDoc.exists) {
-            return res.status(400).json({ success: false, error: 'User already registered.' });
+            return res.status(400).json({ success: false, error: 'User already registered with this phone number.' });
         }
 
         // Public Data
@@ -231,11 +194,11 @@ export default async function handler(req, res) {
         // Private Data
         const privateData = {
             email: String(email || '').trim().substring(0, 200),
-            paymentId: razorpay_payment_id,
+            paymentId: paymentId,
             timestamp: admin.firestore.FieldValue.serverTimestamp(),
             promoCode: promoCode || null,
             discountApplied: discountApplied || 0,
-            amountPaid: paymentAmount // Save the REAL amount
+            amountPaid: paymentAmount // Store the expected payment in paise
         };
 
         const batch = db.batch();
@@ -244,7 +207,7 @@ export default async function handler(req, res) {
         
         await batch.commit();
 
-        // Send registration email and wait for it to complete before closing the Vercel function
+        // Send registration email
         try {
             await sendRegistrationEmail(publicData, privateData);
         } catch (err) {

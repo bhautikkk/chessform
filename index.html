@@ -311,8 +311,6 @@
         }
     </style>
 
-    <!-- Razorpay Checkout -->
-    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
     <!-- Firebase SDK (Compat Version) -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -650,6 +648,40 @@
                         </div>
                     </div>
 
+                    <!-- UPI Payment Card (Glassmorphic) -->
+                    <div class="upi-card" id="upiPaymentCard" style="display: none;">
+                        <div class="upi-card-title">
+                            <i class="fas fa-qrcode"></i>
+                            <span>UPI Payment</span>
+                        </div>
+                        <p class="upi-card-desc">Scan the QR code below or copy the UPI ID to pay using any UPI app (GPay, PhonePe, Paytm, BHIM, etc.). After paying, enter your 12-digit transaction UTR below.</p>
+                        
+                        <div class="upi-id-copy-row">
+                            <span class="upi-id-text" id="upiIdDisplay">chessbird@ybl</span>
+                            <button type="button" class="upi-copy-btn" id="upiCopyBtn" title="Copy UPI ID">
+                                <i class="far fa-copy"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="upi-qr-wrapper">
+                            <div class="upi-qr-title">Scan to Pay <span id="upiAmountDisplay">₹29</span></div>
+                            <div class="upi-qr-code">
+                                <img id="upiQrCodeImg" src="" alt="UPI QR Code">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group upi-utr-wrapper">
+                            <label for="upiUtrInput">12-Digit Transaction UTR / Ref No.</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-list-ol icon-left"></i>
+                                <input type="text" id="upiUtrInput" class="form-control" placeholder="e.g. 123456789012" maxlength="12" pattern="[0-9]{12}" title="Please enter the 12-digit transaction UTR/Reference ID.">
+                            </div>
+                            <div class="upi-validation-msg" id="upiUtrError">
+                                <i class="fas fa-exclamation-circle"></i> Please enter exactly 12 numeric digits.
+                            </div>
+                        </div>
+                    </div>
+
                     <button type="submit" class="submit-btn" id="submitBtn">
                         <span class="btn-text">Enroll & Proceed to Pay <i class="fas fa-arrow-right arrow-icon"></i></span>
                         <div class="btn-glow"></div>
@@ -740,7 +772,7 @@
                 <div class="fvs-step-num">2</div>
                 <div class="fvs-step-text">
                     <h4>Make Payment</h4>
-                    <p>Complete a secure payment via Razorpay to receive your confirmation.</p>
+                    <p>Complete the UPI payment and enter the 12-digit transaction UTR reference.</p>
                 </div>
             </div>
             <div class="fvs-step">

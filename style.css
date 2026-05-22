@@ -1421,3 +1421,149 @@ html {
     .promo-popup-emoji { font-size: 3rem; }
     .promo-popup-box h3 { font-size: 1.4rem; }
 }
+
+/* --- UPI Payment Card Styles --- */
+.upi-card {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(198, 168, 124, 0.25);
+    border-radius: 16px;
+    padding: 24px;
+    margin: 20px 0;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    animation: slideUpFade 0.5s var(--ease-out-expo) forwards;
+}
+
+.upi-card:hover {
+    border-color: rgba(198, 168, 124, 0.45);
+    box-shadow: 0 12px 40px 0 rgba(198, 168, 124, 0.08);
+}
+
+.upi-card-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.upi-card-desc {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.55;
+    margin-bottom: 20px;
+}
+
+.upi-id-copy-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-bottom: 20px;
+    transition: border-color 0.2s;
+}
+
+.upi-id-copy-row:hover {
+    border-color: var(--border-focus);
+}
+
+.upi-id-text {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: 0.5px;
+    word-break: break-all;
+}
+
+.upi-copy-btn {
+    background: transparent;
+    border: none;
+    color: var(--primary);
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 6px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.upi-copy-btn:hover {
+    background: rgba(198, 168, 124, 0.15);
+    color: #ffffff;
+}
+
+.upi-copy-btn:active {
+    transform: scale(0.92);
+}
+
+.upi-qr-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 24px;
+    padding: 18px;
+    background: rgba(255, 255, 255, 0.01);
+    border: 1px dashed rgba(198, 168, 124, 0.2);
+    border-radius: 12px;
+}
+
+.upi-qr-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.upi-qr-code {
+    width: 150px;
+    height: 150px;
+    background: white;
+    padding: 8px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+}
+
+.upi-qr-code img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.upi-utr-wrapper {
+    margin-bottom: 0;
+}
+
+.upi-utr-wrapper label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+}
+
+.upi-validation-msg {
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: #ef4444;
+    margin-top: 6px;
+    display: none;
+}

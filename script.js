@@ -137,6 +137,12 @@ function initRegistrationApp() {
             currentEventId = doc.exists ? (doc.data().eventId || 'event_default') : 'event_default';
             const isPromoEnabled = doc.exists ? (doc.data().isPromoEnabled !== false) : true; // Default ON
             window.dynamicAdminEmails = doc.exists ? (doc.data().notificationEmails || []) : [];
+            window.activeUpiId = doc.exists ? (doc.data().upiId || 'chessbird@ybl') : 'chessbird@ybl';
+            window.activeVercelUrl = doc.exists ? (doc.data().vercelUrl || '') : '';
+            const upiDisplay = document.getElementById('upiIdDisplay');
+            if (upiDisplay) {
+                upiDisplay.textContent = window.activeUpiId;
+            }
             window.emailMaskingSettings = doc.exists ? {
                 sendFullPhone: doc.data().sendFullPhone !== false,
                 sendFullEmail: doc.data().sendFullEmail !== false,
@@ -151,10 +157,10 @@ function initRegistrationApp() {
                 urgencyBanner.style.display = '';
                 if (isRegistrationOpen) {
                     if (urgencyPulse) urgencyPulse.style.display = 'block';
-                    urgencyText.innerHTML = '<strong style="color: var(--primary);">Enrollments Open</strong> — Join India\'s Premier Chess Academy';
+                    urgencyText.innerHTML = '<strong style="color: var(--primary);">Registrations Open</strong> — Join India\'s Most Exclusive Chess Community';
                 } else {
                     if (urgencyPulse) urgencyPulse.style.display = 'none';
-                    urgencyText.innerHTML = '<strong style="color: #ef4444;">Enrollment Closed</strong> — Stay tuned for the next coaching batch';
+                    urgencyText.innerHTML = '<strong style="color: #ef4444;">Registration Closed</strong> — Stay tuned for the next tournament';
                 }
             }
             // ─────────────────────────────────────────────────────────
@@ -282,18 +288,26 @@ function initRegistrationApp() {
         });
     }
 
-    // ── Update submit button text based on applied promo ──
+    // ── Update submit button text based on applied promo and toggle UPI Payment Card ──
     function updateSubmitBtn() {
         if (!submitBtn) return;
         const btnText = submitBtn.querySelector('.btn-text');
         const mainPrice = document.getElementById('mainPriceDisplay');
         const origPrice = document.getElementById('originalPriceDisplay');
         const discBadge = document.getElementById('discountBadge');
+        const upiPaymentCard = document.getElementById('upiPaymentCard');
+        const upiQrCodeImg = document.getElementById('upiQrCodeImg');
+        const upiAmountDisplay = document.getElementById('upiAmountDisplay');
+        const upiUtrInput = document.getElementById('upiUtrInput');
+        const upiUtrError = document.getElementById('upiUtrError');
 
         if (!btnText || !mainPrice) return;
 
+        let finalRs = BASE_AMOUNT_RS;
+        let isFree = false;
+
         if (appliedPromo && appliedPromo.discount > 0 && appliedPromo.discount < 100) {
-            const finalRs = Math.max(0, (BASE_AMOUNT_RS * (1 - appliedPromo.discount / 100)));
+            finalRs = Math.max(0, (BASE_AMOUNT_RS * (1 - appliedPromo.discount / 100)));
             const finalDisplay = Number.isInteger(finalRs) ? finalRs : finalRs.toFixed(2);
             
             mainPrice.innerHTML = `&#x20B9;${finalDisplay}`;
@@ -301,22 +315,39 @@ function initRegistrationApp() {
             origPrice.style.display = 'inline';
             discBadge.innerHTML = `<i class="fas fa-tag"></i> <span>${appliedPromo.discount}% OFF</span>`;
             discBadge.style.display = 'inline-flex';
-            
-            btnText.innerHTML = `Enroll & Proceed to Pay <i class="fas fa-arrow-right arrow-icon"></i>`;
         } else if (appliedPromo && appliedPromo.discount === 100) {
+            isFree = true;
             mainPrice.innerHTML = `<span style="color:#4ade80;">FREE</span>`;
             origPrice.innerHTML = `&#x20B9;${BASE_AMOUNT_RS}`;
             origPrice.style.display = 'inline';
             discBadge.innerHTML = `<i class="fas fa-tag"></i> <span>100% OFF</span>`;
             discBadge.style.display = 'inline-flex';
-
-            btnText.innerHTML = `Submit Free Enrollment <i class="fas fa-arrow-right arrow-icon"></i>`;
         } else {
             mainPrice.innerHTML = `&#x20B9;${BASE_AMOUNT_RS}`;
             origPrice.style.display = 'none';
             discBadge.style.display = 'none';
+        }
 
-            btnText.innerHTML = `Enroll & Proceed to Pay <i class="fas fa-arrow-right arrow-icon"></i>`;
+        if (isFree || finalRs <= 0) {
+            if (upiPaymentCard) upiPaymentCard.style.display = 'none';
+            if (upiUtrInput) {
+                upiUtrInput.required = false;
+                upiUtrInput.removeAttribute('required');
+            }
+            if (upiUtrError) upiUtrError.style.display = 'none';
+            btnText.innerHTML = `Submit Free Enrollment <i class="fas fa-arrow-right arrow-icon"></i>`;
+        } else {
+            const finalDisplay = Number.isInteger(finalRs) ? finalRs : finalRs.toFixed(2);
+            if (upiPaymentCard) upiPaymentCard.style.display = 'block';
+            if (upiUtrInput) upiUtrInput.required = true;
+            if (upiAmountDisplay) upiAmountDisplay.textContent = `₹${finalDisplay}`;
+            
+            const upiId = window.activeUpiId || 'chessbird@ybl';
+            const qrData = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=ChessBird&am=${finalDisplay}&cu=INR`;
+            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(qrData)}`;
+            if (upiQrCodeImg) upiQrCodeImg.src = qrUrl;
+
+            btnText.innerHTML = `Enroll & Submit Payment <i class="fas fa-arrow-right arrow-icon"></i>`;
         }
     }
 
@@ -420,11 +451,11 @@ function initRegistrationApp() {
         const finalEl  = document.getElementById('promoFinalPrice');
         const priceRow = document.getElementById('promoPriceRow');
 
-        if (titleEl) titleEl.textContent = discount === 100 ? 'Free Enrollment! 🚀' : 'Code Applied!';
+        if (titleEl) titleEl.textContent = discount === 100 ? 'Free Registration! 🚀' : 'Code Applied!';
         if (descEl) {
             descEl.textContent = discount === 100
-                ? `Code "${code}" gives you 100% off — enroll completely FREE!`
-                : `Code "${code}" gives you ${discount}% off your enrollment fee.`;
+                ? `Code "${code}" gives you 100% off — register completely FREE!`
+                : `Code "${code}" gives you ${discount}% off your registration fee.`;
         }
         if (discEl) discEl.textContent = `${discount}% OFF`;
         if (origEl) origEl.textContent = `\u20B9${BASE_AMOUNT_RS}`;
@@ -457,6 +488,54 @@ function initRegistrationApp() {
         });
     }
     // ═══════════════════════════════════════════════════════════
+    
+    // ── UPI Payment Clipboard Copy & UTR Validation ───────────
+    const upiCopyBtn = document.getElementById('upiCopyBtn');
+    if (upiCopyBtn) {
+        upiCopyBtn.addEventListener('click', () => {
+            const upiId = window.activeUpiId || 'chessbird@ybl';
+            navigator.clipboard.writeText(upiId).then(() => {
+                if (typeof PremiumSoundManager !== 'undefined') {
+                    PremiumSoundManager.playSuccess();
+                }
+                const icon = upiCopyBtn.querySelector('i');
+                if (icon) {
+                    icon.className = 'fas fa-check';
+                    setTimeout(() => {
+                        icon.className = 'far fa-copy';
+                    }, 2000);
+                }
+            }).catch(err => {
+                console.error('Could not copy text: ', err);
+            });
+        });
+    }
+
+    const utrInput = document.getElementById('upiUtrInput');
+    const utrError = document.getElementById('upiUtrError');
+    if (utrInput) {
+        utrInput.addEventListener('input', () => {
+            let val = utrInput.value.replace(/\D/g, '');
+            if (val.length > 12) {
+                val = val.substring(0, 12);
+            }
+            utrInput.value = val;
+
+            if (val.length === 12) {
+                if (utrError) utrError.style.display = 'none';
+                const wrapper = utrInput.closest('.input-wrapper');
+                if (wrapper) {
+                    wrapper.classList.remove('is-invalid');
+                    wrapper.classList.add('is-valid');
+                }
+            } else if (val.length === 0) {
+                if (utrError) utrError.style.display = 'none';
+                const wrapper = utrInput.closest('.input-wrapper');
+                if (wrapper) wrapper.classList.remove('is-invalid', 'is-valid');
+            }
+        });
+    }
+    // ───────────────────────────────────────────────────────────
 
     // ── Add checkmark icons to all input wrappers ──
     document.querySelectorAll('.input-wrapper').forEach(wrapper => {
@@ -723,8 +802,10 @@ function initRegistrationApp() {
                     })
                     .finally(() => {
                         // Show success message and transition UI
+                        const currentEventId = 'event_reg_done';
                         localStorage.setItem(currentEventId, 'true');
                         form.style.display = 'none';
+                        const alreadyRegisteredMessage = document.getElementById('alreadyRegisteredMessage');
                         if (alreadyRegisteredMessage) {
                             alreadyRegisteredMessage.style.display = 'block';
                             alreadyRegisteredMessage.style.animation = 'slideUpFade 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards';
@@ -735,70 +816,36 @@ function initRegistrationApp() {
                         }
                     });
             };
-
             // Database Handling — SECURITY HARDENED via BACKEND
-            const handleFinalSave = async (paymentId, usedPromoCode, discountApplied, finalAmountPaise, razorpayKeyId) => {
+            const handleFinalSave = async (paymentId, usedPromoCode, discountApplied, finalAmountPaise) => {
                 // Free registrations (100% off) use 'FREE_<timestamp>' format
                 const isFreeReg = paymentId && /^FREE_\d+$/.test(paymentId);
-                const isRazorpay = paymentId && /^pay_[A-Za-z0-9]{14,}$/.test(paymentId);
+                const isUpiReg = paymentId && /^UPI_\d{12}$/.test(paymentId);
 
-                if (!isFreeReg && !isRazorpay) {
+                if (!isFreeReg && !isUpiReg) {
                     console.error("Invalid paymentId format. Aborting save.", paymentId);
                     alert("Invalid payment reference. Aborting.");
                     return;
                 }
 
                 const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-
-                // Bypass Vercel backend for all registrations ONLY when running locally (since python local server doesn't run Vercel serverless /api functions)
+                
+                // Determine API Endpoint
+                let apiEndpoint = '/api/verifyPayment';
                 if (isLocalhost) {
-                    try {
-                        const publicData = {
-                            name: String(templateParams.name || '').trim().substring(0, 100),
-                            username: String(templateParams.username || '').trim().substring(0, 50),
-                            phone: String(templateParams.phone || '').trim(),
-                            rating: templateParams.rating === 'N/A' ? 'N/A' : (parseInt(templateParams.rating, 10) || 'N/A'),
-                            cardId: 'Pending'
-                        };
-
-                        const privateData = {
-                            email: String(templateParams.email || '').trim().substring(0, 200),
-                            paymentId: paymentId,
-                            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                            promoCode: usedPromoCode || null,
-                            discountApplied: discountApplied || 0,
-                            amountPaid: finalAmountPaise
-                        };
-
-                        const batch = db.batch();
-                        batch.set(db.collection('registrations').doc(templateParams.phone), publicData);
-                        batch.set(db.collection('registrations_private').doc(templateParams.phone), privateData);
-                        await batch.commit();
-
-                        console.log('Registration securely saved directly to Firestore (localhost mode)!');
-                        proceedWithEmailJS();
-                        return; // Successfully saved, abort backend fetch
-                    } catch (error) {
-                        console.error('Error saving free registration directly:', error);
-                        alert('Registration failed: ' + error.message);
-                        if (btn) {
-                            btn.innerHTML = originalBtnHtml;
-                            btn.style.opacity = '1';
-                            btn.style.pointerEvents = 'all';
-                        }
-                        return;
-                    }
+                    const fallbackUrl = window.activeVercelUrl || 'https://chessform.vercel.app';
+                    apiEndpoint = `${fallbackUrl.replace(/\/$/, '')}/api/verifyPayment`;
+                    console.log(`Running on localhost. Routing API request to: ${apiEndpoint}`);
                 }
 
                 try {
-                    const response = await fetch('/api/verifyPayment', {
+                    const response = await fetch(apiEndpoint, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
                         },
                         body: JSON.stringify({
-                            razorpay_payment_id: paymentId,
-                            razorpay_key_id: razorpayKeyId,
+                            paymentId: paymentId,
                             name: templateParams.name,
                             username: templateParams.username,
                             email: templateParams.email,
@@ -815,25 +862,55 @@ function initRegistrationApp() {
                     if (data.success) {
                         console.log("Registration securely saved via backend!");
                         proceedWithEmailJS();
+                        return;
                     } else {
-                        console.error("Backend validation failed:", data.error);
-                        alert("Payment verification failed: " + data.error);
-                        
-                        // Re-enable button
-                        const btn = form.querySelector('.submit-btn');
-                        if (btn) {
-                            btn.innerHTML = '<span class="btn-text">Enroll Now <i class="fas fa-arrow-right arrow-icon"></i></span><div class="btn-glow"></div>';
-                            btn.style.opacity = '1';
-                            btn.style.pointerEvents = 'all';
-                        }
+                        throw new Error(data.error || "Unknown backend validation error");
                     }
-                } catch (error) {
-                    console.error("Error calling backend:", error);
-                    alert("A network error occurred while verifying the payment. Please contact support if money was deducted.");
+                } catch (fetchError) {
+                    console.warn("Backend API call failed:", fetchError);
                     
+                    // Fallback for Localhost: If backend API failed and it's a FREE registration,
+                    // we can fall back to direct client-side save because Firestore rules allow client-side free writes.
+                    if (isLocalhost && isFreeReg) {
+                        console.log("Attempting direct client-side Firestore write fallback for free registration on localhost...");
+                        try {
+                            const publicData = {
+                                name: String(templateParams.name || '').trim().substring(0, 100),
+                                username: String(templateParams.username || '').trim().substring(0, 50),
+                                phone: String(templateParams.phone || '').trim(),
+                                rating: templateParams.rating === 'N/A' ? 'N/A' : (parseInt(templateParams.rating, 10) || 'N/A'),
+                                cardId: 'Pending'
+                            };
+
+                            const privateData = {
+                                email: String(templateParams.email || '').trim().substring(0, 200),
+                                paymentId: paymentId,
+                                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                                promoCode: usedPromoCode || null,
+                                discountApplied: discountApplied || 0,
+                                amountPaid: finalAmountPaise
+                            };
+
+                            const batch = db.batch();
+                            batch.set(db.collection('registrations').doc(templateParams.phone), publicData);
+                            batch.set(db.collection('registrations_private').doc(templateParams.phone), privateData);
+                            await batch.commit();
+
+                            console.log('Registration securely saved directly to Firestore (localhost free fallback)!');
+                            proceedWithEmailJS();
+                            return;
+                        } catch (error) {
+                            console.error('Direct client-side fallback failed:', error);
+                            alert('Registration failed (Direct Fallback): ' + error.message);
+                        }
+                    } else {
+                        // For paid registrations or when not running on localhost, show the API error
+                        alert("Payment verification failed: " + fetchError.message);
+                    }
+
                     const btn = form.querySelector('.submit-btn');
                     if (btn) {
-                        btn.innerHTML = '<span class="btn-text">Enroll Now <i class="fas fa-arrow-right arrow-icon"></i></span><div class="btn-glow"></div>';
+                        btn.innerHTML = originalBtnHtml;
                         btn.style.opacity = '1';
                         btn.style.pointerEvents = 'all';
                     }
@@ -842,9 +919,6 @@ function initRegistrationApp() {
 
             // ═══════════════════════════════════════════════════════
             // We re-fetch the promo code from Firestore at submit time.
-            // This means even if someone edits the appliedPromo variable
-            // in DevTools, the actual Razorpay charge is always based on
-            // the REAL server value — not any client-side value.
             // ═══════════════════════════════════════════════════════
             let verifiedDiscount = 0;
             let verifiedCode = null;
@@ -868,10 +942,7 @@ function initRegistrationApp() {
                 }
 
                 // ── Step 1: Re-fetch registration fee LIVE from Firestore ─
-                // Yeh ensure karta hai ki DevTools se BASE_AMOUNT_PAISE
-                // change karne par bhi Razorpay correct amount charge kare.
                 let secureAmountPaise = BASE_AMOUNT_PAISE; // fallback: display value
-                let fetchedRazorpayKey = "rzp_test_SdF2J3WDCQa5Ko"; // fallback: test key
                 try {
                     if (typeof db !== 'undefined') {
                         const settingsSnap = await db.collection('settings').doc('global').get();
@@ -879,9 +950,6 @@ function initRegistrationApp() {
                             const rawFee = parseInt(settingsSnap.data().registrationFee, 10);
                             if (!isNaN(rawFee) && rawFee >= 1 && rawFee <= 10000) {
                                 secureAmountPaise = rawFee * 100;
-                            }
-                            if (settingsSnap.data().razorpayKey) {
-                                fetchedRazorpayKey = settingsSnap.data().razorpayKey.trim();
                             }
                         }
                     }
@@ -908,81 +976,31 @@ function initRegistrationApp() {
                 // Calculate final amount (fee + discount — BOTH from Firestore, not JS variables)
                 const finalAmountPaise = Math.round(secureAmountPaise * (1 - verifiedDiscount / 100));
 
-                // ── 100% OFF: Skip Razorpay entirely ──
-                if (verifiedDiscount === 100) {
+                // ── 100% OFF or Free registration: Skip UPI entirely ──
+                if (verifiedDiscount === 100 || finalAmountPaise === 0) {
                     if (btn) btn.innerHTML = '<span class="btn-text">Processing... <i class="fas fa-spinner fa-spin"></i></span><div class="btn-glow"></div>';
                     const freePayId = 'FREE_' + Date.now();
-                    handleFinalSave(freePayId, verifiedCode, verifiedDiscount, finalAmountPaise, fetchedRazorpayKey);
+                    handleFinalSave(freePayId, verifiedCode, verifiedDiscount, finalAmountPaise);
                     return;
                 }
 
-                // ── Normal / Discounted payment via Razorpay ──
-                const options = {
-                    "key": fetchedRazorpayKey,
-                    "amount": finalAmountPaise,
-                    "currency": "INR",
-                    "name": "Chess Bird Academy",
-                    "description": verifiedCode
-                        ? `Academy Enrollment (${verifiedCode} — ${verifiedDiscount}% off)`
-                        : "Academy Enrollment Fee",
-                    "handler": function (response) {
-                        console.log("Payment Successful!", response.razorpay_payment_id);
-                        if (btn) btn.innerHTML = '<span class="btn-text">Verifying... <i class="fas fa-spinner fa-spin"></i></span><div class="btn-glow"></div>';
-                        handleFinalSave(response.razorpay_payment_id, verifiedCode, verifiedDiscount, finalAmountPaise, fetchedRazorpayKey);
-                    },
-                    "prefill": {
-                        "name": templateParams.name,
-                        "email": templateParams.email,
-                        "contact": templateParams.phone
-                    },
-                    "theme": { "color": "#c6a87c" },
-                    /*
-                    // Temporarily commented out: UPI-only mode fails in standard checkout without server-generated order_id.
-                    "config": {
-                        "display": {
-                            "blocks": {
-                                "upi": {
-                                    "name": "Pay via UPI",
-                                    "instruments": [
-                                        {
-                                            "method": "upi"
-                                        }
-                                    ]
-                                }
-                            },
-                            "sequence": ["block.upi"],
-                            "preferences": {
-                                "show_default_blocks": false
-                            }
-                        }
-                    },
-                    */
-                    "modal": {
-                        "ondismiss": function() {
-                            updateSubmitBtn(); // Restore correct button text
-                            if (btn) {
-                                btn.style.opacity = '1';
-                                btn.style.pointerEvents = 'all';
-                            }
-                        }
+                // ── Paid registration: Verify UTR and submit ──
+                const utrVal = utrInput ? utrInput.value.trim() : '';
+                if (utrVal.length !== 12 || !/^\d{12}$/.test(utrVal)) {
+                    PremiumSoundManager.playError();
+                    if (utrError) utrError.style.display = 'block';
+                    alert("Please enter a valid 12-digit transaction UTR.");
+                    if (btn) {
+                        btn.innerHTML = originalBtnHtml;
+                        btn.style.opacity = '1';
+                        btn.style.pointerEvents = 'all';
                     }
-                };
-
-                if (typeof Razorpay !== 'undefined') {
-                    const rzp = new Razorpay(options);
-                    rzp.on('payment.failed', function (response) {
-                        alert("Payment Failed. Reason: " + response.error.description);
-                        updateSubmitBtn();
-                        if (btn) {
-                            btn.style.opacity = '1';
-                            btn.style.pointerEvents = 'all';
-                        }
-                    });
-
-                    rzp.open();
-                } else {
-                    alert("Razorpay is not loaded properly.");
+                    return;
                 }
+
+                const paymentId = 'UPI_' + utrVal;
+                if (btn) btn.innerHTML = '<span class="btn-text">Submitting Payment... <i class="fas fa-spinner fa-spin"></i></span><div class="btn-glow"></div>';
+                handleFinalSave(paymentId, verifiedCode, verifiedDiscount, finalAmountPaise);
             };
 
             // Execute the payment flow
