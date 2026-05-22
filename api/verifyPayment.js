@@ -207,12 +207,8 @@ export default async function handler(req, res) {
         
         await batch.commit();
 
-        // Send registration email
-        try {
-            await sendRegistrationEmail(publicData, privateData);
-        } catch (err) {
-            console.error("Failed to send registration email:", err);
-        }
+        // Email notification has been removed from here.
+        // It will be sent manually from the Admin Panel when approved.
 
         return res.status(200).json({ success: true, message: 'Registration successful' });
 
