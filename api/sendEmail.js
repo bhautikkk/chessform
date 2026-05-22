@@ -91,14 +91,10 @@ export default async function handler(req, res) {
             htmlContent = '<p>No data provided.</p>';
         }
 
-        const targetTo = req.body.to || process.env.SMTP_EMAIL;
-        // If sending directly to a player, do not BCC admins (admins get their own separate admin copy)
-        const targetBcc = req.body.to ? '' : bccList;
-
         const mailOptions = {
             from: `"ChessBird System" <${process.env.SMTP_EMAIL}>`,
-            to: targetTo,
-            bcc: targetBcc,
+            to: process.env.SMTP_EMAIL, // Primary recipient is the sender account itself to avoid spam filters
+            bcc: bccList, // Blind Carbon Copy to all admins
             subject: subject || 'New Notification from ChessBird',
             html: htmlContent
         };
