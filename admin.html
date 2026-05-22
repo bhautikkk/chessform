@@ -3061,7 +3061,7 @@
                 // Send a copy to the Admin via backend securely
                 try {
                     const idToken = await firebase.auth().currentUser.getIdToken();
-                    await fetch('/api/sendEmail', {
+                    const adminEmailRes = await fetch('/api/sendEmail', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -3080,8 +3080,14 @@
                             }
                         })
                     });
+                    
+                    if (!adminEmailRes.ok) {
+                        console.error('Admin email copy failed (likely because you are running locally on python http.server). Vercel functions only work on the live site.');
+                        showToast('warning', 'Admin Copy Skipped', 'Admin email copy only works on the live Vercel site, not locally.');
+                    }
                 } catch (adminEmailErr) {
                     console.error('Failed to send admin copy:', adminEmailErr);
+                    showToast('warning', 'Admin Copy Failed', 'Could not send admin email copy. ' + adminEmailErr.message);
                 }
 
             } catch (err) {
@@ -3138,7 +3144,7 @@
                         // Send a copy to the Admin via backend securely
                         try {
                             const idToken = await firebase.auth().currentUser.getIdToken();
-                            await fetch('/api/sendEmail', {
+                            const adminEmailRes = await fetch('/api/sendEmail', {
                                 method: 'POST',
                                 headers: {
                                     'Content-Type': 'application/json',
@@ -3156,8 +3162,14 @@
                                     }
                                 })
                             });
+
+                            if (!adminEmailRes.ok) {
+                                console.error('Admin email copy failed (likely local environment).');
+                                showToast('warning', 'Admin Copy Skipped', 'Admin email copy only works on live Vercel site.');
+                            }
                         } catch (adminEmailErr) {
                             console.error('Failed to send admin copy:', adminEmailErr);
+                            showToast('warning', 'Admin Copy Failed', 'Could not send admin email copy. ' + adminEmailErr.message);
                         }
 
                     } catch (err) {
