@@ -239,6 +239,49 @@ function initRegistrationApp() {
                     if (alreadyRegisteredMessage) {
                         alreadyRegisteredMessage.style.display = 'block';
                         alreadyRegisteredMessage.style.animation = 'slideUpFade 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards';
+                        
+                        // Check exact status if phone is known
+                        const userPhone = localStorage.getItem('userPhone');
+                        if (userPhone && typeof db !== 'undefined') {
+                            db.collection('registrations').doc(userPhone).get().then(docSnap => {
+                                if (docSnap.exists) {
+                                    const userData = docSnap.data();
+                                    if (userData.status === 'Approved') {
+                                        const iconWrap = alreadyRegisteredMessage.querySelector('.status-icon');
+                                        const h3 = alreadyRegisteredMessage.querySelector('h3');
+                                        const p = alreadyRegisteredMessage.querySelector('p');
+                                        if (iconWrap) {
+                                            iconWrap.style.color = '#22c55e';
+                                            iconWrap.style.background = 'rgba(34, 197, 94, 0.1)';
+                                            iconWrap.innerHTML = '<i class="fas fa-check-circle"></i>';
+                                        }
+                                        if (h3) {
+                                            h3.style.color = '#22c55e';
+                                            h3.innerText = 'Application Approved!';
+                                        }
+                                        if (p) {
+                                            p.innerText = 'Your registration has been approved! You can now view and download your pass.';
+                                        }
+                                    } else if (userData.status === 'Rejected') {
+                                        const iconWrap = alreadyRegisteredMessage.querySelector('.status-icon');
+                                        const h3 = alreadyRegisteredMessage.querySelector('h3');
+                                        const p = alreadyRegisteredMessage.querySelector('p');
+                                        if (iconWrap) {
+                                            iconWrap.style.color = '#ef4444';
+                                            iconWrap.style.background = 'rgba(239, 68, 68, 0.1)';
+                                            iconWrap.innerHTML = '<i class="fas fa-times-circle"></i>';
+                                        }
+                                        if (h3) {
+                                            h3.style.color = '#ef4444';
+                                            h3.innerText = 'Application Rejected';
+                                        }
+                                        if (p) {
+                                            p.innerText = 'We are sorry, but your registration was not approved. Please contact support if you think this is a mistake.';
+                                        }
+                                    }
+                                }
+                            }).catch(e => console.warn('Status check failed', e));
+                        }
                     }
                 } else {
                     if (alreadyRegisteredMessage) alreadyRegisteredMessage.style.display = 'none';
@@ -797,6 +840,9 @@ function initRegistrationApp() {
                 // Show success message and transition UI
                 const currentEventId = 'event_reg_done';
                 localStorage.setItem(currentEventId, 'true');
+                if (templateParams && templateParams.phone) {
+                    localStorage.setItem('userPhone', templateParams.phone);
+                }
                 form.style.display = 'none';
                 const alreadyRegisteredMessage = document.getElementById('alreadyRegisteredMessage');
                 if (alreadyRegisteredMessage) {
