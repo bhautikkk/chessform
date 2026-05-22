@@ -34,3 +34,39 @@ Jab aapka Razorpay account puri tarah se approve ho jaye aur "Live Mode" mein aa
 
 **Bas ho gaya! 🎉** 
 Ek baar kisi dusre phone se Rs. 1 ka fake/test payment ya asli payment karke check kar lein. Sab kuch theek raha toh aapki website officially payments ke liye ready hai!
+
+---
+
+# 🧪 Razorpay Test Mode Setup Guide (Hindi)
+
+Agar aap apni website par payments ko bina asli paise kharch kiye test karna chahte hain, toh in steps ko follow karke "Test Mode" setup karein:
+
+## Step 1: Razorpay se Test Keys nikalna
+1. Apne Razorpay Dashboard mein login karein.
+2. Left sidebar mein check karein ki aapka dashboard **"Test Mode"** mein switched hai (agar wahan "Live Mode" likha hai, toh toggle par click karke use Test Mode mein switch karein).
+3. **"Account & Settings"** -> **"API Keys"** par jayein.
+4. **"Generate Test Key"** button par click karein. Aapko do cheezein milengi:
+   - **Key ID:** (Yeh `rzp_test_...` se shuru hogi)
+   - **Key Secret:** (Yeh ek lamba code hoga jise secure rakhna hai)
+
+---
+
+## Step 2: Vercel par Test Secret configure karna
+Aapka backend payment ko verify karne ke liye is secret ka use karega.
+1. Apne Vercel dashboard par jayein aur apne project settings par jayein.
+2. Left menu se **Environment Variables** select karein.
+3. Ek naya variable add karein:
+   - **Key:** `RAZORPAY_TEST_KEY_SECRET`
+   - **Value:** (Apni Razorpay Test Key Secret `rzp_test_secret_...` yahan paste karein)
+4. Add aur Save par click karein.
+5. *(⚠️ **Zaruri:** Vercel Dashboard par "Deployments" tab mein jaakar apni site ko ek baar **Redeploy** zaroor karein taaki backend variables update ho sakein).*
+
+---
+
+## Step 3: Admin Panel par Test Key update karna
+1. Apni website ka Admin Panel open karein (`https://chessbirdform.vercel.app/admin.html`).
+2. Log in karein aur scroll karke **"RAZORPAY API KEY"** section par jayein.
+3. Wahan par apni **Test Key ID** (`rzp_test_...`) paste karein.
+4. **Save Key** par click karein.
+
+**Bas! 🎉** Ab aapka frontend aur backend dono hi secure tarike se Test Mode payments ko process karne ke liye ready hain. Aap cards/UPI ke dummy options se test payments complete kar sakte hain!

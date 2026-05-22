@@ -98,6 +98,7 @@ export default async function handler(req, res) {
         razorpay_payment_id, 
         razorpay_order_id, 
         razorpay_signature,
+        razorpay_key_id, // Sent from frontend to dynamically identify key
         
         // Registration details sent from frontend
         name,
@@ -140,18 +141,42 @@ export default async function handler(req, res) {
             paymentAmount = 0; // Verified free
         } else {
             // Verify Razorpay Payment (100% Secure Backend Verification)
-            const secret = process.env.RAZORPAY_KEY_SECRET;
-            
-            if (!secret) {
-                return res.status(500).json({ success: false, error: 'Razorpay Secret Key missing in Vercel.' });
+            let activeKeyId = razorpay_key_id || process.env.RAZORPAY_KEY_ID || 'rzp_test_SdF2J3WDCQa5Ko';
+            let activeSecret = process.env.RAZORPAY_KEY_SECRET;
+
+            // Dynamically switch secret if a test key is used
+            if (activeKeyId.startsWith('rzp_test_')) {
+                activeSecret = process.env.RAZORPAY_TEST_KEY_SECRET || process.env.RAZORPAY_KEY_SECRET;
+            }
+
+            if (!activeSecret) {
+                return res.status(500).json({ 
+                    success: false, 
+                    error: `Razorpay Secret Key is missing in Vercel. (Key ID: ${activeKeyId}). Please set it in Vercel environment variables.` 
+                });
             }
 
             const razorpay = new Razorpay({
-                key_id: process.env.RAZORPAY_KEY_ID || 'rzp_test_SdF2J3WDCQa5Ko',
-                key_secret: secret,
+                key_id: activeKeyId,
+                key_secret: activeSecret,
             });
 
-            const payment = await razorpay.payments.fetch(razorpay_payment_id);
+            let payment;
+            try {
+                payment = await razorpay.payments.fetch(razorpay_payment_id);
+            } catch (fetchErr) {
+                console.error("Razorpay Fetch Error:", fetchErr);
+                let helpfulError = "Invalid Payment ID or Key mismatch.";
+                if (fetchErr.statusCode === 401) {
+                    helpfulError = "Unauthorized: The Secret Key (RAZORPAY_KEY_SECRET or RAZORPAY_TEST_KEY_SECRET) in Vercel environment variables is incorrect or does not match the Key ID used by the frontend (" + activeKeyId + ").";
+                } else if (fetchErr.description) {
+                    helpfulError = fetchErr.description;
+                }
+                return res.status(400).json({ 
+                    success: false, 
+                    error: `${helpfulError} (Backend Key ID: ${activeKeyId})` 
+                });
+            }
             
             if (!payment) {
                 return res.status(400).json({ success: false, error: 'Invalid Payment ID' });

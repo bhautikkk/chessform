@@ -737,7 +737,7 @@ function initRegistrationApp() {
             };
 
             // Database Handling — SECURITY HARDENED via BACKEND
-            const handleFinalSave = async (paymentId, usedPromoCode, discountApplied, finalAmountPaise) => {
+            const handleFinalSave = async (paymentId, usedPromoCode, discountApplied, finalAmountPaise, razorpayKeyId) => {
                 // Free registrations (100% off) use 'FREE_<timestamp>' format
                 const isFreeReg = paymentId && /^FREE_\d+$/.test(paymentId);
                 const isRazorpay = paymentId && /^pay_[A-Za-z0-9]{14,}$/.test(paymentId);
@@ -798,6 +798,7 @@ function initRegistrationApp() {
                         },
                         body: JSON.stringify({
                             razorpay_payment_id: paymentId,
+                            razorpay_key_id: razorpayKeyId,
                             name: templateParams.name,
                             username: templateParams.username,
                             email: templateParams.email,
@@ -911,7 +912,7 @@ function initRegistrationApp() {
                 if (verifiedDiscount === 100) {
                     if (btn) btn.innerHTML = '<span class="btn-text">Processing... <i class="fas fa-spinner fa-spin"></i></span><div class="btn-glow"></div>';
                     const freePayId = 'FREE_' + Date.now();
-                    handleFinalSave(freePayId, verifiedCode, verifiedDiscount, finalAmountPaise);
+                    handleFinalSave(freePayId, verifiedCode, verifiedDiscount, finalAmountPaise, fetchedRazorpayKey);
                     return;
                 }
 
@@ -927,7 +928,7 @@ function initRegistrationApp() {
                     "handler": function (response) {
                         console.log("Payment Successful!", response.razorpay_payment_id);
                         if (btn) btn.innerHTML = '<span class="btn-text">Verifying... <i class="fas fa-spinner fa-spin"></i></span><div class="btn-glow"></div>';
-                        handleFinalSave(response.razorpay_payment_id, verifiedCode, verifiedDiscount, finalAmountPaise);
+                        handleFinalSave(response.razorpay_payment_id, verifiedCode, verifiedDiscount, finalAmountPaise, fetchedRazorpayKey);
                     },
                     "prefill": {
                         "name": templateParams.name,
