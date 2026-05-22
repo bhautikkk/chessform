@@ -3050,24 +3050,48 @@
                 // ── STEP 2: Send player confirmation email ──────────────
                 if (player.email) {
                     try {
-                        const templateParams = {
-                            name: player.name || '',
-                            username: player.username || '',
-                            email: player.email || '',
-                            user_email: player.email || '',
-                            phone: player.phone || '',
-                            rating: player.rating || '',
-                            cardId: cardId,
-                            status: 'approved'
-                        };
-                        await emailjs.send('service_nfjpyi6', 'template_udal0hk', templateParams);
-                        showToast('info', 'Confirmation Sent ✉️', `Approval email sent to ${player.email}`);
+                        const idToken = await firebase.auth().currentUser.getIdToken();
+                        const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                        const settingsSnap = await db.collection('settings').doc('global').get();
+                        const vercelUrl = (settingsSnap.exists && settingsSnap.data().vercelUrl) || 'https://chessform.vercel.app';
+                        const sendEmailEndpoint = isLocalhost
+                            ? `${vercelUrl.replace(/\/$/, '')}/api/sendEmail`
+                            : '/api/sendEmail';
+
+                        const htmlMessage = `
+                            <h3>Registration Approved! 🎉</h3>
+                            <p>Hello <b>${player.name}</b>,</p>
+                            <p>Congratulations! Your registration for ChessBird has been successfully approved.</p>
+                            <p>Your Entry ID is: <b style="font-size:18px; color:#22c55e;">${cardId}</b></p>
+                            <p>You can now check your status on the portal using your phone number.</p>
+                            <br>
+                            <p>Thanks,<br>ChessBird Team</p>
+                        `;
+
+                        const playerEmailRes = await fetch(sendEmailEndpoint, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${idToken}`
+                            },
+                            body: JSON.stringify({
+                                to: player.email,
+                                subject: '🎉 ChessBird Registration Approved!',
+                                message: htmlMessage
+                            })
+                        });
+
+                        if (playerEmailRes.ok) {
+                            showToast('info', 'Confirmation Sent ✉️', `Approval email sent to ${player.email}`);
+                        } else {
+                            throw new Error('API returned ' + playerEmailRes.status);
+                        }
                     } catch (emailErr) {
-                        console.warn('EmailJS send failed:', emailErr);
+                        console.warn('Player Email send failed:', emailErr);
                         showToast('warning', 'Player Email Failed', 'Could not send confirmation email to player.');
                     }
                 } else {
-                    console.warn('Player email not available — skipping EmailJS.');
+                    console.warn('Player email not available — skipping player email.');
                 }
 
                 // ── STEP 3: Send admin notification email ───────────────
@@ -3136,20 +3160,49 @@
 
                         showToast('success', 'Player Rejected', `"${escHtml(player.name)}" has been rejected and deleted.`);
 
-                        // Trigger EmailJS rejection email
-                        const templateParams = {
-                            name: player.name || '',
-                            username: player.username || '',
-                            email: player.email || '',
-                            user_email: player.email || '',
-                            phone: player.phone || '',
-                            rating: player.rating || '',
-                            cardId: 'Rejected',
-                            status: 'rejected'
-                        };
+                        // Trigger rejection email via backend API
+                        if (player.email) {
+                            try {
+                                const idToken = await firebase.auth().currentUser.getIdToken();
+                                const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                                const settingsSnap = await db.collection('settings').doc('global').get();
+                                const vercelUrl = (settingsSnap.exists && settingsSnap.data().vercelUrl) || 'https://chessform.vercel.app';
+                                const sendEmailEndpoint = isLocalhost
+                                    ? `${vercelUrl.replace(/\/$/, '')}/api/sendEmail`
+                                    : '/api/sendEmail';
 
-                        await emailjs.send('service_nfjpyi6', 'template_udal0hk', templateParams);
-                        showToast('info', 'Notice Sent ✉️', `Rejection email sent to ${player.email}`);
+                                const htmlMessage = `
+                                    <h3>Registration Update</h3>
+                                    <p>Hello <b>${player.name}</b>,</p>
+                                    <p>We are sorry to inform you that your registration for ChessBird was not approved and has been cancelled.</p>
+                                    <p>If you made a payment, please contact our support team for assistance or a refund.</p>
+                                    <br>
+                                    <p>Thanks,<br>ChessBird Team</p>
+                                `;
+
+                                const playerEmailRes = await fetch(sendEmailEndpoint, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'Authorization': `Bearer ${idToken}`
+                                    },
+                                    body: JSON.stringify({
+                                        to: player.email,
+                                        subject: 'Update on your ChessBird Registration',
+                                        message: htmlMessage
+                                    })
+                                });
+
+                                if (playerEmailRes.ok) {
+                                    showToast('info', 'Notice Sent ✉️', `Rejection email sent to ${player.email}`);
+                                } else {
+                                    throw new Error('API returned ' + playerEmailRes.status);
+                                }
+                            } catch (emailErr) {
+                                console.warn('Player Rejection Email failed:', emailErr);
+                                showToast('warning', 'Player Email Failed', 'Could not send rejection email to player.');
+                            }
+                        }
 
                         // Send a copy to the Admin via backend securely
                         try {
