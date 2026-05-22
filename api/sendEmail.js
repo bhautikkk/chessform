@@ -43,10 +43,12 @@ export default async function handler(req, res) {
             return res.status(403).json({ success: false, error: 'Forbidden: Only the admin can call this endpoint.' });
         }
 
-        const { emails, subject, data, message } = req.body;
+        const { subject, data, message } = req.body;
 
-        // It's okay if emails array is empty, it will still go to the SMTP_EMAIL owner
-        const bccList = (emails && emails.length > 0) ? (Array.isArray(emails) ? emails.join(', ') : emails) : '';
+        const settingsSnap = await admin.firestore().collection('settings').doc('global').get();
+        const settings = settingsSnap.exists ? settingsSnap.data() : {};
+        const emails = settings.notificationEmails || [];
+        const toList = emails.length > 0 ? (Array.isArray(emails) ? emails.join(', ') : emails) : process.env.SMTP_EMAIL;
 
         if (!process.env.SMTP_EMAIL || !process.env.SMTP_PASSWORD) {
             console.warn("SMTP_EMAIL or SMTP_PASSWORD is not set in Vercel environment variables. Email skipping.");
@@ -60,6 +62,34 @@ export default async function handler(req, res) {
                 pass: process.env.SMTP_PASSWORD
             }
         });
+
+        // Apply privacy masking for admin emails
+        if (data) {
+            const sendFullPhone = settings.sendFullPhone !== false;
+            const sendFullEmail = settings.sendFullEmail !== false;
+            const sendFullUsername = settings.sendFullUsername !== false;
+
+            const maskStr = (str, type) => {
+                if (!str) return '-';
+                str = String(str);
+                if (type === 'phone' && !sendFullPhone && str.length >= 4) {
+                    return str.substring(0, 2) + '*'.repeat(str.length - 4) + str.substring(str.length - 2);
+                }
+                if (type === 'email' && !sendFullEmail && str.includes('@')) {
+                    const parts = str.split('@');
+                    if (parts[0].length <= 2) return str;
+                    return parts[0].substring(0, 2) + '*'.repeat(parts[0].length - 2) + '@' + parts[1];
+                }
+                if (type === 'username' && !sendFullUsername && str.length > 2) {
+                    return str.substring(0, 2) + '*'.repeat(str.length - 2);
+                }
+                return str;
+            };
+
+            if (data.phone) data.phone = maskStr(data.phone, 'phone');
+            if (data.email) data.email = maskStr(data.email, 'email');
+            if (data.username) data.username = maskStr(data.username, 'username');
+        }
 
         let htmlContent = '';
         if (message) {
@@ -93,8 +123,7 @@ export default async function handler(req, res) {
 
         const mailOptions = {
             from: `"ChessBird System" <${process.env.SMTP_EMAIL}>`,
-            to: process.env.SMTP_EMAIL, // Primary recipient is the sender account itself to avoid spam filters
-            bcc: bccList, // Blind Carbon Copy to all admins
+            to: toList,
             subject: subject || 'New Notification from ChessBird',
             html: htmlContent
         };

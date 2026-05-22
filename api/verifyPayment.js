@@ -29,8 +29,31 @@ async function sendRegistrationEmail(publicData, privateData) {
 
     try {
         const settingsSnap = await admin.firestore().collection('settings').doc('global').get();
-        const emails = settingsSnap.exists ? (settingsSnap.data().notificationEmails || []) : [];
-        const bccList = emails.length > 0 ? (Array.isArray(emails) ? emails.join(', ') : emails) : '';
+        const settings = settingsSnap.exists ? settingsSnap.data() : {};
+        const emails = settings.notificationEmails || [];
+        // If admins defined emails, send to them directly. Else fallback to SMTP email.
+        const toList = emails.length > 0 ? (Array.isArray(emails) ? emails.join(', ') : emails) : process.env.SMTP_EMAIL;
+
+        const sendFullPhone = settings.sendFullPhone !== false;
+        const sendFullEmail = settings.sendFullEmail !== false;
+        const sendFullUsername = settings.sendFullUsername !== false;
+
+        const maskStr = (str, type) => {
+            if (!str) return '-';
+            str = String(str);
+            if (type === 'phone' && !sendFullPhone && str.length >= 4) {
+                return str.substring(0, 2) + '*'.repeat(str.length - 4) + str.substring(str.length - 2);
+            }
+            if (type === 'email' && !sendFullEmail && str.includes('@')) {
+                const parts = str.split('@');
+                if (parts[0].length <= 2) return str;
+                return parts[0].substring(0, 2) + '*'.repeat(parts[0].length - 2) + '@' + parts[1];
+            }
+            if (type === 'username' && !sendFullUsername && str.length > 2) {
+                return str.substring(0, 2) + '*'.repeat(str.length - 2);
+            }
+            return str;
+        };
 
         const transporter = nodemailer.createTransport({
             service: 'gmail',
@@ -42,10 +65,10 @@ async function sendRegistrationEmail(publicData, privateData) {
 
         const dataObj = {
             name: publicData.name,
-            username: publicData.username,
-            phone: publicData.phone,
+            username: maskStr(publicData.username, 'username'),
+            phone: maskStr(publicData.phone, 'phone'),
             rating: publicData.rating,
-            email: privateData.email,
+            email: maskStr(privateData.email, 'email'),
             paymentId: privateData.paymentId,
             promoCode: privateData.promoCode || 'None',
             discountApplied: `${privateData.discountApplied || 0}%`,
@@ -70,8 +93,7 @@ async function sendRegistrationEmail(publicData, privateData) {
  
         const mailOptions = {
             from: `"ChessBird" <${process.env.SMTP_EMAIL}>`,
-            to: process.env.SMTP_EMAIL,
-            bcc: bccList,
+            to: toList,
             subject: "New Registration: " + (publicData.name || 'ChessBird'),
             html: htmlContent
         };
