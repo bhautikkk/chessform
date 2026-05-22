@@ -790,31 +790,23 @@ function initRegistrationApp() {
                 rating: templateParams.rating
             };
 
-            // Function to handle Email JS and FormSubmit
-            const proceedWithEmailJS = () => {
-                emailjs.send(serviceID, templateID, maskedTemplateParams)
-                    .then((response) => {
-                        console.log('Email sent successfully!', response.status, response.text);
-                    })
-                    .catch((err) => {
-                        console.error('Email sending failed:', err);
-                        alert("EmailJS kaam nahi kar raha kyuki:\n\n" + JSON.stringify(err) + "\n\n(Aap iska photo khinch ke chat me bhej dein)");
-                    })
-                    .finally(() => {
-                        // Show success message and transition UI
-                        const currentEventId = 'event_reg_done';
-                        localStorage.setItem(currentEventId, 'true');
-                        form.style.display = 'none';
-                        const alreadyRegisteredMessage = document.getElementById('alreadyRegisteredMessage');
-                        if (alreadyRegisteredMessage) {
-                            alreadyRegisteredMessage.style.display = 'block';
-                            alreadyRegisteredMessage.style.animation = 'slideUpFade 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards';
-                        }
-                        const successOverlay = document.querySelector('.success-overlay');
-                        if (successOverlay) {
-                            successOverlay.classList.add('active');
-                        }
-                    });
+            // Function to handle UI transition after saving
+            const showSuccessUI = () => {
+                // Email is NO LONGER sent here! It is sent from Admin Panel on Approval.
+                
+                // Show success message and transition UI
+                const currentEventId = 'event_reg_done';
+                localStorage.setItem(currentEventId, 'true');
+                form.style.display = 'none';
+                const alreadyRegisteredMessage = document.getElementById('alreadyRegisteredMessage');
+                if (alreadyRegisteredMessage) {
+                    alreadyRegisteredMessage.style.display = 'block';
+                    alreadyRegisteredMessage.style.animation = 'slideUpFade 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards';
+                }
+                const successOverlay = document.querySelector('.success-overlay');
+                if (successOverlay) {
+                    successOverlay.classList.add('active');
+                }
             };
             // Database Handling — SECURITY HARDENED via BACKEND
             const handleFinalSave = async (paymentId, usedPromoCode, discountApplied, finalAmountPaise) => {
@@ -861,7 +853,7 @@ function initRegistrationApp() {
                     
                     if (data.success) {
                         console.log("Registration securely saved via backend!");
-                        proceedWithEmailJS();
+                        showSuccessUI();
                         return;
                     } else {
                         throw new Error(data.error || "Unknown backend validation error");
@@ -897,7 +889,7 @@ function initRegistrationApp() {
                             await batch.commit();
 
                             console.log('Registration securely saved directly to Firestore (localhost free fallback)!');
-                            proceedWithEmailJS();
+                            showSuccessUI();
                             return;
                         } catch (error) {
                             console.error('Direct client-side fallback failed:', error);
