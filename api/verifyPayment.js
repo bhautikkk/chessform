@@ -206,7 +206,10 @@ export default async function handler(req, res) {
         batch.set(db.collection('registrations_private').doc(phone), privateData);
         await batch.commit();
 
-        // No emails sent on registration as requested by the user.
+        // Send admin notification email for new registration
+        sendRegistrationEmail(publicData, privateData).catch(e =>
+            console.error('Registration notification email failed (non-blocking):', e)
+        );
 
         return res.status(200).json({ success: true, message: 'Registration successful' });
 

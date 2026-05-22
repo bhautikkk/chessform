@@ -3013,52 +3013,64 @@
             if (btn) btn.disabled = true;
             if (rejectBtn) rejectBtn.disabled = true;
 
+            // ── STEP 1: Firestore transaction — the real approval ──────────
+            let cardId;
             try {
-                // Read all approved players' IDs to avoid collisions
-                const snapshot = await db.collection('registrations').get();
-                const usedIds = new Set();
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    if (data.cardId && data.cardId !== 'Pending' && data.cardId !== 'No ID') {
-                        usedIds.add(data.cardId);
-                    }
+                const settingsRef = db.collection('settings').doc('global');
+                const regRef = db.collection('registrations').doc(docId);
+
+                await db.runTransaction(async (txn) => {
+                    const settingsDoc = await txn.get(settingsRef);
+                    const currentCount = (settingsDoc.exists && settingsDoc.data().cardIdCounter) || 0;
+                    const nextCount = currentCount + 1;
+                    cardId = 'CB' + String(nextCount).padStart(3, '0');
+                    txn.update(settingsRef, { cardIdCounter: nextCount });
+                    txn.update(regRef, { cardId: cardId });
                 });
 
-                // Generate random unique 3-digit ID (CB100 - CB999)
-                function getRandomId() {
-                    const num = Math.floor(Math.random() * 900) + 100;
-                    return 'CB' + num;
+                showToast('success', 'Player Approved! 🎉', `${player.name} approved — Entry ID: ${cardId}`);
+
+            } catch (err) {
+                // Only show "Approval Failed" if the Firestore transaction itself failed
+                console.error('Approve Failed:', err);
+                showToast('error', 'Approval Failed', err.message);
+                if (btn) btn.disabled = false;
+                if (rejectBtn) rejectBtn.disabled = false;
+                return; // Stop — don't send emails if approval didn't save
+            }
+
+            // ── STEP 2 & 3: Emails — only on live Vercel site ─────────────
+            const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
+            if (isLocalhost) {
+                // On localhost (Python server), Vercel API routes don't exist
+                // and EmailJS may not work — skip silently, log to console
+                console.info('[Dev] Email steps skipped on localhost. Deploy to Vercel to send emails.');
+            } else {
+                // ── STEP 2: Send player confirmation email ──────────────
+                if (player.email) {
+                    try {
+                        const templateParams = {
+                            name: player.name || '',
+                            username: player.username || '',
+                            email: player.email || '',
+                            user_email: player.email || '',
+                            phone: player.phone || '',
+                            rating: player.rating || '',
+                            cardId: cardId,
+                            status: 'approved'
+                        };
+                        await emailjs.send('service_nfjpyi6', 'template_udal0hk', templateParams);
+                        showToast('info', 'Confirmation Sent ✉️', `Approval email sent to ${player.email}`);
+                    } catch (emailErr) {
+                        console.warn('EmailJS send failed:', emailErr);
+                        showToast('warning', 'Player Email Failed', 'Could not send confirmation email to player.');
+                    }
+                } else {
+                    console.warn('Player email not available — skipping EmailJS.');
                 }
 
-                let cardId;
-                let attempts = 0;
-                do {
-                    cardId = getRandomId();
-                    attempts++;
-                    if (attempts > 900) throw new Error('Not enough unique IDs available.');
-                } while (usedIds.has(cardId));
-
-                // Update the registrations document
-                await db.collection('registrations').doc(docId).update({ cardId: cardId });
-
-                showToast('success', 'Player Approved! 🎉', `${player.name} has been approved with Card ID: ${cardId}`);
-
-                // Trigger EmailJS approval email
-                const templateParams = {
-                    name: player.name || '',
-                    username: player.username || '',
-                    email: player.email || '',
-                    user_email: player.email || '',
-                    phone: player.phone || '',
-                    rating: player.rating || '',
-                    cardId: cardId,
-                    status: 'approved'
-                };
-
-                await emailjs.send('service_nfjpyi6', 'template_udal0hk', templateParams);
-                showToast('info', 'Confirmation Sent ✉️', `Approval email sent to ${player.email}`);
-
-                // Send a copy to the Admin via backend securely
+                // ── STEP 3: Send admin notification email ───────────────
                 try {
                     const idToken = await firebase.auth().currentUser.getIdToken();
                     const adminEmailRes = await fetch('/api/sendEmail', {
@@ -3068,35 +3080,33 @@
                             'Authorization': `Bearer ${idToken}`
                         },
                         body: JSON.stringify({
-                            subject: 'Registration Approved: ' + player.name,
+                            subject: '✅ Registration Approved: ' + player.name,
                             data: {
                                 name: player.name,
                                 username: player.username,
                                 phone: player.phone,
                                 email: player.email,
                                 paymentId: player.paymentId || 'N/A',
-                                status: 'Approved',
+                                status: 'Approved ✅',
                                 cardId: cardId
                             }
                         })
                     });
-                    
-                    if (!adminEmailRes.ok) {
-                        console.error('Admin email copy failed (likely because you are running locally on python http.server). Vercel functions only work on the live site.');
-                        showToast('warning', 'Admin Copy Skipped', 'Admin email copy only works on the live Vercel site, not locally.');
+
+                    if (adminEmailRes.ok) {
+                        showToast('info', 'Admin Mail Sent ✉️', 'Approval notification sent to admin.');
+                    } else {
+                        const errBody = await adminEmailRes.text();
+                        console.warn('Admin email failed:', errBody);
+                        showToast('warning', 'Admin Mail Failed', 'Could not send admin notification. Check Vercel logs.');
                     }
                 } catch (adminEmailErr) {
-                    console.error('Failed to send admin copy:', adminEmailErr);
-                    showToast('warning', 'Admin Copy Failed', 'Could not send admin email copy. ' + adminEmailErr.message);
+                    console.warn('Admin email error:', adminEmailErr);
+                    showToast('warning', 'Admin Mail Error', adminEmailErr.message);
                 }
-
-            } catch (err) {
-                console.error('Approve Failed:', err);
-                showToast('error', 'Approval Failed', err.message);
-                if (btn) btn.disabled = false;
-                if (rejectBtn) rejectBtn.disabled = false;
             }
         }
+
 
         // ─── Reject Pending Player ───────────────────────────────────
         async function rejectPlayer(docId) {

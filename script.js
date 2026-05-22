@@ -131,6 +131,57 @@ function initRegistrationApp() {
         countdownInterval = setInterval(tick, 1000);
     }
 
+    // ── Helper: update the status message UI based on Firestore doc ──
+    function applyStatusUI(docSnap) {
+        if (!alreadyRegisteredMessage) return;
+        const iconWrap = alreadyRegisteredMessage.querySelector('.status-icon');
+        const h3 = alreadyRegisteredMessage.querySelector('h3');
+        const p = alreadyRegisteredMessage.querySelector('p');
+        if (!docSnap.exists) {
+            // REJECTED — doc deleted by admin
+            if (iconWrap) {
+                iconWrap.style.color = '#ef4444';
+                iconWrap.style.background = 'rgba(239, 68, 68, 0.1)';
+                iconWrap.innerHTML = '<i class="fas fa-times-circle"></i>';
+            }
+            if (h3) { h3.style.color = '#ef4444'; h3.innerText = 'Application Rejected'; }
+            if (p) { p.innerText = 'We are sorry, but your registration was not approved. Please contact support if you think this is a mistake.'; }
+        } else {
+            const userData = docSnap.data();
+            if (userData.cardId && userData.cardId !== 'Pending') {
+                // APPROVED — admin has assigned a cardId
+                if (iconWrap) {
+                    iconWrap.style.color = '#22c55e';
+                    iconWrap.style.background = 'rgba(34, 197, 94, 0.1)';
+                    iconWrap.innerHTML = '<i class="fas fa-check-circle"></i>';
+                }
+                if (h3) { h3.style.color = '#22c55e'; h3.innerText = 'Registration Approved! 🎉'; }
+                if (p) { p.innerText = 'Your registration has been approved! You can now view and download your pass.'; }
+            } else {
+                // PENDING — still waiting
+                if (iconWrap) {
+                    iconWrap.style.color = '#f59e0b';
+                    iconWrap.style.background = 'rgba(245, 158, 11, 0.1)';
+                    iconWrap.innerHTML = '<i class="fas fa-clock"></i>';
+                }
+                if (h3) { h3.style.color = '#f59e0b'; h3.innerText = 'Waiting for Approval'; }
+                if (p) { p.innerText = 'Your registration is under review. Approval usually takes up to 24 hours.'; }
+            }
+        }
+    }
+
+    // ── Helper: start real-time listener on user's registration doc ──
+    let statusUnsubscribe = null;
+    function listenToStatus() {
+        const userPhone = localStorage.getItem('userPhone');
+        if (!userPhone || typeof db === 'undefined') return;
+        if (statusUnsubscribe) statusUnsubscribe(); // clear old listener
+        statusUnsubscribe = db.collection('registrations').doc(userPhone)
+            .onSnapshot(docSnap => {
+                applyStatusUI(docSnap);
+            }, e => console.warn('Status listen failed', e));
+    }
+
     if (typeof db !== 'undefined') {
         db.collection('settings').doc('global').onSnapshot((doc) => {
             const isRegistrationOpen = doc.exists ? (doc.data().isRegistrationOpen || false) : false;
@@ -225,6 +276,8 @@ function initRegistrationApp() {
                     if (alreadyRegisteredMessage) {
                         alreadyRegisteredMessage.style.display = 'block';
                         alreadyRegisteredMessage.style.animation = 'slideUpFade 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards';
+                        // Start real-time status listener so approval shows immediately
+                        listenToStatus();
                     }
                     const successOverlay = document.querySelector('.success-overlay');
                     if (successOverlay) {
@@ -234,54 +287,15 @@ function initRegistrationApp() {
                     return; // Done processing
                 }
 
+                // Only check the CURRENT event's localStorage key.
+                // When admin changes Event ID, users see a fresh form for the new event.
                 if (localStorage.getItem(currentEventId) === 'true') {
                     if (form) form.style.display = 'none';
                     if (alreadyRegisteredMessage) {
                         alreadyRegisteredMessage.style.display = 'block';
                         alreadyRegisteredMessage.style.animation = 'slideUpFade 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards';
-                        
-                        // Check exact status if phone is known
-                        const userPhone = localStorage.getItem('userPhone');
-                        if (userPhone && typeof db !== 'undefined') {
-                            db.collection('registrations').doc(userPhone).get().then(docSnap => {
-                                if (docSnap.exists) {
-                                    const userData = docSnap.data();
-                                    if (userData.status === 'Approved') {
-                                        const iconWrap = alreadyRegisteredMessage.querySelector('.status-icon');
-                                        const h3 = alreadyRegisteredMessage.querySelector('h3');
-                                        const p = alreadyRegisteredMessage.querySelector('p');
-                                        if (iconWrap) {
-                                            iconWrap.style.color = '#22c55e';
-                                            iconWrap.style.background = 'rgba(34, 197, 94, 0.1)';
-                                            iconWrap.innerHTML = '<i class="fas fa-check-circle"></i>';
-                                        }
-                                        if (h3) {
-                                            h3.style.color = '#22c55e';
-                                            h3.innerText = 'Application Approved!';
-                                        }
-                                        if (p) {
-                                            p.innerText = 'Your registration has been approved! You can now view and download your pass.';
-                                        }
-                                    } else if (userData.status === 'Rejected') {
-                                        const iconWrap = alreadyRegisteredMessage.querySelector('.status-icon');
-                                        const h3 = alreadyRegisteredMessage.querySelector('h3');
-                                        const p = alreadyRegisteredMessage.querySelector('p');
-                                        if (iconWrap) {
-                                            iconWrap.style.color = '#ef4444';
-                                            iconWrap.style.background = 'rgba(239, 68, 68, 0.1)';
-                                            iconWrap.innerHTML = '<i class="fas fa-times-circle"></i>';
-                                        }
-                                        if (h3) {
-                                            h3.style.color = '#ef4444';
-                                            h3.innerText = 'Application Rejected';
-                                        }
-                                        if (p) {
-                                            p.innerText = 'We are sorry, but your registration was not approved. Please contact support if you think this is a mistake.';
-                                        }
-                                    }
-                                }
-                            }).catch(e => console.warn('Status check failed', e));
-                        }
+                        // Real-time listener: UI updates the moment admin approves
+                        listenToStatus();
                     }
                 } else {
                     if (alreadyRegisteredMessage) alreadyRegisteredMessage.style.display = 'none';
@@ -837,8 +851,7 @@ function initRegistrationApp() {
             const showSuccessUI = () => {
                 // Email is NO LONGER sent here! It is sent from Admin Panel on Approval.
                 
-                // Show success message and transition UI
-                const currentEventId = 'event_reg_done';
+                // Use the SAME currentEventId from Firestore (not a hardcoded key!)
                 localStorage.setItem(currentEventId, 'true');
                 if (templateParams && templateParams.phone) {
                     localStorage.setItem('userPhone', templateParams.phone);
@@ -848,6 +861,8 @@ function initRegistrationApp() {
                 if (alreadyRegisteredMessage) {
                     alreadyRegisteredMessage.style.display = 'block';
                     alreadyRegisteredMessage.style.animation = 'slideUpFade 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards';
+                    // Start real-time listener so approval shows without page refresh
+                    listenToStatus();
                 }
                 const successOverlay = document.querySelector('.success-overlay');
                 if (successOverlay) {
