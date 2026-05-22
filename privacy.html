@@ -4,101 +4,885 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Privacy Policy - Chess Bird</title>
+    <meta name="description" content="Chess Bird Privacy Policy — learn how we collect, use, and protect your personal information when you register for skill-based chess tournaments.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <style>
-        .doc-container {
-            max-width: 800px;
-            margin: 40px auto;
-            padding: 40px;
-            background: var(--surface-color);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 24px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+        /* ── Policy Page Layout ── */
+        body {
+            background-color: #03050a;
+            min-height: 100vh;
         }
-        .doc-container h1 {
-            font-family: var(--font-heading);
-            color: var(--text-pure);
-            margin-bottom: 24px;
-            font-size: 2.5rem;
+
+        .policy-header {
+            background: linear-gradient(135deg, #0b111a 0%, #03050a 100%);
+            border-bottom: 1px solid rgba(245, 158, 11, 0.15);
+            padding: 24px 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(12px);
         }
-        .doc-container h2 {
-            color: var(--primary);
-            margin-top: 32px;
-            margin-bottom: 16px;
-            font-size: 1.5rem;
+
+        .policy-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
         }
-        .doc-container p, .doc-container li {
-            color: var(--text-secondary);
-            line-height: 1.8;
-            margin-bottom: 16px;
-            font-size: 1.05rem;
+
+        .policy-logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
         }
-        .doc-container ul {
-            padding-left: 24px;
-            margin-bottom: 16px;
+
+        .policy-logo-text {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #ffffff;
         }
+
+        .policy-logo-text span {
+            color: #f59e0b;
+        }
+
         .back-btn {
             display: inline-flex;
             align-items: center;
-            gap: 10px;
-            color: var(--text-pure);
+            gap: 8px;
+            color: #94a3b8;
             text-decoration: none;
-            margin-bottom: 30px;
-            font-weight: 600;
+            font-weight: 500;
+            font-size: 0.9rem;
             transition: color 0.3s ease;
+            padding: 8px 16px;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 8px;
+            background: rgba(255,255,255,0.03);
         }
+
         .back-btn:hover {
-            color: var(--primary);
+            color: #f59e0b;
+            border-color: rgba(245, 158, 11, 0.3);
+            background: rgba(245, 158, 11, 0.05);
         }
+
+        .policy-page-wrapper {
+            max-width: 860px;
+            margin: 0 auto;
+            padding: 60px 40px 80px;
+        }
+
+        /* ── Page Hero ── */
+        .policy-hero {
+            margin-bottom: 48px;
+            padding-bottom: 40px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+
+        .policy-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.25);
+            color: #f59e0b;
+            padding: 6px 14px;
+            border-radius: 100px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+        }
+
+        .policy-hero h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 3rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 14px;
+            line-height: 1.1;
+        }
+
+        .policy-hero .subtitle {
+            color: #94a3b8;
+            font-size: 1.05rem;
+            line-height: 1.7;
+            max-width: 620px;
+        }
+
+        .policy-meta {
+            display: flex;
+            gap: 24px;
+            margin-top: 24px;
+            flex-wrap: wrap;
+        }
+
+        .policy-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            color: #64748b;
+        }
+
+        .policy-meta-item i {
+            color: #f59e0b;
+            font-size: 0.9rem;
+        }
+
+        /* ── Table of Contents ── */
+        .toc-box {
+            background: rgba(245, 158, 11, 0.04);
+            border: 1px solid rgba(245, 158, 11, 0.15);
+            border-radius: 16px;
+            padding: 28px 32px;
+            margin-bottom: 48px;
+        }
+
+        .toc-box h3 {
+            color: #f59e0b;
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .toc-list {
+            list-style: none;
+            padding: 0;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px 24px;
+        }
+
+        .toc-list li a {
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: color 0.25s ease;
+        }
+
+        .toc-list li a:hover {
+            color: #f59e0b;
+        }
+
+        .toc-list li a::before {
+            content: '';
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: rgba(245, 158, 11, 0.5);
+            flex-shrink: 0;
+        }
+
+        /* ── Section Styles ── */
+        .policy-section {
+            margin-bottom: 48px;
+            scroll-margin-top: 100px;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 20px;
+        }
+
+        .section-num {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, rgba(245,158,11,0.2) 0%, rgba(245,158,11,0.05) 100%);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 800;
+            color: #f59e0b;
+            flex-shrink: 0;
+        }
+
+        .policy-section h2 {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin: 0;
+        }
+
+        .policy-section p {
+            color: #94a3b8;
+            line-height: 1.85;
+            margin-bottom: 16px;
+            font-size: 1rem;
+        }
+
+        .policy-section ul,
+        .policy-section ol {
+            padding-left: 0;
+            margin-bottom: 16px;
+            list-style: none;
+        }
+
+        .policy-section ul li,
+        .policy-section ol li {
+            color: #94a3b8;
+            line-height: 1.8;
+            margin-bottom: 10px;
+            font-size: 1rem;
+            padding-left: 24px;
+            position: relative;
+        }
+
+        .policy-section ul li::before {
+            content: '›';
+            position: absolute;
+            left: 6px;
+            color: #f59e0b;
+            font-weight: 700;
+            font-size: 1.1rem;
+            top: -1px;
+        }
+
+        .policy-section ol {
+            counter-reset: ol-counter;
+        }
+
+        .policy-section ol li {
+            counter-increment: ol-counter;
+        }
+
+        .policy-section ol li::before {
+            content: counter(ol-counter) ".";
+            position: absolute;
+            left: 0;
+            color: #f59e0b;
+            font-weight: 700;
+            font-size: 0.85rem;
+            top: 3px;
+        }
+
+        .policy-section strong {
+            color: #e2e8f0;
+            font-weight: 600;
+        }
+
+        /* ── Highlight Box ── */
+        .highlight-box {
+            background: rgba(16, 185, 129, 0.05);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            border-left: 3px solid #10b981;
+            border-radius: 12px;
+            padding: 18px 22px;
+            margin: 20px 0;
+        }
+
+        .highlight-box p {
+            margin: 0;
+            color: #94a3b8;
+            font-size: 0.95rem;
+            line-height: 1.7;
+        }
+
+        .highlight-box p strong {
+            color: #10b981;
+        }
+
+        .warning-box {
+            background: rgba(245, 158, 11, 0.05);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            border-left: 3px solid #f59e0b;
+            border-radius: 12px;
+            padding: 18px 22px;
+            margin: 20px 0;
+        }
+
+        .warning-box p {
+            margin: 0;
+            color: #94a3b8;
+            font-size: 0.95rem;
+            line-height: 1.7;
+        }
+
+        .warning-box p strong {
+            color: #f59e0b;
+        }
+
+        /* ── Divider ── */
+        .section-divider {
+            border: none;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            margin: 0 0 48px;
+        }
+
+        /* ── Contact Section ── */
+        .contact-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+            margin-top: 20px;
+        }
+
+        .contact-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 14px;
+            padding: 20px 22px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+        }
+
+        .contact-card:hover {
+            background: rgba(255,255,255,0.06);
+            border-color: rgba(245,158,11,0.25);
+            transform: translateY(-2px);
+        }
+
+        .contact-card-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+
+        .icon-email { background: rgba(245, 158, 11, 0.12); color: #f59e0b; }
+        .icon-whatsapp { background: rgba(37, 211, 102, 0.12); color: #25d366; }
+        .icon-telegram { background: rgba(36, 161, 222, 0.12); color: #24a1de; }
+
+        .contact-card-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .contact-card-label {
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #64748b;
+            margin-bottom: 4px;
+        }
+
+        .contact-card-value {
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: #e2e8f0;
+            word-break: break-all;
+        }
+
+        /* ── Policy Footer Nav ── */
+        .policy-footer {
+            background: #0b111a;
+            border-top: 1px solid rgba(255,255,255,0.06);
+            padding: 32px 40px;
+            margin-top: 40px;
+        }
+
+        .footer-inner {
+            max-width: 860px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .footer-label {
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: #64748b;
+            margin-bottom: 8px;
+        }
+
+        .footer-policy-links {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .footer-policy-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 10px 18px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border: 1px solid rgba(255,255,255,0.08);
+            color: #94a3b8;
+            background: rgba(255,255,255,0.02);
+            transition: all 0.25s ease;
+        }
+
+        .footer-policy-link:hover {
+            color: #f59e0b;
+            border-color: rgba(245, 158, 11, 0.3);
+            background: rgba(245, 158, 11, 0.05);
+        }
+
+        .footer-policy-link.active {
+            color: #f59e0b;
+            border-color: rgba(245, 158, 11, 0.4);
+            background: rgba(245, 158, 11, 0.08);
+        }
+
+        .footer-copy {
+            font-size: 0.82rem;
+            color: #475569;
+            line-height: 1.6;
+        }
+
+        /* ── Responsive ── */
         @media (max-width: 768px) {
-            .doc-container {
-                margin: 20px;
-                padding: 24px;
+            .policy-header {
+                padding: 16px 20px;
             }
-            .doc-container h1 {
-                font-size: 2rem;
+
+            .policy-page-wrapper {
+                padding: 40px 20px 60px;
+            }
+
+            .policy-hero h1 {
+                font-size: 2.2rem;
+            }
+
+            .toc-list {
+                grid-template-columns: 1fr;
+            }
+
+            .toc-box {
+                padding: 20px;
+            }
+
+            .footer-policy-links {
+                flex-direction: column;
+            }
+
+            .footer-policy-link {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .policy-footer {
+                padding: 24px 20px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .policy-header {
+                flex-direction: column;
+                gap: 12px;
+                align-items: flex-start;
+            }
+            .policy-meta {
+                flex-direction: column;
+                gap: 10px;
             }
         }
     </style>
 </head>
 <body>
-    <div class="doc-container">
-        <a href="index.html" class="back-btn"><i class="fas fa-arrow-left"></i> Back to Home</a>
-        
-        <h1>Privacy Policy</h1>
-        <p>Last updated: April 19, 2026</p>
 
-        <h2>1. Information We Collect</h2>
-        <p>When you register for Chess Bird tournaments, we collect the following information:</p>
-        <ul>
-            <li>Full Name</li>
-            <li>Chess.com Username</li>
-            <li>Email Address</li>
-            <li>Phone Number</li>
-            <li>Chess Rating (fetched automatically)</li>
-        </ul>
+    <!-- Header -->
+    <header class="policy-header">
+        <a href="index.html" class="policy-logo" id="logo-home-link">
+            <div class="policy-logo-icon"><i class="fas fa-chess-king"></i></div>
+            <span class="policy-logo-text">Chess <span>Bird</span></span>
+        </a>
+        <a href="index.html" class="back-btn" id="back-to-home-btn">
+            <i class="fas fa-arrow-left"></i> Back to Home
+        </a>
+    </header>
 
-        <h2>2. How We Use Your Information</h2>
-        <p>We use the collected information for the following purposes:</p>
-        <ul>
-            <li>To register you for our exclusive chess tournaments.</li>
-            <li>To verify your identity and chess rating to ensure fair play.</li>
-            <li>To communicate tournament schedules, updates, and prize distributions.</li>
-            <li>To maintain the integrity of our leaderboard and ranking system.</li>
-        </ul>
+    <!-- Main Content -->
+    <main class="policy-page-wrapper">
 
-        <h2>3. Data Protection and Security</h2>
-        <p>Your privacy is our top priority. All personal and payment information is securely transmitted and stored using industry-standard encryption protocols. We do not sell, trade, or rent your personal information to third parties.</p>
+        <!-- Page Hero -->
+        <div class="policy-hero">
+            <div class="policy-badge">
+                <i class="fas fa-shield-alt"></i>
+                Legal Document
+            </div>
+            <h1>Privacy Policy</h1>
+            <p class="subtitle">
+                This Privacy Policy explains how Chess Bird collects, uses, and protects your personal information when you register for and participate in our skill-based online chess tournaments.
+            </p>
+            <div class="policy-meta">
+                <div class="policy-meta-item">
+                    <i class="fas fa-calendar-alt"></i>
+                    Last Updated: May 22, 2026
+                </div>
+                <div class="policy-meta-item">
+                    <i class="fas fa-globe"></i>
+                    Effective Date: May 22, 2026
+                </div>
+                <div class="policy-meta-item">
+                    <i class="fas fa-language"></i>
+                    Jurisdiction: India
+                </div>
+            </div>
+        </div>
 
-        <h2>4. Third-Party Services</h2>
-        <p>We use third-party services like Razorpay for payment processing and Firebase for secure database management. These services have their own stringent privacy policies and security measures.</p>
+        <!-- Table of Contents -->
+        <div class="toc-box">
+            <h3><i class="fas fa-list-ul"></i> Contents</h3>
+            <ul class="toc-list">
+                <li><a href="#section-overview">Platform Overview</a></li>
+                <li><a href="#section-collect">Information We Collect</a></li>
+                <li><a href="#section-use">How We Use Your Data</a></li>
+                <li><a href="#section-payment">Payment Security</a></li>
+                <li><a href="#section-protection">Data Protection</a></li>
+                <li><a href="#section-cookies">Cookies Policy</a></li>
+                <li><a href="#section-third-party">Third-Party Services</a></li>
+                <li><a href="#section-retention">Data Retention</a></li>
+                <li><a href="#section-rights">Your Rights</a></li>
+                <li><a href="#section-contact">Contact Us</a></li>
+            </ul>
+        </div>
 
-        <h2>5. Contact Us</h2>
-        <p>If you have any questions about this Privacy Policy, please contact us via our official Telegram channel.</p>
-    </div>
+        <!-- Section 1 -->
+        <div class="policy-section" id="section-overview">
+            <div class="section-header">
+                <div class="section-num">01</div>
+                <h2>Platform Overview &amp; Nature of Service</h2>
+            </div>
+            <p>
+                Chess Bird is an online platform that organises and manages <strong>skill-based chess tournaments and competitive matches</strong>. Players pay a registration fee to compete against other verified participants in structured formats. Chess is universally recognised as a game of skill, strategy, and intellectual ability.
+            </p>
+            <div class="highlight-box">
+                <p>
+                    <strong>Important Compliance Statement:</strong> Chess Bird is strictly a skill-based competitive chess platform. We do <strong>not</strong> engage in, promote, or facilitate any form of gambling, betting, wagering, or games of chance. All outcomes on this platform are determined solely by a player's chess skill and performance.
+                </p>
+            </div>
+            <p>
+                By accessing our platform and registering for any tournament, you acknowledge that you have read and understood this Privacy Policy and consent to the collection and use of your information as described herein.
+            </p>
+        </div>
+
+        <hr class="section-divider">
+
+        <!-- Section 2 -->
+        <div class="policy-section" id="section-collect">
+            <div class="section-header">
+                <div class="section-num">02</div>
+                <h2>Information We Collect</h2>
+            </div>
+            <p>
+                We collect only the information that is necessary to operate the platform, verify your identity, process payments, and manage your tournament participation. This includes:
+            </p>
+
+            <p><strong>Personal Identification Information</strong></p>
+            <ul>
+                <li><strong>Full Name</strong> — used to identify you in our records, tournament brackets, and leaderboards.</li>
+                <li><strong>Email Address</strong> — used for communication, registration confirmation, match scheduling, and prize notifications.</li>
+                <li><strong>Phone Number</strong> — used for WhatsApp/Telegram support contact and important tournament updates.</li>
+                <li><strong>Chess.com or Lichess Username</strong> — used to verify your identity, fetch your public rating, and track your in-game performance during tournaments.</li>
+            </ul>
+
+            <p><strong>Payment Information</strong></p>
+            <ul>
+                <li>Transaction reference numbers and payment status records generated by our payment processor (Razorpay).</li>
+                <li>We do <strong>not</strong> collect, store, or process raw card numbers, CVV codes, UPI PINs, or any sensitive banking credentials directly. All such data is handled exclusively by our PCI-DSS compliant payment gateway.</li>
+            </ul>
+
+            <p><strong>Technical &amp; Device Information</strong></p>
+            <ul>
+                <li>Browser type and version, operating system, and device type.</li>
+                <li>IP address and approximate geographic location.</li>
+                <li>Pages visited, time spent on platform, and interaction logs (for security and fraud prevention).</li>
+            </ul>
+
+            <p><strong>Chess Performance Data</strong></p>
+            <ul>
+                <li>Publicly available chess ratings fetched from Chess.com or Lichess APIs.</li>
+                <li>Match results, scores, and ranking data generated through tournament play on our platform.</li>
+            </ul>
+        </div>
+
+        <hr class="section-divider">
+
+        <!-- Section 3 -->
+        <div class="policy-section" id="section-use">
+            <div class="section-header">
+                <div class="section-num">03</div>
+                <h2>How We Use Your Information</h2>
+            </div>
+            <p>Your data is used solely for the purposes described below. We do not sell, rent, or trade your personal information to third parties for commercial gain.</p>
+
+            <p><strong>Tournament Registration &amp; Management</strong></p>
+            <ul>
+                <li>To register and confirm your participation in chess tournaments.</li>
+                <li>To generate tournament brackets, assign pairings, and schedule matches.</li>
+                <li>To maintain and update the official leaderboard and ranking system.</li>
+            </ul>
+
+            <p><strong>User Communication</strong></p>
+            <ul>
+                <li>To send confirmation emails following registration or payment.</li>
+                <li>To notify you of your match schedule, opponent details, and round results.</li>
+                <li>To inform you of prize distribution timelines or any changes to tournament rules.</li>
+                <li>To respond to support queries submitted via email, WhatsApp, or Telegram.</li>
+            </ul>
+
+            <p><strong>Payment Verification</strong></p>
+            <ul>
+                <li>To verify successful payment before confirming your tournament spot.</li>
+                <li>To reconcile transactions and issue refunds where applicable under our Refund Policy.</li>
+                <li>To maintain a secure payment audit trail for financial and legal compliance.</li>
+            </ul>
+
+            <p><strong>Fair Play &amp; Security</strong></p>
+            <ul>
+                <li>To verify the ownership and authenticity of registered chess accounts.</li>
+                <li>To detect and prevent cheating, engine assistance, multiple account registrations, and fraudulent payment activity.</li>
+                <li>To conduct identity verification calls if warranted by suspicious activity.</li>
+            </ul>
+
+            <p><strong>Platform Improvement</strong></p>
+            <ul>
+                <li>To analyse usage patterns and improve platform features.</li>
+                <li>To address technical issues and ensure a smooth user experience.</li>
+            </ul>
+        </div>
+
+        <hr class="section-divider">
+
+        <!-- Section 4 -->
+        <div class="policy-section" id="section-payment">
+            <div class="section-header">
+                <div class="section-num">04</div>
+                <h2>Payment Security</h2>
+            </div>
+            <p>
+                Chess Bird takes the security of your financial information extremely seriously. All registration fee payments are processed through <strong>Razorpay</strong>, a Reserve Bank of India (RBI) regulated and PCI DSS Level 1 compliant payment gateway.
+            </p>
+            <ul>
+                <li>All payment transactions are encrypted using <strong>TLS 1.2 / TLS 1.3</strong> encryption protocols.</li>
+                <li>Chess Bird does <strong>not</strong> store, log, or have access to your credit/debit card numbers, CVV, UPI PINs, or net banking credentials at any time.</li>
+                <li>Payment data is handled entirely within Razorpay's secure, isolated environment.</li>
+                <li>We retain only the transaction reference ID, payment status (success/failure), and amount for our internal records and audit purposes.</li>
+                <li>In the event of a refund, the reversal is processed back through Razorpay to your original payment method within the timelines specified in our Refund Policy.</li>
+            </ul>
+            <div class="warning-box">
+                <p>
+                    <strong>Fraud Alert:</strong> Chess Bird will never ask for your card number, CVV, OTP, UPI PIN, or banking password through any channel — email, WhatsApp, Telegram, or otherwise. If you receive any such request purporting to be from Chess Bird, please report it to us immediately.
+                </p>
+            </div>
+        </div>
+
+        <hr class="section-divider">
+
+        <!-- Section 5 -->
+        <div class="policy-section" id="section-protection">
+            <div class="section-header">
+                <div class="section-num">05</div>
+                <h2>Data Protection &amp; Security</h2>
+            </div>
+            <p>
+                Your personal data is stored securely using <strong>Google Firebase</strong> (Firestore Database and Authentication), which employs enterprise-grade security infrastructure, including encryption at rest and in transit.
+            </p>
+            <ul>
+                <li>Access to your personal records is restricted to authorised platform administrators only.</li>
+                <li>We implement role-based access controls, ensuring that no single administrator has unrestricted access to all sensitive data.</li>
+                <li>Our Firestore Security Rules restrict database read and write access based on user authentication status and role.</li>
+                <li>We do not share your personal information with any third party except as required to operate the platform (e.g., payment processor, email service), or as required by applicable law.</li>
+                <li>In the event of a data breach that affects your personal information, we will notify you promptly in accordance with applicable legal obligations.</li>
+            </ul>
+        </div>
+
+        <hr class="section-divider">
+
+        <!-- Section 6 -->
+        <div class="policy-section" id="section-cookies">
+            <div class="section-header">
+                <div class="section-num">06</div>
+                <h2>Cookies &amp; Tracking Technologies</h2>
+            </div>
+            <p>
+                Chess Bird uses a minimal set of cookies and browser storage technologies to enhance your experience and ensure platform security.
+            </p>
+            <p><strong>Types of Cookies We Use</strong></p>
+            <ul>
+                <li><strong>Session Cookies:</strong> Temporary cookies that expire when you close your browser. Used to maintain your authenticated session during your visit.</li>
+                <li><strong>Preference Cookies:</strong> Store your preferences (such as form state) to reduce repeated data entry.</li>
+                <li><strong>Analytics Cookies:</strong> Used via Google Firebase Analytics to understand aggregate usage patterns. These are anonymised and do not identify you individually.</li>
+            </ul>
+            <p>
+                We do <strong>not</strong> use cookies for advertising, retargeting, or selling data to third-party marketing platforms. You may disable cookies through your browser settings; however, some functionality of the platform may be affected.
+            </p>
+        </div>
+
+        <hr class="section-divider">
+
+        <!-- Section 7 -->
+        <div class="policy-section" id="section-third-party">
+            <div class="section-header">
+                <div class="section-num">07</div>
+                <h2>Third-Party Services</h2>
+            </div>
+            <p>
+                We use the following trusted third-party services to operate the platform. Each operates under its own privacy policy and security standards:
+            </p>
+            <ul>
+                <li><strong>Razorpay (Payment Processing):</strong> Handles all payment transactions. PCI DSS Level 1 certified. <a href="https://razorpay.com/privacy/" target="_blank" rel="noopener noreferrer" style="color:#f59e0b;">Razorpay Privacy Policy</a></li>
+                <li><strong>Google Firebase (Database &amp; Authentication):</strong> Stores user registration data and manages authentication. Operated by Google LLC. <a href="https://firebase.google.com/support/privacy" target="_blank" rel="noopener noreferrer" style="color:#f59e0b;">Firebase Privacy Policy</a></li>
+                <li><strong>Chess.com / Lichess API (Rating Verification):</strong> Used to fetch publicly available player ratings and verify account ownership. Only public API endpoints are accessed.</li>
+                <li><strong>Google Fonts (Typography):</strong> Loads web fonts. Google may collect minimal usage data. No personal data from our platform is shared.</li>
+                <li><strong>Font Awesome (Icons):</strong> Loads icon assets via CDN. No personal data is shared.</li>
+            </ul>
+            <p>
+                We do not sell or share your personal data with any of these third parties beyond what is strictly necessary to provide the services described.
+            </p>
+        </div>
+
+        <hr class="section-divider">
+
+        <!-- Section 8 -->
+        <div class="policy-section" id="section-retention">
+            <div class="section-header">
+                <div class="section-num">08</div>
+                <h2>Data Retention</h2>
+            </div>
+            <p>
+                We retain your personal data for as long as is necessary to fulfil the purposes outlined in this Privacy Policy, or as required by applicable law.
+            </p>
+            <ul>
+                <li>Tournament registration data (name, username, payment status) is retained for a minimum of <strong>2 years</strong> following the completion of the tournament, for dispute resolution and audit purposes.</li>
+                <li>Payment transaction records are retained as required by Indian tax and financial regulations (typically 7 years).</li>
+                <li>If you request deletion of your account and data, we will fulfil the request within 30 days, except where retention is required by law.</li>
+            </ul>
+        </div>
+
+        <hr class="section-divider">
+
+        <!-- Section 9 -->
+        <div class="policy-section" id="section-rights">
+            <div class="section-header">
+                <div class="section-num">09</div>
+                <h2>Your Rights</h2>
+            </div>
+            <p>
+                You have the following rights with respect to your personal data held by Chess Bird:
+            </p>
+            <ul>
+                <li><strong>Right of Access:</strong> You may request a copy of all personal data we hold about you.</li>
+                <li><strong>Right of Correction:</strong> You may request correction of inaccurate or incomplete personal data.</li>
+                <li><strong>Right to Deletion:</strong> You may request deletion of your personal data, subject to applicable legal retention obligations.</li>
+                <li><strong>Right to Object:</strong> You may object to the processing of your data for any purpose beyond what is strictly necessary for tournament operation.</li>
+                <li><strong>Right to Withdraw Consent:</strong> Where processing is based on consent, you may withdraw that consent at any time by contacting us.</li>
+            </ul>
+            <p>
+                To exercise any of these rights, please contact our support team using the details provided in Section 10 below.
+            </p>
+        </div>
+
+        <hr class="section-divider">
+
+        <!-- Section 10 -->
+        <div class="policy-section" id="section-contact">
+            <div class="section-header">
+                <div class="section-num">10</div>
+                <h2>Contact Us</h2>
+            </div>
+            <p>
+                For any questions, concerns, or requests regarding this Privacy Policy or the handling of your personal data, please reach out to us through any of the following channels. We aim to respond to all enquiries within <strong>2 business days</strong>.
+            </p>
+
+            <div class="contact-grid">
+                <a href="mailto:chessbirdtournament@gmail.com" class="contact-card" id="contact-email-link">
+                    <div class="contact-card-icon icon-email">
+                        <i class="fas fa-envelope"></i>
+                    </div>
+                    <div class="contact-card-info">
+                        <div class="contact-card-label">Email Support</div>
+                        <div class="contact-card-value">chessbirdtournament@gmail.com</div>
+                    </div>
+                </a>
+                <a href="https://whatsapp.com/channel/0029Vb7eY6i3wtbHyPSOiW2c" target="_blank" rel="noopener noreferrer" class="contact-card" id="contact-whatsapp-link">
+                    <div class="contact-card-icon icon-whatsapp">
+                        <i class="fab fa-whatsapp"></i>
+                    </div>
+                    <div class="contact-card-info">
+                        <div class="contact-card-label">WhatsApp Channel</div>
+                        <div class="contact-card-value">Chess Bird WhatsApp</div>
+                    </div>
+                </a>
+                <a href="https://t.me/chessbirdofficial" target="_blank" rel="noopener noreferrer" class="contact-card" id="contact-telegram-link">
+                    <div class="contact-card-icon icon-telegram">
+                        <i class="fab fa-telegram-plane"></i>
+                    </div>
+                    <div class="contact-card-info">
+                        <div class="contact-card-label">Telegram Channel</div>
+                        <div class="contact-card-value">@chessbirdofficial</div>
+                    </div>
+                </a>
+            </div>
+
+            <p style="margin-top: 24px;">
+                Chess Bird is operated in India. This Privacy Policy is governed by and construed in accordance with the laws of India, including the Information Technology Act, 2000 and applicable rules. Any disputes arising in connection with this Privacy Policy shall be subject to the exclusive jurisdiction of the courts in India.
+            </p>
+        </div>
+
+    </main>
+
+    <!-- Policy Footer Navigation -->
+    <footer class="policy-footer">
+        <div class="footer-inner">
+            <div>
+                <div class="footer-label">Policy Documents</div>
+                <div class="footer-policy-links">
+                    <a href="privacy.html" class="footer-policy-link active" id="footer-privacy-link">
+                        <i class="fas fa-shield-alt"></i> Privacy Policy
+                    </a>
+                    <a href="terms.html" class="footer-policy-link" id="footer-terms-link">
+                        <i class="fas fa-file-contract"></i> Terms &amp; Conditions
+                    </a>
+                    <a href="refund.html" class="footer-policy-link" id="footer-refund-link">
+                        <i class="fas fa-undo-alt"></i> Refund &amp; Cancellation Policy
+                    </a>
+                    <a href="index.html" class="footer-policy-link" id="footer-home-link">
+                        <i class="fas fa-home"></i> Back to Home
+                    </a>
+                </div>
+            </div>
+            <p class="footer-copy">
+                &copy; 2026 Chess Bird. All rights reserved. Chess Bird is a skill-based competitive chess platform and does not engage in or promote gambling, betting, or games of chance. Registration fees are charged for access to organised tournament infrastructure, opponent matching, and prize pool management.
+            </p>
+        </div>
+    </footer>
+
 </body>
 </html>

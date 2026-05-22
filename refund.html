@@ -1,0 +1,1040 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Refund &amp; Cancellation Policy - Chess Bird</title>
+    <meta name="description" content="Chess Bird Refund & Cancellation Policy — understand when and how to request a refund for your chess tournament registration fee.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* ── Policy Page Layout ── */
+        body {
+            background-color: #03050a;
+            min-height: 100vh;
+        }
+
+        .policy-header {
+            background: linear-gradient(135deg, #0b111a 0%, #03050a 100%);
+            border-bottom: 1px solid rgba(245, 158, 11, 0.15);
+            padding: 24px 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(12px);
+        }
+
+        .policy-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+        }
+
+        .policy-logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+        }
+
+        .policy-logo-text {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .policy-logo-text span {
+            color: #f59e0b;
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #94a3b8;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: color 0.3s ease;
+            padding: 8px 16px;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 8px;
+            background: rgba(255,255,255,0.03);
+        }
+
+        .back-btn:hover {
+            color: #f59e0b;
+            border-color: rgba(245, 158, 11, 0.3);
+            background: rgba(245, 158, 11, 0.05);
+        }
+
+        .policy-page-wrapper {
+            max-width: 860px;
+            margin: 0 auto;
+            padding: 60px 40px 80px;
+        }
+
+        /* ── Page Hero ── */
+        .policy-hero {
+            margin-bottom: 48px;
+            padding-bottom: 40px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+
+        .policy-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.25);
+            color: #f59e0b;
+            padding: 6px 14px;
+            border-radius: 100px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+        }
+
+        .policy-hero h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 3rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 14px;
+            line-height: 1.1;
+        }
+
+        .policy-hero .subtitle {
+            color: #94a3b8;
+            font-size: 1.05rem;
+            line-height: 1.7;
+            max-width: 620px;
+        }
+
+        .policy-meta {
+            display: flex;
+            gap: 24px;
+            margin-top: 24px;
+            flex-wrap: wrap;
+        }
+
+        .policy-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            color: #64748b;
+        }
+
+        .policy-meta-item i {
+            color: #f59e0b;
+            font-size: 0.9rem;
+        }
+
+        /* ── Table of Contents ── */
+        .toc-box {
+            background: rgba(245, 158, 11, 0.04);
+            border: 1px solid rgba(245, 158, 11, 0.15);
+            border-radius: 16px;
+            padding: 28px 32px;
+            margin-bottom: 48px;
+        }
+
+        .toc-box h3 {
+            color: #f59e0b;
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .toc-list {
+            list-style: none;
+            padding: 0;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px 24px;
+        }
+
+        .toc-list li a {
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: color 0.25s ease;
+        }
+
+        .toc-list li a:hover {
+            color: #f59e0b;
+        }
+
+        .toc-list li a::before {
+            content: '';
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: rgba(245, 158, 11, 0.5);
+            flex-shrink: 0;
+        }
+
+        /* ── Section Styles ── */
+        .policy-section {
+            margin-bottom: 48px;
+            scroll-margin-top: 100px;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 20px;
+        }
+
+        .section-num {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, rgba(245,158,11,0.2) 0%, rgba(245,158,11,0.05) 100%);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 800;
+            color: #f59e0b;
+            flex-shrink: 0;
+        }
+
+        .policy-section h2 {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin: 0;
+        }
+
+        .policy-section p {
+            color: #94a3b8;
+            line-height: 1.85;
+            margin-bottom: 16px;
+            font-size: 1rem;
+        }
+
+        .policy-section ul,
+        .policy-section ol {
+            padding-left: 0;
+            margin-bottom: 16px;
+            list-style: none;
+        }
+
+        .policy-section ul li,
+        .policy-section ol li {
+            color: #94a3b8;
+            line-height: 1.8;
+            margin-bottom: 10px;
+            font-size: 1rem;
+            padding-left: 24px;
+            position: relative;
+        }
+
+        .policy-section ul li::before {
+            content: '›';
+            position: absolute;
+            left: 6px;
+            color: #f59e0b;
+            font-weight: 700;
+            font-size: 1.1rem;
+            top: -1px;
+        }
+
+        .policy-section ol {
+            counter-reset: ol-counter;
+        }
+
+        .policy-section ol li {
+            counter-increment: ol-counter;
+        }
+
+        .policy-section ol li::before {
+            content: counter(ol-counter) ".";
+            position: absolute;
+            left: 0;
+            color: #f59e0b;
+            font-weight: 700;
+            font-size: 0.85rem;
+            top: 3px;
+        }
+
+        .policy-section strong {
+            color: #e2e8f0;
+            font-weight: 600;
+        }
+
+        /* ── Highlight Box ── */
+        .highlight-box {
+            background: rgba(16, 185, 129, 0.05);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            border-left: 3px solid #10b981;
+            border-radius: 12px;
+            padding: 18px 22px;
+            margin: 20px 0;
+        }
+
+        .highlight-box p {
+            margin: 0;
+            color: #94a3b8;
+            font-size: 0.95rem;
+            line-height: 1.7;
+        }
+
+        .highlight-box p strong {
+            color: #10b981;
+        }
+
+        .warning-box {
+            background: rgba(239, 68, 68, 0.05);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            border-left: 3px solid #ef4444;
+            border-radius: 12px;
+            padding: 18px 22px;
+            margin: 20px 0;
+        }
+
+        .warning-box p {
+            margin: 0;
+            color: #94a3b8;
+            font-size: 0.95rem;
+            line-height: 1.7;
+        }
+
+        .warning-box p strong {
+            color: #ef4444;
+        }
+
+        .info-box {
+            background: rgba(245, 158, 11, 0.05);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            border-left: 3px solid #f59e0b;
+            border-radius: 12px;
+            padding: 18px 22px;
+            margin: 20px 0;
+        }
+
+        .info-box p {
+            margin: 0;
+            color: #94a3b8;
+            font-size: 0.95rem;
+            line-height: 1.7;
+        }
+
+        .info-box p strong {
+            color: #f59e0b;
+        }
+
+        /* ── Divider ── */
+        .section-divider {
+            border: none;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            margin: 0 0 48px;
+        }
+
+        /* ── Refund Scenario Cards ── */
+        .refund-scenario-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin: 24px 0;
+        }
+
+        .refund-card {
+            border-radius: 14px;
+            padding: 22px;
+            border: 1px solid;
+        }
+
+        .refund-card.eligible {
+            background: rgba(16, 185, 129, 0.05);
+            border-color: rgba(16, 185, 129, 0.2);
+        }
+
+        .refund-card.not-eligible {
+            background: rgba(239, 68, 68, 0.05);
+            border-color: rgba(239, 68, 68, 0.2);
+        }
+
+        .refund-card-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            font-size: 1rem;
+            margin-bottom: 14px;
+        }
+
+        .refund-card.eligible .refund-card-title {
+            color: #10b981;
+        }
+
+        .refund-card.not-eligible .refund-card-title {
+            color: #ef4444;
+        }
+
+        .refund-card ul {
+            padding: 0;
+            margin: 0;
+        }
+
+        .refund-card ul li {
+            font-size: 0.9rem;
+            color: #94a3b8;
+            padding-left: 16px;
+            margin-bottom: 8px;
+            position: relative;
+        }
+
+        .refund-card.eligible ul li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: #10b981;
+            font-weight: 700;
+            font-size: 0.8rem;
+        }
+
+        .refund-card.not-eligible ul li::before {
+            content: '✗';
+            position: absolute;
+            left: 0;
+            color: #ef4444;
+            font-weight: 700;
+            font-size: 0.8rem;
+        }
+
+        /* ── Process Steps ── */
+        .process-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            margin: 24px 0;
+            position: relative;
+        }
+
+        .process-steps::before {
+            content: '';
+            position: absolute;
+            left: 19px;
+            top: 20px;
+            bottom: 20px;
+            width: 2px;
+            background: linear-gradient(to bottom, rgba(245,158,11,0.4), rgba(245,158,11,0.05));
+        }
+
+        .process-step {
+            display: flex;
+            gap: 18px;
+            align-items: flex-start;
+            padding: 16px 0;
+            position: relative;
+            z-index: 1;
+        }
+
+        .step-num {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            font-weight: 800;
+            color: #fff;
+            flex-shrink: 0;
+            box-shadow: 0 0 0 4px #03050a, 0 0 0 5px rgba(245,158,11,0.2);
+        }
+
+        .step-content {
+            padding-top: 8px;
+            flex: 1;
+        }
+
+        .step-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #e2e8f0;
+            margin-bottom: 4px;
+        }
+
+        .step-desc {
+            font-size: 0.9rem;
+            color: #64748b;
+            line-height: 1.6;
+        }
+
+        /* ── Timeline Card ── */
+        .timeline-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin: 24px 0;
+        }
+
+        .timeline-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 14px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .timeline-card-type {
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #64748b;
+            margin-bottom: 8px;
+        }
+
+        .timeline-card-days {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: #f59e0b;
+            line-height: 1.1;
+            margin-bottom: 6px;
+        }
+
+        .timeline-card-label {
+            font-size: 0.82rem;
+            color: #94a3b8;
+            line-height: 1.5;
+        }
+
+        /* ── Contact Section ── */
+        .contact-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+            margin-top: 20px;
+        }
+
+        .contact-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 14px;
+            padding: 20px 22px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+        }
+
+        .contact-card:hover {
+            background: rgba(255,255,255,0.06);
+            border-color: rgba(245,158,11,0.25);
+            transform: translateY(-2px);
+        }
+
+        .contact-card-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+
+        .icon-email { background: rgba(245, 158, 11, 0.12); color: #f59e0b; }
+        .icon-whatsapp { background: rgba(37, 211, 102, 0.12); color: #25d366; }
+        .icon-telegram { background: rgba(36, 161, 222, 0.12); color: #24a1de; }
+
+        .contact-card-info { flex: 1; min-width: 0; }
+
+        .contact-card-label {
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #64748b;
+            margin-bottom: 4px;
+        }
+
+        .contact-card-value {
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: #e2e8f0;
+            word-break: break-all;
+        }
+
+        /* ── Policy Footer Nav ── */
+        .policy-footer {
+            background: #0b111a;
+            border-top: 1px solid rgba(255,255,255,0.06);
+            padding: 32px 40px;
+            margin-top: 40px;
+        }
+
+        .footer-inner {
+            max-width: 860px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .footer-label {
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: #64748b;
+            margin-bottom: 8px;
+        }
+
+        .footer-policy-links {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .footer-policy-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 10px 18px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border: 1px solid rgba(255,255,255,0.08);
+            color: #94a3b8;
+            background: rgba(255,255,255,0.02);
+            transition: all 0.25s ease;
+        }
+
+        .footer-policy-link:hover {
+            color: #f59e0b;
+            border-color: rgba(245, 158, 11, 0.3);
+            background: rgba(245, 158, 11, 0.05);
+        }
+
+        .footer-policy-link.active {
+            color: #f59e0b;
+            border-color: rgba(245, 158, 11, 0.4);
+            background: rgba(245, 158, 11, 0.08);
+        }
+
+        .footer-copy {
+            font-size: 0.82rem;
+            color: #475569;
+            line-height: 1.6;
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 768px) {
+            .policy-header { padding: 16px 20px; }
+            .policy-page-wrapper { padding: 40px 20px 60px; }
+            .policy-hero h1 { font-size: 2.2rem; }
+            .toc-list { grid-template-columns: 1fr; }
+            .toc-box { padding: 20px; }
+            .refund-scenario-grid { grid-template-columns: 1fr; }
+            .footer-policy-links { flex-direction: column; }
+            .footer-policy-link { width: 100%; justify-content: center; }
+            .policy-footer { padding: 24px 20px; }
+        }
+
+        @media (max-width: 480px) {
+            .policy-header { flex-direction: column; gap: 12px; align-items: flex-start; }
+            .policy-meta { flex-direction: column; gap: 10px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="policy-header">
+        <a href="index.html" class="policy-logo" id="logo-home-link">
+            <div class="policy-logo-icon"><i class="fas fa-chess-king"></i></div>
+            <span class="policy-logo-text">Chess <span>Bird</span></span>
+        </a>
+        <a href="index.html" class="back-btn" id="back-to-home-btn">
+            <i class="fas fa-arrow-left"></i> Back to Home
+        </a>
+    </header>
+
+    <!-- Main Content -->
+    <main class="policy-page-wrapper">
+
+        <!-- Page Hero -->
+        <div class="policy-hero">
+            <div class="policy-badge">
+                <i class="fas fa-undo-alt"></i>
+                Legal Document
+            </div>
+            <h1>Refund &amp; Cancellation Policy</h1>
+            <p class="subtitle">
+                This policy outlines the conditions under which Chess Bird will process refunds for tournament registration fees, and the process for submitting a refund request. Please read this carefully before registering.
+            </p>
+            <div class="policy-meta">
+                <div class="policy-meta-item">
+                    <i class="fas fa-calendar-alt"></i>
+                    Last Updated: May 22, 2026
+                </div>
+                <div class="policy-meta-item">
+                    <i class="fas fa-globe"></i>
+                    Effective Date: May 22, 2026
+                </div>
+                <div class="policy-meta-item">
+                    <i class="fas fa-language"></i>
+                    Jurisdiction: India
+                </div>
+            </div>
+        </div>
+
+        <!-- Table of Contents -->
+        <div class="toc-box">
+            <h3><i class="fas fa-list-ul"></i> Contents</h3>
+            <ul class="toc-list">
+                <li><a href="#section-overview">Policy Overview</a></li>
+                <li><a href="#section-eligible">Eligible Refund Situations</a></li>
+                <li><a href="#section-duplicate">Duplicate Payment Refunds</a></li>
+                <li><a href="#section-nonrefundable">Non-Refundable Situations</a></li>
+                <li><a href="#section-process">Refund Request Process</a></li>
+                <li><a href="#section-timeline">Processing Timeline</a></li>
+                <li><a href="#section-failed">Failed Payment Reversals</a></li>
+                <li><a href="#section-contact">Contact Support</a></li>
+            </ul>
+        </div>
+
+        <!-- Section 1 -->
+        <div class="policy-section" id="section-overview">
+            <div class="section-header">
+                <div class="section-num">01</div>
+                <h2>Policy Overview</h2>
+            </div>
+            <p>
+                Chess Bird charges a <strong>tournament registration fee</strong> to cover the costs of platform infrastructure, match organisation, opponent scheduling, and prize pool management. This fee is generally non-refundable once a tournament spot has been confirmed.
+            </p>
+            <p>
+                However, we recognise that exceptional circumstances can arise — including tournament cancellations by the organiser or accidental duplicate payments — and we have clearly defined the circumstances under which a refund will be granted.
+            </p>
+            <div class="highlight-box">
+                <p>
+                    <strong>Our Commitment:</strong> Where a refund is due under this policy, Chess Bird will process it promptly and transparently. We believe in fair dealing with all our participants and are committed to resolving payment concerns with integrity.
+                </p>
+            </div>
+            <p>
+                All refund requests must be submitted via one of the official support channels listed in Section 8 of this policy. Verbal requests or requests via unofficial channels will not be processed.
+            </p>
+        </div>
+
+        <hr class="section-divider">
+
+        <!-- Section 2 -->
+        <div class="policy-section" id="section-eligible">
+            <div class="section-header">
+                <div class="section-num">02</div>
+                <h2>Situations Eligible for a Refund</h2>
+            </div>
+            <p>
+                A full refund of the registration fee will be issued in the following circumstances:
+            </p>
+
+            <div class="refund-scenario-grid">
+                <div class="refund-card eligible">
+                    <div class="refund-card-title">
+                        <i class="fas fa-check-circle"></i> Refund Eligible
+                    </div>
+                    <ul>
+                        <li>Tournament cancelled by Chess Bird before it begins</li>
+                        <li>Duplicate payment for the same tournament slot</li>
+                        <li>Payment debited but registration not confirmed (technical error)</li>
+                        <li>Player registered but found ineligible due to rating miscommunication on our part</li>
+                        <li>Tournament permanently cancelled after partial completion (partial refund may apply)</li>
+                    </ul>
+                </div>
+                <div class="refund-card not-eligible">
+                    <div class="refund-card-title">
+                        <i class="fas fa-times-circle"></i> Not Eligible
+                    </div>
+                    <ul>
+                        <li>Voluntary withdrawal after registration is confirmed</li>
+                        <li>Disqualification due to cheating or fair play violations</li>
+                        <li>Failure to appear for scheduled matches (no-show)</li>
+                        <li>Registration with incorrect personal details provided by the player</li>
+                        <li>Change of personal circumstances or schedule conflicts</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <hr class="section-divider">
+
+        <!-- Section 3 -->
+        <div class="policy-section" id="section-duplicate">
+            <div class="section-header">
+                <div class="section-num">03</div>
+                <h2>Duplicate Payment Refund Policy</h2>
+            </div>
+            <p>
+                If you have accidentally submitted two or more payments for the same tournament registration, Chess Bird will refund the duplicate amount(s) in full.
+            </p>
+            <ul>
+                <li>A duplicate payment is defined as more than one successful payment transaction made by the same user for the same tournament, resulting in a single confirmed registration slot.</li>
+                <li>If you believe you have made a duplicate payment, you must contact us within <strong>7 days</strong> of the payment date with your transaction reference number(s) and the registered email address.</li>
+                <li>Duplicate payment refunds will be processed within <strong>5–7 business days</strong> of verification and returned to the original payment method.</li>
+                <li>If the duplicate payment resulted in two separate tournament registrations being confirmed (e.g., registering two players), this will not be treated as a duplicate and the standard refund terms apply.</li>
+            </ul>
+            <div class="info-box">
+                <p>
+                    <strong>How to Report:</strong> Contact our support team with both transaction reference IDs, your registered email address, and a brief description of the duplicate payment. We will cross-verify with our payment records and initiate the refund within 2 business days of confirmation.
+                </p>
+            </div>
+        </div>
+
+        <hr class="section-divider">
+
+        <!-- Section 4 -->
+        <div class="policy-section" id="section-nonrefundable">
+            <div class="section-header">
+                <div class="section-num">04</div>
+                <h2>Non-Refundable Situations</h2>
+            </div>
+            <p>
+                The following situations are <strong>not eligible for a refund</strong> under any circumstances. Please review this list carefully before registering and making payment.
+            </p>
+            <ul>
+                <li><strong>Voluntary Withdrawal:</strong> If you choose to withdraw from a tournament after your registration has been confirmed and your payment processed, you are not entitled to a refund, regardless of the reason.</li>
+                <li><strong>No-Show Without Prior Notice:</strong> If you fail to appear for your scheduled match(es) without notifying the administrator in advance, your registration fee is forfeited.</li>
+                <li><strong>Disqualification for Fair Play Violations:</strong> Any participant disqualified for using chess engines, playing on another person's account, or any other fair play violation will not receive a refund under any circumstances.</li>
+                <li><strong>Ineligibility Due to Player Error:</strong> If your registration is invalidated because you provided incorrect or fraudulent information (name, chess username, rating, etc.), no refund will be issued.</li>
+                <li><strong>Platform or Internet Issues on the Player's Side:</strong> Technical difficulties on your device, ISP, or internet connection that result in missed matches are not grounds for a refund.</li>
+                <li><strong>Change of Mind:</strong> Registration fees are non-refundable simply because you have changed your mind or your circumstances have changed after confirmed registration.</li>
+                <li><strong>Partial Tournament Completion:</strong> If you have successfully played one or more rounds in a tournament before withdrawing or being eliminated through fair competition, no refund will be issued.</li>
+            </ul>
+            <div class="warning-box">
+                <p>
+                    <strong>Important:</strong> By completing payment and confirming your registration, you acknowledge and accept that the registration fee is non-refundable except in the specific eligible circumstances described in Section 2 and Section 3 of this policy.
+                </p>
+            </div>
+        </div>
+
+        <hr class="section-divider">
+
+        <!-- Section 5 -->
+        <div class="policy-section" id="section-process">
+            <div class="section-header">
+                <div class="section-num">05</div>
+                <h2>Refund Request Process</h2>
+            </div>
+            <p>
+                To submit a refund request, please follow these steps carefully. Requests that do not include the required information cannot be processed:
+            </p>
+
+            <div class="process-steps">
+                <div class="process-step">
+                    <div class="step-num">1</div>
+                    <div class="step-content">
+                        <div class="step-title">Gather Your Payment Details</div>
+                        <div class="step-desc">Locate your Razorpay transaction reference ID (found in your payment confirmation email or Razorpay receipt) and the email address used for registration.</div>
+                    </div>
+                </div>
+                <div class="process-step">
+                    <div class="step-num">2</div>
+                    <div class="step-content">
+                        <div class="step-title">Contact Our Support Team</div>
+                        <div class="step-desc">Reach out via email to <strong>chessbirdtournament@gmail.com</strong> or via WhatsApp/Telegram (details in Section 8). Use the subject line: "Refund Request – [Your Name] – [Tournament Name]".</div>
+                    </div>
+                </div>
+                <div class="process-step">
+                    <div class="step-num">3</div>
+                    <div class="step-content">
+                        <div class="step-title">Provide Required Information</div>
+                        <div class="step-desc">Include your full name, registered email address, Razorpay transaction ID, tournament name, amount paid, and a clear explanation of the reason for your refund request.</div>
+                    </div>
+                </div>
+                <div class="process-step">
+                    <div class="step-num">4</div>
+                    <div class="step-content">
+                        <div class="step-title">Verification by Our Team</div>
+                        <div class="step-desc">Our team will verify your request against our payment and registration records. We may contact you for additional information or documentation.</div>
+                    </div>
+                </div>
+                <div class="process-step">
+                    <div class="step-num">5</div>
+                    <div class="step-content">
+                        <div class="step-title">Refund Initiation &amp; Confirmation</div>
+                        <div class="step-desc">If your request is approved, we will initiate the refund through Razorpay to your original payment method. You will receive a confirmation email with the refund reference number.</div>
+                    </div>
+                </div>
+            </div>
+
+            <p>
+                Please ensure that your refund request is submitted within <strong>14 days</strong> of the event that gives rise to the refund claim (e.g., tournament cancellation date or duplicate payment date). Requests submitted after this period may not be honoured.
+            </p>
+        </div>
+
+        <hr class="section-divider">
+
+        <!-- Section 6 -->
+        <div class="policy-section" id="section-timeline">
+            <div class="section-header">
+                <div class="section-num">06</div>
+                <h2>Refund Processing Timeline</h2>
+            </div>
+            <p>
+                Once a refund request has been verified and approved, the following timelines apply:
+            </p>
+
+            <div class="timeline-grid">
+                <div class="timeline-card">
+                    <div class="timeline-card-type">Review</div>
+                    <div class="timeline-card-days">1–2</div>
+                    <div class="timeline-card-label">Business days to review &amp; approve your request</div>
+                </div>
+                <div class="timeline-card">
+                    <div class="timeline-card-type">Initiation</div>
+                    <div class="timeline-card-days">1–2</div>
+                    <div class="timeline-card-label">Business days to initiate refund via Razorpay after approval</div>
+                </div>
+                <div class="timeline-card">
+                    <div class="timeline-card-type">Credit (UPI)</div>
+                    <div class="timeline-card-days">2–5</div>
+                    <div class="timeline-card-label">Business days for UPI refunds to reflect in your account</div>
+                </div>
+                <div class="timeline-card">
+                    <div class="timeline-card-type">Credit (Card/Net Banking)</div>
+                    <div class="timeline-card-days">5–7</div>
+                    <div class="timeline-card-label">Business days for card/net banking refunds to reflect</div>
+                </div>
+            </div>
+
+            <p>
+                Total maximum processing time from submission to credit is typically <strong>7–10 business days</strong>. If the refund does not appear in your account after 10 business days from the date of our confirmation email, please contact us immediately with your refund reference number.
+            </p>
+            <p>
+                Refund timelines for credit/debit card transactions depend on the processing timelines of your issuing bank, which are beyond our control.
+            </p>
+        </div>
+
+        <hr class="section-divider">
+
+        <!-- Section 7 -->
+        <div class="policy-section" id="section-failed">
+            <div class="section-header">
+                <div class="section-num">07</div>
+                <h2>Failed Payment Reversals</h2>
+            </div>
+            <p>
+                If a payment is initiated but fails partway through (e.g., network interruption, bank gateway error) and the amount is debited from your account but the registration is <strong>not confirmed</strong>, the following applies:
+            </p>
+            <ul>
+                <li>In most cases, failed payment amounts are automatically reversed by Razorpay and credited back to your source account within <strong>5–7 business days</strong>.</li>
+                <li>This automatic reversal is handled by your bank and Razorpay without any action required from Chess Bird.</li>
+                <li>If you do not receive the reversal within 7 business days, you should first contact your bank with the Razorpay transaction reference number.</li>
+                <li>If the bank confirms that no reversal was received and the issue persists, contact Chess Bird support with your transaction details. We will raise a query with Razorpay on your behalf.</li>
+                <li>In all failed-payment cases where a debit occurred without confirmed registration, Chess Bird will cooperate fully with your bank and Razorpay to facilitate the reversal.</li>
+            </ul>
+            <div class="info-box">
+                <p>
+                    <strong>Quick Tip:</strong> After any payment, always check your email for a Razorpay receipt and a Chess Bird registration confirmation. If you receive only the Razorpay receipt but not the registration confirmation email, contact our support team immediately to investigate.
+                </p>
+            </div>
+        </div>
+
+        <hr class="section-divider">
+
+        <!-- Section 8 -->
+        <div class="policy-section" id="section-contact">
+            <div class="section-header">
+                <div class="section-num">08</div>
+                <h2>Contact Support for Payment Issues</h2>
+            </div>
+            <p>
+                For all refund requests, payment disputes, or billing queries, please reach out to our support team through any of the following channels. When contacting us, please always include your <strong>transaction reference ID</strong> and <strong>registered email address</strong> to expedite your query.
+            </p>
+            <p>We aim to respond to all refund queries within <strong>1–2 business days</strong>.</p>
+
+            <div class="contact-grid">
+                <a href="mailto:chessbirdtournament@gmail.com" class="contact-card" id="contact-email-link">
+                    <div class="contact-card-icon icon-email"><i class="fas fa-envelope"></i></div>
+                    <div class="contact-card-info">
+                        <div class="contact-card-label">Email Support</div>
+                        <div class="contact-card-value">chessbirdtournament@gmail.com</div>
+                    </div>
+                </a>
+                <a href="https://whatsapp.com/channel/0029Vb7eY6i3wtbHyPSOiW2c" target="_blank" rel="noopener noreferrer" class="contact-card" id="contact-whatsapp-link">
+                    <div class="contact-card-icon icon-whatsapp"><i class="fab fa-whatsapp"></i></div>
+                    <div class="contact-card-info">
+                        <div class="contact-card-label">WhatsApp Channel</div>
+                        <div class="contact-card-value">Chess Bird WhatsApp</div>
+                    </div>
+                </a>
+                <a href="https://t.me/chessbirdofficial" target="_blank" rel="noopener noreferrer" class="contact-card" id="contact-telegram-link">
+                    <div class="contact-card-icon icon-telegram"><i class="fab fa-telegram-plane"></i></div>
+                    <div class="contact-card-info">
+                        <div class="contact-card-label">Telegram Channel</div>
+                        <div class="contact-card-value">@chessbirdofficial</div>
+                    </div>
+                </a>
+            </div>
+
+            <p style="margin-top: 28px;">
+                Chess Bird is committed to resolving all payment concerns fairly and transparently. If you are unsatisfied with the outcome of your refund request, you may escalate your concern in writing to <strong>chessbirdtournament@gmail.com</strong> with the subject line "Escalation — [Your Name]" and we will review your case at a senior level within 5 business days.
+            </p>
+        </div>
+
+    </main>
+
+    <!-- Policy Footer Navigation -->
+    <footer class="policy-footer">
+        <div class="footer-inner">
+            <div>
+                <div class="footer-label">Policy Documents</div>
+                <div class="footer-policy-links">
+                    <a href="privacy.html" class="footer-policy-link" id="footer-privacy-link">
+                        <i class="fas fa-shield-alt"></i> Privacy Policy
+                    </a>
+                    <a href="terms.html" class="footer-policy-link" id="footer-terms-link">
+                        <i class="fas fa-file-contract"></i> Terms &amp; Conditions
+                    </a>
+                    <a href="refund.html" class="footer-policy-link active" id="footer-refund-link">
+                        <i class="fas fa-undo-alt"></i> Refund &amp; Cancellation Policy
+                    </a>
+                    <a href="index.html" class="footer-policy-link" id="footer-home-link">
+                        <i class="fas fa-home"></i> Back to Home
+                    </a>
+                </div>
+            </div>
+            <p class="footer-copy">
+                &copy; 2026 Chess Bird. All rights reserved. Chess Bird is a skill-based competitive chess platform and does not engage in or promote gambling, betting, or games of chance. All registration fees are charged for platform access and tournament organisation services.
+            </p>
+        </div>
+    </footer>
+
+</body>
+</html>
