@@ -21,8 +21,7 @@
     <!-- jsPDF for PDF Export -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
-    <!-- EmailJS SDK -->
-    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+
 
     <style>
         :root {
@@ -1671,8 +1670,7 @@
     <!-- Duplicate confirmModal removed -->
 
     <script>
-        // Initialize EmailJS
-        emailjs.init("RigOHkJ8jBL9S7079");
+
 
         // ─── Dashboard Tab Switching Logic ───────────────────────────
         function switchTab(tabId) {
@@ -3039,41 +3037,53 @@
                 return; // Stop — don't send emails if approval didn't save
             }
 
-            // ── STEP 2 & 3: Emails — only on live Vercel site ─────────────
+            // ── STEP 2: Send player confirmation email (via secure backend) ──────────────
+            const idToken = await firebase.auth().currentUser.getIdToken();
             const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            let sendEmailEndpoint;
+            
+            try {
+                const settingsSnap = await db.collection('settings').doc('global').get();
+                const vercelUrl = (settingsSnap.exists && settingsSnap.data().vercelUrl) || 'https://chessform.vercel.app';
+                sendEmailEndpoint = isLocalhost ? `${vercelUrl.replace(/\/$/, '')}/api/sendEmail` : '/api/sendEmail';
+            } catch (e) {
+                console.warn('Could not fetch settings for Vercel URL, using default.');
+                sendEmailEndpoint = isLocalhost ? 'https://chessform.vercel.app/api/sendEmail' : '/api/sendEmail';
+            }
 
             if (isLocalhost) {
-                // On localhost (Python server), Vercel API routes don't exist
-                // and EmailJS may not work — skip silently, log to console
                 console.info('[Dev] Email steps skipped on localhost. Deploy to Vercel to send emails.');
             } else {
-                // ── STEP 2: Send player confirmation email ──────────────
                 if (player.email) {
                     try {
-                        const templateParams = {
-                            name: player.name || '',
-                            username: player.username || '',
-                            email: player.email || '',
-                            user_email: player.email || '',
-                            phone: player.phone || '',
-                            rating: player.rating || '',
-                            cardId: cardId,
-                            status: 'approved'
-                        };
-                        await emailjs.send('service_nfjpyi6', 'template_udal0hk', templateParams);
+                        await fetch(sendEmailEndpoint, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${idToken}`
+                            },
+                            body: JSON.stringify({
+                                emailType: 'player_approval',
+                                playerEmail: player.email,
+                                data: {
+                                    name: player.name,
+                                    username: player.username,
+                                    cardId: cardId
+                                }
+                            })
+                        });
                         showToast('info', 'Confirmation Sent ✉️', `Approval email sent to ${player.email}`);
                     } catch (emailErr) {
-                        console.warn('EmailJS send failed:', emailErr);
+                        console.warn('Player email send failed:', emailErr);
                         showToast('warning', 'Player Email Failed', 'Could not send confirmation email to player.');
                     }
                 } else {
-                    console.warn('Player email not available — skipping EmailJS.');
+                    console.warn('Player email not available — skipping player email.');
                 }
 
                 // ── STEP 3: Send admin notification email ───────────────
                 try {
-                    const idToken = await firebase.auth().currentUser.getIdToken();
-                    const adminEmailRes = await fetch('/api/sendEmail', {
+                    const adminEmailRes = await fetch(sendEmailEndpoint, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',

@@ -120,6 +120,12 @@ export default async function handler(req, res) {
         return res.status(405).json({ success: false, error: 'Method Not Allowed' });
     }
 
+    const origin = req.headers.origin || req.headers.referer;
+    if (origin && !origin.includes('chessform.vercel.app') && !origin.includes('localhost') && !origin.includes('127.0.0.1')) {
+        console.warn(`Blocked verifyPayment request from unauthorized origin: ${origin}`);
+        return res.status(403).json({ success: false, error: 'Unauthorized Origin' });
+    }
+
     if (!db) {
         return res.status(500).json({ success: false, error: 'Database configuration missing in Vercel.' });
     }
