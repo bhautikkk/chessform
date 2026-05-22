@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Academy Rankings - ChessBird</title>
-    <meta name="description" content="Live student standings for ChessBird Academy.">
+    <title>Tournament Leaderboard - ChessBird</title>
+    <meta name="description" content="Live tournament standings for ChessBird chess tournament.">
     
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -475,8 +475,8 @@
 
     <div class="hero-section">
         <img id="siteLogoImg" src="header_logo.png" alt="Chess Bird" style="height: 64px; margin-bottom: 12px; filter: drop-shadow(0 0 12px rgba(245, 158, 11, 0.4));">
-        <h1>Rankings</h1>
-        <p>Live Student Standings</p>
+        <h1>Leaderboard</h1>
+        <p>Live Tournament Standings</p>
         <div class="live-indicator">
             <div class="dot"></div> Live Updates
         </div>
@@ -496,11 +496,11 @@
                 <div class="lock-pulse"></div>
                 <i class="fas fa-lock" id="closedIcon"></i>
             </div>
-            <h2 id="closedTitle">Academy Sessions Start Soon!</h2>
-            <p id="closedMsg">Classes haven't started yet. The live rankings will be revealed on launch day. Stay tuned!</p>
+            <h2 id="closedTitle">Tournament Starts Soon!</h2>
+            <p id="closedMsg">The game hasn't started yet. The live leaderboard will be revealed on match day. Stay tuned!</p>
             <div class="glass-divider"></div>
             <div class="status-indicator">
-                <div class="status-dot"></div> Waiting for class day...
+                <div class="status-dot"></div> Waiting for match day...
             </div>
         </div>
 
@@ -682,7 +682,7 @@
                 for (let i = 1; i <= maxRound; i++) {
                     const btn = document.createElement('button');
                     btn.className = 'tab-btn' + (i === activeRoundTab ? ' active' : '');
-                    btn.textContent = winnerRoundsSet.has(i) ? '🏆 Top Performers' : 'Round ' + i;
+                    btn.textContent = winnerRoundsSet.has(i) ? '🏆 Winners' : 'Round ' + i;
                     btn.onclick = () => { activeRoundTab = i; renderTabsAndData(); };
                     tabsEl.appendChild(btn);
                 }
@@ -781,20 +781,20 @@
                     if (prevSt && prevSt.startsWith('winner_')) {
                         const rank = prevSt.split('_')[1];
                         badgeClass = 'status-won';
-                        badgeText = '🏆 Top Performer ' + rank;
+                        badgeText = '🏆 Winner ' + rank;
                     } else {
                         badgeClass = 'status-active';
-                        badgeText = 'In Session';
+                        badgeText = 'Playing';
                     }
                 } else {
-                    if (statusVal === 'won')  { badgeClass = 'status-won';  badgeText = 'Excelled'; }
+                    if (statusVal === 'won')  { badgeClass = 'status-won';  badgeText = 'Won'; }
                     if (statusVal === 'draw') { badgeClass = 'status-draw'; badgeText = 'Draw'; }
-                    if (statusVal === 'lose' || statusVal === 'lose_next') { badgeClass = 'status-lose'; badgeText = 'Completed'; }
+                    if (statusVal === 'lose' || statusVal === 'lose_next') { badgeClass = 'status-lose'; badgeText = 'Eliminated'; }
                     if (statusVal === 'bye')  { badgeClass = 'status-draw'; badgeText = 'BYE'; }
                     if (statusVal && statusVal.startsWith('winner_')) {
                         // In the round where winner was clicked: show 'Won'
                         badgeClass = 'status-won';
-                        badgeText = 'Excelled ⭐';
+                        badgeText = 'Won ⭐';
                     }
                 }
 

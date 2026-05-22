@@ -335,7 +335,7 @@ function initRegistrationApp() {
                 upiUtrInput.removeAttribute('required');
             }
             if (upiUtrError) upiUtrError.style.display = 'none';
-            btnText.innerHTML = `Submit Free Enrollment <i class="fas fa-arrow-right arrow-icon"></i>`;
+            btnText.innerHTML = `Submit Free Registration <i class="fas fa-arrow-right arrow-icon"></i>`;
         } else {
             const finalDisplay = Number.isInteger(finalRs) ? finalRs : finalRs.toFixed(2);
             if (upiPaymentCard) upiPaymentCard.style.display = 'block';
@@ -347,7 +347,7 @@ function initRegistrationApp() {
             const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(qrData)}`;
             if (upiQrCodeImg) upiQrCodeImg.src = qrUrl;
 
-            btnText.innerHTML = `Enroll & Submit Payment <i class="fas fa-arrow-right arrow-icon"></i>`;
+            btnText.innerHTML = `Register & Submit Payment <i class="fas fa-arrow-right arrow-icon"></i>`;
         }
     }
 
@@ -931,7 +931,7 @@ function initRegistrationApp() {
                     try {
                         const docSnap = await db.collection("registrations").doc(templateParams.phone).get();
                         if (docSnap.exists) {
-                            alert("This phone number is already used for enrollment! Please use a different phone number.");
+                            alert("This phone number is already used for registration! Please use a different phone number.");
                             updateSubmitBtn();
                             if (btn) { btn.style.opacity = '1'; btn.style.pointerEvents = 'all'; }
                             return; // Stop execution

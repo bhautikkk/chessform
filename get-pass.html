@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ChessBird - Download Admission Pass</title>
+    <title>ChessBird - Download Pass</title>
     
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -401,8 +401,8 @@
     <!-- PHASE 1: Form to verify -->
     <div class="search-container" id="searchPhase">
         <img id="siteLogoImg" src="header_logo.png" alt="Chess Bird" style="height: 64px; margin-bottom: 12px; filter: drop-shadow(0 0 12px rgba(198,168,124,0.3));">
-        <h2>Download Your Admission Pass</h2>
-        <p>Enter details used during enrollment to find your premium admission pass.</p>
+        <h2>Download Your Pass</h2>
+        <p>Enter details used during registration to find your premium tournament pass.</p>
         
         <div class="input-group">
             <i class="fas fa-user"></i>
@@ -414,7 +414,7 @@
             <input type="tel" id="passPhone" class="form-input" placeholder="Registered Phone Number">
         </div>
         
-        <button class="btn" id="findBtn" onclick="findPass()">Find My Admission Pass</button>
+        <button class="btn" id="findBtn" onclick="findPass()">Find My Pass</button>
         <div class="error-msg" id="errorMsg"></div>
         
 
@@ -460,14 +460,14 @@
                 <div class="ticket-header">
                     <div class="brand-col">
                         <div class="brand-title">ChessBird</div>
-                        <div class="brand-sub">Elite Academy</div>
+                        <div class="brand-sub">Elite Tournament</div>
                     </div>
                     <div class="status-badge"><i class="fas fa-check-circle"></i> Verified</div>
                 </div>
 
                 <div class="ticket-body">
                     <div class="player-info">
-                        <div class="player-label">Student</div>
+                        <div class="player-label">Participant</div>
                         <div class="player-name" id="cardName">Player Name</div>
                         <div class="player-chess-id"><i class="fas fa-chess-pawn"></i> <span id="cardUsername">username</span></div>
                     </div>
@@ -480,7 +480,7 @@
 
                 <div class="ticket-details">
                     <div class="detail-box">
-                        <span class="player-label">Admission ID</span>
+                        <span class="player-label">Entry ID</span>
                         <span class="detail-val gold" id="cardId">#CB000</span>
                     </div>
                     <div class="detail-box">
@@ -490,7 +490,7 @@
                 </div>
 
                 <div class="ticket-footer">
-                    Present this pass (or Admission ID) digitally before classes begin. Do not share your Admission ID publicly.
+                    Present this pass (or Entry ID) digitally before the match. Do not share your Entry ID publicly.
                 </div>
 
             </div>
@@ -631,7 +631,7 @@
                     document.getElementById('loadingPhase').style.display = 'none';
                     document.getElementById('searchPhase').style.display = 'block';
                     const errDiv = document.getElementById('errorMsg');
-                    errDiv.innerHTML = '<i class="fas fa-exclamation-circle"></i> No enrollment found for this phone number.';
+                    errDiv.innerHTML = '<i class="fas fa-exclamation-circle"></i> No registration found for this phone number.';
                     errDiv.style.display = 'block';
                     btn.innerHTML = 'Find My Pass';
                 } else {
