@@ -75,17 +75,20 @@ export default async function handler(req, res) {
 
         if (emailType === 'player_approval') {
             recipient = playerEmail;
-            finalSubject = `Registration Approved - ChessBird (Entry ID: ${data.cardId})`;
+            finalSubject = `Registration Approved - ChessBird`;
             htmlContent = `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eaeaea; border-radius: 8px; background-color: #ffffff;">
                 <h2 style="color: #22c55e; text-align: center;">Registration Approved! 🎉</h2>
                 <p>Hi <b>${data.name}</b>,</p>
                 <p>Your registration for the upcoming ChessBird tournament has been successfully verified and approved.</p>
                 <div style="background-color: #f8fafc; padding: 15px; border-radius: 6px; margin: 20px 0; border-left: 4px solid #22c55e;">
-                    <p style="margin: 0; font-size: 16px;">Your Entry ID: <strong>${data.cardId}</strong></p>
-                    <p style="margin: 5px 0 0 0; color: #555;">Chess.com Username: ${data.username}</p>
+                    <p style="margin: 0; font-size: 16px;"><strong>Download Your Tournament Pass</strong></p>
+                    <p style="margin: 10px 0 0 0; color: #555;">To get your unique Entry ID and Tournament Pass, please visit our secure pass portal. You will need to enter your registered phone number to access it.</p>
+                    <div style="margin-top: 15px;">
+                        <a href="https://chessbirdform.vercel.app/get-pass.html" style="background-color: #22c55e; color: #ffffff; text-decoration: none; padding: 10px 20px; border-radius: 5px; font-weight: bold; display: inline-block;">Get Your Pass Now</a>
+                    </div>
                 </div>
-                <p>Please keep this Entry ID handy. We will share the tournament link and further instructions in the WhatsApp/Telegram group shortly.</p>
+                <p>Please keep your Entry ID handy. We will share the tournament link and further instructions in the WhatsApp/Telegram group shortly.</p>
                 <br/>
                 <p>Best regards,<br/><b>The ChessBird Team</b></p>
             </div>`;
