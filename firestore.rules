@@ -30,13 +30,9 @@ service cloud.firestore {
     match /registrations/{docId} {
 
       // ── CREATE ───────────────────────────────────────────────
-      // Creation is allowed via Vercel Backend, Admin manually, OR direct frontend free registrations
-      allow create: if isAdmin() || (
-          get(/databases/$(database)/documents/settings/global).data.isRegistrationOpen == true &&
-          request.resource.data.keys().hasAll(['name', 'username', 'phone', 'rating', 'cardId']) &&
-          request.resource.data.cardId == 'Pending' &&
-          request.resource.data.phone == docId
-      );
+      // Creation is strictly blocked from frontend to prevent bot spam/bypassing.
+      // All registrations MUST go through the secure Vercel API backend.
+      allow create: if isAdmin();
 
       // ── ALL OTHER OPERATIONS: admin only ─────────────────────
       // Public reads are fully blocked. Leaderboard & Pass use secure Vercel APIs.
