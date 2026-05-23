@@ -297,15 +297,21 @@ function initRegistrationApp() {
                     return; // Done processing
                 }
 
-                // Only check the CURRENT event's localStorage key.
-                // When admin changes Event ID, users see a fresh form for the new event.
+                // Handle normal page load
                 if (localStorage.getItem(currentEventId) === 'true') {
-                    if (form) form.style.display = 'none';
-                    if (alreadyRegisteredMessage) {
-                        alreadyRegisteredMessage.style.display = 'block';
-                        alreadyRegisteredMessage.style.animation = 'slideUpFade 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards';
-                        // Real-time listener: UI updates the moment admin approves
-                        listenToStatus();
+                    // Critical fallback: if userPhone is missing, we can't track status. Reset and show form.
+                    if (!localStorage.getItem('userPhone')) {
+                        localStorage.removeItem(currentEventId);
+                        if (alreadyRegisteredMessage) alreadyRegisteredMessage.style.display = 'none';
+                        if (form) form.style.display = 'block';
+                    } else {
+                        if (form) form.style.display = 'none';
+                        if (alreadyRegisteredMessage) {
+                            alreadyRegisteredMessage.style.display = 'block';
+                            alreadyRegisteredMessage.style.animation = 'slideUpFade 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards';
+                            // Real-time listener: UI updates the moment admin approves
+                            listenToStatus();
+                        }
                     }
                 } else {
                     if (alreadyRegisteredMessage) alreadyRegisteredMessage.style.display = 'none';
