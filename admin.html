@@ -3159,13 +3159,19 @@
                     try {
                         const settingsSnap = await db.collection('settings').doc('global').get();
                         const currentEventId = settingsSnap.exists ? (settingsSnap.data().eventId || 'event_default') : 'event_default';
-
-                        const rejectRef = db.collection('rejection_history').doc(`${currentEventId}_${player.phone || docId}`);
-                        const rejectSnap = await rejectRef.get();
-                        let rejectCount = (rejectSnap.exists ? rejectSnap.data().count : 0) + 1;
+                        
+                        let rejectCount = 1;
+                        try {
+                            const rejectRef = db.collection('rejection_history').doc(`${currentEventId}_${player.phone || docId}`);
+                            const rejectSnap = await rejectRef.get();
+                            rejectCount = (rejectSnap.exists ? rejectSnap.data().count : 0) + 1;
+                            await rejectRef.set({ count: rejectCount, lastRejected: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
+                        } catch (historyErr) {
+                            console.warn("Failed to update rejection history (rules issue?):", historyErr);
+                            // Proceed with deletion anyway so the player doesn't get stuck
+                        }
 
                         const batch = db.batch();
-                        batch.set(rejectRef, { count: rejectCount, lastRejected: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
                         batch.delete(db.collection('registrations').doc(docId));
                         batch.delete(db.collection('registrations_private').doc(docId));
                         batch.delete(db.collection('pass_attempts').doc(player.phone || docId));
