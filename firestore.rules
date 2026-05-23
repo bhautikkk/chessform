@@ -35,8 +35,10 @@ service cloud.firestore {
       allow create: if isAdmin();
 
       // ── ALL OTHER OPERATIONS: admin only ─────────────────────
-      // Public reads are fully blocked. Leaderboard & Pass use secure Vercel APIs.
-      allow update, delete, get, list: if isAdmin();
+      // Allow public to 'get' their own registration status using their phone number. 
+      // Leaderboard & Pass use secure Vercel APIs.
+      allow get: if true;
+      allow update, delete, list: if isAdmin();
     }
 
     // ══════════════════════════════════════════════════════════
