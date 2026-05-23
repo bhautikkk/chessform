@@ -886,7 +886,7 @@ function initRegistrationApp() {
                 // Determine API Endpoint
                 let apiEndpoint = '/api/verifyPayment';
                 if (isLocalhost) {
-                    const fallbackUrl = window.activeVercelUrl || 'https://chessform.vercel.app';
+                    const fallbackUrl = window.activeVercelUrl || 'https://chessbirdform.vercel.app';
                     apiEndpoint = `${fallbackUrl.replace(/\/$/, '')}/api/verifyPayment`;
                     console.log(`Running on localhost. Routing API request to: ${apiEndpoint}`);
                 }
