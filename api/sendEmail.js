@@ -164,14 +164,73 @@ export default async function handler(req, res) {
             recipient = playerEmail;
             finalSubject = `Registration Update - ChessBird`;
             htmlContent = `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eaeaea; border-radius: 8px; background-color: #ffffff;">
-                <h2 style="color: #ef4444; text-align: center;">Registration Update</h2>
-                <p>Hi <b>${data.name}</b>,</p>
-                <p>We regret to inform you that your registration could not be approved at this time. This usually happens if the payment verification failed or the details provided were incomplete/incorrect.</p>
-                <p>If you believe this is a mistake or if you have already completed the payment, please contact our support team immediately.</p>
-                <br/>
-                <p>Best regards,<br/><b>The ChessBird Team</b></p>
-            </div>`;
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <style>
+                    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=Inter:wght@400;500;600&display=swap');
+                </style>
+            </head>
+            <body style="margin: 0; padding: 0; background-color: #f4f4f5; font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased;">
+                <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f4f4f5; padding: 20px 10px;">
+                    <tr>
+                        <td align="center">
+                            <table width="100%" max-width="600" border="0" cellspacing="0" cellpadding="0" style="max-width: 600px; width: 100%; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.08);">
+                                <!-- Header -->
+                                <tr>
+                                    <td style="background-color: #111113; padding: 30px 20px; text-align: center; border-bottom: 2px solid #ef4444;">
+                                        <img src="https://chessbirdform.vercel.app/header_logo.png" alt="ChessBird" style="height: 40px; margin-bottom: 15px;">
+                                        <h1 style="margin: 0; font-family: 'Outfit', sans-serif; color: #ffffff; font-size: 24px; font-weight: 900; letter-spacing: -0.5px; text-transform: uppercase;">
+                                            <span style="color: #ef4444;">Action</span> Required
+                                        </h1>
+                                        <p style="margin: 8px 0 0 0; color: #a1a1aa; font-size: 14px; letter-spacing: 1px; text-transform: uppercase; font-weight: 600;">Payment Verification Failed</p>
+                                    </td>
+                                </tr>
+                                
+                                <!-- Body -->
+                                <tr>
+                                    <td style="padding: 30px 20px;">
+                                        <p style="margin: 0 0 20px 0; color: #18181b; font-size: 16px; font-weight: 600;">Hi ${data.name},</p>
+                                        <p style="margin: 0 0 25px 0; color: #52525b; font-size: 15px; line-height: 1.6;">We could not verify the payment for your recent tournament registration. As a result, your entry has been declined and your data has been cleared.</p>
+                                        
+                                        <!-- Error Section -->
+                                        <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #fef2f2; border-radius: 12px; border-left: 4px solid #ef4444; margin-bottom: 25px;">
+                                            <tr>
+                                                <td style="padding: 20px;">
+                                                    <h3 style="margin: 0 0 10px 0; color: #991b1b; font-family: 'Outfit', sans-serif; font-size: 17px;">❌ Why did this happen?</h3>
+                                                    <p style="margin: 0 0 0 0; color: #991b1b; font-size: 14px; line-height: 1.5;">This usually happens if the 12-digit UTR/Transaction ID you entered was incorrect or mismatched with our bank records.</p>
+                                                </td>
+                                            </tr>
+                                        </table>
+
+                                        <!-- Fix Section -->
+                                        <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 25px;">
+                                            <tr>
+                                                <td style="padding: 20px;">
+                                                    <h3 style="margin: 0 0 10px 0; color: #0f172a; font-family: 'Outfit', sans-serif; font-size: 17px;">🔄 How to fix this</h3>
+                                                    <p style="margin: 0 0 15px 0; color: #475569; font-size: 14px; line-height: 1.5;">If you made a genuine mistake, you can simply register again with the correct 12-digit UTR number.</p>
+                                                    <a href="https://chessbirdform.vercel.app/" style="display: inline-block; background-color: #0f172a; color: #ffffff; text-decoration: none; padding: 12px 20px; border-radius: 8px; font-weight: 600; font-size: 14px; text-align: center;">Register Again</a>
+                                                </td>
+                                            </tr>
+                                        </table>
+
+                                        <p style="margin: 0; color: #71717a; font-size: 15px; line-height: 1.6;">If you need help, please contact our support team.<br><br><strong style="color: #18181b;">The ChessBird Team</strong></p>
+                                    </td>
+                                </tr>
+                                
+                                <!-- Footer -->
+                                <tr>
+                                    <td style="background-color: #fafafa; padding: 24px 30px; text-align: center; border-top: 1px solid #f4f4f5;">
+                                        <p style="margin: 0; color: #a1a1aa; font-size: 12px;">© ${new Date().getFullYear()} ChessBird. All rights reserved.</p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            </body>
+            </html>`;
         } else {
             // Default: Admin Notification
             // Apply privacy masking for admin emails
