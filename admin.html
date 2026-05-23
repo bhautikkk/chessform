@@ -3017,12 +3017,29 @@
                 const settingsRef = db.collection('settings').doc('global');
                 const regRef = db.collection('registrations').doc(docId);
 
+                const existingUsedIds = new Set((window.allPlayersRaw || []).map(p => p.cardId).filter(id => id && id !== 'Pending' && id !== 'No ID'));
+
                 await db.runTransaction(async (txn) => {
                     const settingsDoc = await txn.get(settingsRef);
-                    const currentCount = (settingsDoc.exists && settingsDoc.data().cardIdCounter) || 0;
-                    const nextCount = currentCount + 1;
-                    cardId = 'CB' + String(nextCount).padStart(3, '0');
-                    txn.update(settingsRef, { cardIdCounter: nextCount });
+                    const data = settingsDoc.exists ? settingsDoc.data() : {};
+                    let usedIds = data.usedCardIds || [];
+                    
+                    // Combine both realtime players and previously transaction-saved IDs
+                    const allUsed = new Set([...existingUsedIds, ...usedIds]);
+                    
+                    let newCardId;
+                    let attempts = 0;
+                    do {
+                        let num = Math.floor(Math.random() * 900) + 100; // 100 to 999
+                        newCardId = 'CB' + num;
+                        attempts++;
+                        if (attempts > 1000) throw new Error("No unique 3-digit IDs left. Contact support.");
+                    } while (allUsed.has(newCardId));
+                    
+                    usedIds.push(newCardId);
+                    cardId = newCardId;
+                    
+                    txn.update(settingsRef, { usedCardIds: usedIds });
                     txn.update(regRef, { cardId: cardId });
                 });
 
