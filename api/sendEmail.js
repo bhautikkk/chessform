@@ -77,20 +77,37 @@ export default async function handler(req, res) {
             recipient = playerEmail;
             finalSubject = `Registration Approved - ChessBird`;
             htmlContent = `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eaeaea; border-radius: 8px; background-color: #ffffff;">
-                <h2 style="color: #22c55e; text-align: center;">Registration Approved! 🎉</h2>
-                <p>Hi <b>${data.name}</b>,</p>
-                <p>Your registration for the upcoming ChessBird tournament has been successfully verified and approved.</p>
-                <div style="background-color: #f8fafc; padding: 15px; border-radius: 6px; margin: 20px 0; border-left: 4px solid #22c55e;">
-                    <p style="margin: 0; font-size: 16px;"><strong>Download Your Tournament Pass</strong></p>
-                    <p style="margin: 10px 0 0 0; color: #555;">To get your unique Entry ID and Tournament Pass, please visit our secure pass portal. You will need to enter your registered phone number to access it.</p>
-                    <div style="margin-top: 15px;">
-                        <a href="https://chessbirdform.vercel.app/get-pass.html" style="background-color: #22c55e; color: #ffffff; text-decoration: none; padding: 10px 20px; border-radius: 5px; font-weight: bold; display: inline-block;">Get Your Pass Now</a>
+            <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 25px; border: 1px solid #eaeaea; border-radius: 12px; background-color: #ffffff; box-shadow: 0 4px 20px rgba(0,0,0,0.05);">
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <h2 style="color: #22c55e; margin: 0; font-size: 28px;">Registration Approved! 🎉</h2>
+                </div>
+                
+                <p style="color: #333; font-size: 16px;">Hi <b>${data.name}</b>,</p>
+                <p style="color: #555; font-size: 16px; line-height: 1.5;">Your registration for the upcoming ChessBird tournament has been successfully verified and approved. We are thrilled to have you on board!</p>
+                
+                <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; margin: 25px 0; border-left: 4px solid #22c55e;">
+                    <h3 style="margin: 0 0 10px 0; color: #1e293b; font-size: 18px;">Download Your Tournament Pass</h3>
+                    <p style="margin: 0 0 15px 0; color: #475569; font-size: 15px;">To get your unique Entry ID and official Tournament Pass, please visit our secure pass portal. You will need to enter your registered phone number to access it.</p>
+                    <a href="https://chessbirdform.vercel.app/get-pass.html" style="background-color: #22c55e; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: bold; display: inline-block; font-size: 15px; box-shadow: 0 2px 5px rgba(34, 197, 94, 0.3);">Get Your Pass Now</a>
+                </div>
+
+                <div style="background-color: #fffbeb; padding: 20px; border-radius: 8px; margin: 25px 0; border: 1px solid #fde68a;">
+                    <h3 style="margin: 0 0 10px 0; color: #b45309; font-size: 18px;">⚠️ Mandatory Next Step</h3>
+                    <p style="margin: 0 0 15px 0; color: #78350f; font-size: 15px; line-height: 1.5;">To ensure you don't miss any critical updates, <strong>you must join our official community groups</strong>. All tournament dates, pairings, rules, and official announcements will be shared exclusively there.</p>
+                    <p style="margin: 0 0 15px 0; color: #78350f; font-size: 15px;"><strong>Please join at least one (joining both is highly recommended for the best experience):</strong></p>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <a href="https://whatsapp.com/channel/0029Vb7eY6i3wtbHyPSOiW2c" style="background-color: #25D366; color: #ffffff; text-decoration: none; padding: 10px 18px; border-radius: 6px; font-weight: bold; display: inline-block; font-size: 14px;">Join WhatsApp</a>
+                        <a href="https://t.me/chessbirdofficial" style="background-color: #24A1DE; color: #ffffff; text-decoration: none; padding: 10px 18px; border-radius: 6px; font-weight: bold; display: inline-block; font-size: 14px;">Join Telegram</a>
                     </div>
                 </div>
-                <p>Please keep your Entry ID handy. We will share the tournament link and further instructions in the WhatsApp/Telegram group shortly.</p>
-                <br/>
-                <p>Best regards,<br/><b>The ChessBird Team</b></p>
+
+                <div style="background-color: #eff6ff; padding: 20px; border-radius: 8px; margin: 25px 0; border: 1px solid #bfdbfe;">
+                    <h3 style="margin: 0 0 10px 0; color: #1d4ed8; font-size: 18px;">🚀 Elevate Your Game</h3>
+                    <p style="margin: 0 0 15px 0; color: #1e3a8a; font-size: 15px; line-height: 1.5;">While you wait for the tournament day, start preparing like a Grandmaster! You can review your past chess games and get AI-powered insights absolutely free.</p>
+                    <a href="https://chessgamereview.vercel.app/" style="background-color: #3b82f6; color: #ffffff; text-decoration: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; display: inline-block; font-size: 15px;">Review Unlimited Games for Free</a>
+                </div>
+
+                <p style="color: #555; font-size: 15px;">Best regards,<br/><b>The ChessBird Team</b></p>
             </div>`;
         } else if (emailType === 'player_rejection') {
             recipient = playerEmail;
