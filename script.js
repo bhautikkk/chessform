@@ -404,6 +404,12 @@ function initRegistrationApp() {
             const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(qrData)}`;
             if (upiQrCodeImg) upiQrCodeImg.src = qrUrl;
 
+            const upiPayBtn = document.getElementById('upiPayBtn');
+            if (upiPayBtn) {
+                // Ensure it works nicely on mobile devices
+                upiPayBtn.href = qrData;
+            }
+
             btnText.innerHTML = `Register & Submit Payment <i class="fas fa-arrow-right arrow-icon"></i>`;
         }
     }
