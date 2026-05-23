@@ -3193,46 +3193,7 @@
                         }
                         showToast('info', 'Notice Sent ✉️', `Rejection email sent to ${player.email}`);
 
-                        // Send a copy to the Admin via backend securely
-                        try {
-                            const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-                            let sendEmailEndpoint = '/api/sendEmail';
-                            try {
-                                const settingsSnap = await db.collection('settings').doc('global').get();
-                                const vercelUrl = (settingsSnap.exists && settingsSnap.data().vercelUrl) || 'https://chessbirdform.vercel.app';
-                                sendEmailEndpoint = isLocalhost ? `${vercelUrl.replace(/\/$/, '')}/api/sendEmail` : '/api/sendEmail';
-                            } catch (e) {
-                                sendEmailEndpoint = isLocalhost ? 'https://chessbirdform.vercel.app/api/sendEmail' : '/api/sendEmail';
-                            }
 
-                            const idToken = await firebase.auth().currentUser.getIdToken();
-                            const adminEmailRes = await fetch(sendEmailEndpoint, {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'Authorization': `Bearer ${idToken}`
-                                },
-                                body: JSON.stringify({
-                                    subject: 'Registration Rejected: ' + player.name,
-                                    data: {
-                                        name: player.name,
-                                        username: player.username,
-                                        phone: player.phone,
-                                        email: player.email,
-                                        paymentId: player.paymentId || 'N/A',
-                                        status: 'Rejected'
-                                    }
-                                })
-                            });
-
-                            if (!adminEmailRes.ok) {
-                                console.error('Admin email copy failed (likely local environment).');
-                                showToast('warning', 'Admin Copy Skipped', 'Admin email copy only works on live Vercel site.');
-                            }
-                        } catch (adminEmailErr) {
-                            console.error('Failed to send admin copy:', adminEmailErr);
-                            showToast('warning', 'Admin Copy Failed', 'Could not send admin email copy. ' + adminEmailErr.message);
-                        }
 
                     } catch (err) {
                         console.error('Reject Failed:', err);
