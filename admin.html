@@ -3141,19 +3141,38 @@
 
                         showToast('success', 'Player Rejected', `"${escHtml(player.name)}" has been rejected and deleted.`);
 
-                        // Trigger EmailJS rejection email
-                        const templateParams = {
-                            name: player.name || '',
-                            username: player.username || '',
-                            email: player.email || '',
-                            user_email: player.email || '',
-                            phone: player.phone || '',
-                            rating: player.rating || '',
-                            cardId: 'Rejected',
-                            status: 'rejected'
-                        };
+                        // Send rejection email to player via backend
+                        try {
+                            const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                            let sendEmailEndpoint = '/api/sendEmail';
+                            try {
+                                const settingsSnap = await db.collection('settings').doc('global').get();
+                                const vercelUrl = (settingsSnap.exists && settingsSnap.data().vercelUrl) || 'https://chessbirdform.vercel.app';
+                                sendEmailEndpoint = isLocalhost ? `${vercelUrl.replace(/\/$/, '')}/api/sendEmail` : '/api/sendEmail';
+                            } catch (e) {
+                                sendEmailEndpoint = isLocalhost ? 'https://chessbirdform.vercel.app/api/sendEmail' : '/api/sendEmail';
+                            }
 
-                        await emailjs.send('service_nfjpyi6', 'template_udal0hk', templateParams);
+                            if (player.email) {
+                                await fetch(sendEmailEndpoint, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'Authorization': `Bearer ${idToken}`
+                                    },
+                                    body: JSON.stringify({
+                                        emailType: 'player_rejection',
+                                        playerEmail: player.email,
+                                        data: {
+                                            name: player.name,
+                                            username: player.username
+                                        }
+                                    })
+                                });
+                            }
+                        } catch (emailErr) {
+                            console.warn('Rejection email failed:', emailErr);
+                        }
                         showToast('info', 'Notice Sent ✉️', `Rejection email sent to ${player.email}`);
 
                         // Send a copy to the Admin via backend securely
