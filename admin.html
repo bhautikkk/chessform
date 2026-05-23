@@ -3160,6 +3160,7 @@
 
                         // Send rejection email to player via backend
                         try {
+                            const idToken = await firebase.auth().currentUser.getIdToken();
                             const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
                             let sendEmailEndpoint = '/api/sendEmail';
                             try {
