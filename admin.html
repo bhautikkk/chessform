@@ -3051,69 +3051,65 @@
                 sendEmailEndpoint = isLocalhost ? 'https://chessform.vercel.app/api/sendEmail' : '/api/sendEmail';
             }
 
-            if (isLocalhost) {
-                console.info('[Dev] Email steps skipped on localhost. Deploy to Vercel to send emails.');
-            } else {
-                if (player.email) {
-                    try {
-                        await fetch(sendEmailEndpoint, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Authorization': `Bearer ${idToken}`
-                            },
-                            body: JSON.stringify({
-                                emailType: 'player_approval',
-                                playerEmail: player.email,
-                                data: {
-                                    name: player.name,
-                                    username: player.username,
-                                    cardId: cardId
-                                }
-                            })
-                        });
-                        showToast('info', 'Confirmation Sent ✉️', `Approval email sent to ${player.email}`);
-                    } catch (emailErr) {
-                        console.warn('Player email send failed:', emailErr);
-                        showToast('warning', 'Player Email Failed', 'Could not send confirmation email to player.');
-                    }
-                } else {
-                    console.warn('Player email not available — skipping player email.');
-                }
-
-                // ── STEP 3: Send admin notification email ───────────────
+            if (player.email) {
                 try {
-                    const adminEmailRes = await fetch(sendEmailEndpoint, {
+                    await fetch(sendEmailEndpoint, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
                             'Authorization': `Bearer ${idToken}`
                         },
                         body: JSON.stringify({
-                            subject: '✅ Registration Approved: ' + player.name,
+                            emailType: 'player_approval',
+                            playerEmail: player.email,
                             data: {
                                 name: player.name,
                                 username: player.username,
-                                phone: player.phone,
-                                email: player.email,
-                                paymentId: player.paymentId || 'N/A',
-                                status: 'Approved ✅',
                                 cardId: cardId
                             }
                         })
                     });
-
-                    if (adminEmailRes.ok) {
-                        showToast('info', 'Admin Mail Sent ✉️', 'Approval notification sent to admin.');
-                    } else {
-                        const errBody = await adminEmailRes.text();
-                        console.warn('Admin email failed:', errBody);
-                        showToast('warning', 'Admin Mail Failed', 'Could not send admin notification. Check Vercel logs.');
-                    }
-                } catch (adminEmailErr) {
-                    console.warn('Admin email error:', adminEmailErr);
-                    showToast('warning', 'Admin Mail Error', adminEmailErr.message);
+                    showToast('info', 'Confirmation Sent ✉️', `Approval email sent to ${player.email}`);
+                } catch (emailErr) {
+                    console.warn('Player email send failed:', emailErr);
+                    showToast('warning', 'Player Email Failed', 'Could not send confirmation email to player.');
                 }
+            } else {
+                console.warn('Player email not available — skipping player email.');
+            }
+
+            // ── STEP 3: Send admin notification email ───────────────
+            try {
+                const adminEmailRes = await fetch(sendEmailEndpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${idToken}`
+                    },
+                    body: JSON.stringify({
+                        subject: '✅ Registration Approved: ' + player.name,
+                        data: {
+                            name: player.name,
+                            username: player.username,
+                            phone: player.phone,
+                            email: player.email,
+                            paymentId: player.paymentId || 'N/A',
+                            status: 'Approved ✅',
+                            cardId: cardId
+                        }
+                    })
+                });
+
+                if (adminEmailRes.ok) {
+                    showToast('info', 'Admin Mail Sent ✉️', 'Approval notification sent to admin.');
+                } else {
+                    const errBody = await adminEmailRes.text();
+                    console.warn('Admin email failed:', errBody);
+                    showToast('warning', 'Admin Mail Failed', 'Could not send admin notification. Check Vercel logs.');
+                }
+            } catch (adminEmailErr) {
+                console.warn('Admin email error:', adminEmailErr);
+                showToast('warning', 'Admin Mail Error', adminEmailErr.message);
             }
         }
 
@@ -3163,8 +3159,18 @@
 
                         // Send a copy to the Admin via backend securely
                         try {
+                            const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                            let sendEmailEndpoint = '/api/sendEmail';
+                            try {
+                                const settingsSnap = await db.collection('settings').doc('global').get();
+                                const vercelUrl = (settingsSnap.exists && settingsSnap.data().vercelUrl) || 'https://chessform.vercel.app';
+                                sendEmailEndpoint = isLocalhost ? `${vercelUrl.replace(/\/$/, '')}/api/sendEmail` : '/api/sendEmail';
+                            } catch (e) {
+                                sendEmailEndpoint = isLocalhost ? 'https://chessform.vercel.app/api/sendEmail' : '/api/sendEmail';
+                            }
+
                             const idToken = await firebase.auth().currentUser.getIdToken();
-                            const adminEmailRes = await fetch('/api/sendEmail', {
+                            const adminEmailRes = await fetch(sendEmailEndpoint, {
                                 method: 'POST',
                                 headers: {
                                     'Content-Type': 'application/json',
