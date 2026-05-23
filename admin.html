@@ -3157,7 +3157,10 @@
                     if (rejectBtn) rejectBtn.disabled = true;
 
                     try {
-                        const rejectRef = db.collection('rejection_history').doc(player.phone || docId);
+                        const settingsSnap = await db.collection('settings').doc('global').get();
+                        const currentEventId = settingsSnap.exists ? (settingsSnap.data().eventId || 'event_default') : 'event_default';
+
+                        const rejectRef = db.collection('rejection_history').doc(`${currentEventId}_${player.phone || docId}`);
                         const rejectSnap = await rejectRef.get();
                         let rejectCount = (rejectSnap.exists ? rejectSnap.data().count : 0) + 1;
 
@@ -3171,7 +3174,7 @@
                         showToast('success', 'Player Rejected', `"${escHtml(player.name)}" has been rejected and deleted.`);
 
                         if (rejectCount >= 2) {
-                            showToast('warning', 'Permanent Ban', `Player rejected ${rejectCount} times. Email NOT sent to prevent spam.`);
+                            showToast('warning', 'Tournament Ban', `Player rejected ${rejectCount} times. Email NOT sent to prevent spam.`);
                             return; // Do not send email on second+ rejection
                         }
 
