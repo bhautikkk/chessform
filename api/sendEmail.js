@@ -210,7 +210,7 @@ export default async function handler(req, res) {
                                                 <td style="padding: 20px;">
                                                     <h3 style="margin: 0 0 10px 0; color: #0f172a; font-family: 'Outfit', sans-serif; font-size: 17px;">🔄 How to fix this</h3>
                                                     <p style="margin: 0 0 15px 0; color: #475569; font-size: 14px; line-height: 1.5;">If you made a genuine mistake, you can simply register again with the correct 12-digit UTR number.</p>
-                                                    <a href="https://chessbirdform.vercel.app/" style="display: inline-block; background-color: #0f172a; color: #ffffff; text-decoration: none; padding: 12px 20px; border-radius: 8px; font-weight: 600; font-size: 14px; text-align: center;">Register Again</a>
+                                                    <a href="https://chessbirdform.vercel.app/?action=reregister" style="display: inline-block; background-color: #0f172a; color: #ffffff; text-decoration: none; padding: 12px 20px; border-radius: 8px; font-weight: 600; font-size: 14px; text-align: center;">Register Again</a>
                                                 </td>
                                             </tr>
                                         </table>

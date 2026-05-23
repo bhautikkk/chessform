@@ -139,13 +139,14 @@ function initRegistrationApp() {
         const p = alreadyRegisteredMessage.querySelector('p');
         if (!docSnap.exists) {
             // REJECTED — doc deleted by admin
-            if (iconWrap) {
-                iconWrap.style.color = '#ef4444';
-                iconWrap.style.background = 'rgba(239, 68, 68, 0.1)';
-                iconWrap.innerHTML = '<i class="fas fa-times-circle"></i>';
-            }
-            if (h3) { h3.style.color = '#ef4444'; h3.innerText = 'Application Rejected'; }
-            if (p) { p.innerText = 'We are sorry, but your registration was not approved. Please contact support if you think this is a mistake.'; }
+            localStorage.removeItem(currentEventId);
+            localStorage.removeItem('userPhone');
+            
+            if (alreadyRegisteredMessage) alreadyRegisteredMessage.style.display = 'none';
+            const form = document.getElementById('registrationForm');
+            if (form) form.style.display = 'block';
+            
+            alert("Your previous registration could not be verified. You can now register again with the correct details.");
         } else {
             const userData = docSnap.data();
             if (userData.cardId && userData.cardId !== 'Pending') {
@@ -266,8 +267,16 @@ function initRegistrationApp() {
 
                 if (closedMessage) closedMessage.style.display = 'none';
 
-                // Handle ?success=true with the correct eventId
+                // Handle ?success=true
                 const urlParams = new URLSearchParams(window.location.search);
+                
+                // Handle explicit "Register Again" from email link
+                if (urlParams.get('action') === 'reregister') {
+                    localStorage.removeItem(currentEventId);
+                    localStorage.removeItem('userPhone');
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                }
+
                 if (urlParams.get('success') === 'true' && !successParamProcessed) {
                     localStorage.setItem(currentEventId, 'true');
                     successParamProcessed = true;
