@@ -639,7 +639,7 @@
                     // Securely verify name locally
                     if (userData.name && userData.name.toUpperCase().trim() === name.toUpperCase().trim()) {
                         
-                        if (userData.status !== 'Approved') {
+                        if (!userData.cardId || userData.cardId === 'Pending') {
                             document.getElementById('loadingPhase').style.display = 'none';
                             document.getElementById('searchPhase').style.display = 'block';
                             const errDiv = document.getElementById('errorMsg');
