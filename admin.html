@@ -3070,7 +3070,7 @@
 
             if (player.email) {
                 try {
-                    await fetch(sendEmailEndpoint, {
+                    const emailRes = await fetch(sendEmailEndpoint, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -3086,7 +3086,14 @@
                             }
                         })
                     });
-                    showToast('info', 'Confirmation Sent ✉️', `Approval email sent to ${player.email}`);
+                    
+                    if (!emailRes.ok) {
+                        const errText = await emailRes.text();
+                        console.error('Approval email API failed:', errText);
+                        showToast('error', 'Email Failed', 'Could not send confirmation email. Try hard-refreshing (Ctrl+Shift+R).');
+                    } else {
+                        showToast('info', 'Confirmation Sent ✉️', `Approval email sent to ${player.email}`);
+                    }
                 } catch (emailErr) {
                     console.warn('Player email send failed:', emailErr);
                     showToast('warning', 'Player Email Failed', 'Could not send confirmation email to player.');
@@ -3172,7 +3179,7 @@
                             }
 
                             if (player.email) {
-                                await fetch(sendEmailEndpoint, {
+                                const emailRes = await fetch(sendEmailEndpoint, {
                                     method: 'POST',
                                     headers: {
                                         'Content-Type': 'application/json',
@@ -3187,11 +3194,19 @@
                                         }
                                     })
                                 });
+                                
+                                if (!emailRes.ok) {
+                                    const errText = await emailRes.text();
+                                    console.error('Rejection email API failed:', errText);
+                                    showToast('error', 'Email Failed', 'Could not send rejection email. Try hard-refreshing (Ctrl+Shift+R).');
+                                } else {
+                                    showToast('info', 'Notice Sent ✉️', `Rejection email sent to ${player.email}`);
+                                }
                             }
                         } catch (emailErr) {
                             console.warn('Rejection email failed:', emailErr);
+                            showToast('error', 'Email Failed', 'Network error while sending email.');
                         }
-                        showToast('info', 'Notice Sent ✉️', `Rejection email sent to ${player.email}`);
 
 
 
