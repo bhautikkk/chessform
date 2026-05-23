@@ -622,22 +622,53 @@
         });
 
         // ── 2. Listen for player data ─────────────────────────────────
-        function startLeaderboardListener() {
-            if (leaderboardListenerAttached) return; // prevent duplicate listeners
-            leaderboardListenerAttached = true;
+        let leaderboardPollInterval = null;
 
-            db.collection('registrations').onSnapshot((snapshot) => {
-                allPlayers = [];
-                snapshot.forEach(doc => allPlayers.push(doc.data()));
-                renderTabsAndData();
-            }, (err) => {
-                console.error('Registrations read error:', err.code, err.message);
+        async function fetchLeaderboardData() {
+            try {
+                const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                let apiUrl = '/api/leaderboard';
+                
+                // For localhost testing, get Vercel URL from global settings
+                if (isLocalhost) {
+                    try {
+                        const settingsDoc = await db.collection('settings').doc('global').get();
+                        if (settingsDoc.exists && settingsDoc.data().vercelUrl) {
+                            apiUrl = `${settingsDoc.data().vercelUrl.replace(/\/$/, '')}/api/leaderboard`;
+                        }
+                    } catch (e) {
+                        console.warn("Could not fetch vercelUrl for localhost testing");
+                    }
+                }
+
+                const res = await fetch(apiUrl);
+                const data = await res.json();
+                
+                if (data.success) {
+                    allPlayers = data.players || [];
+                    renderTabsAndData();
+                } else {
+                    throw new Error(data.error || 'API Error');
+                }
+            } catch (err) {
+                console.error('Leaderboard fetch error:', err.message);
                 document.getElementById('lbTableBody').innerHTML =
                     `<tr><td colspan="5" style="text-align:center;padding:30px;color:#ef4444;">
                         <i class="fas fa-exclamation-circle"></i> Failed to load data.<br>
                         <small style="color:#71717a;">Error: ${escHtml(err.message)}</small>
                     </td></tr>`;
-            });
+            }
+        }
+
+        function startLeaderboardListener() {
+            if (leaderboardListenerAttached) return; // prevent duplicate listeners
+            leaderboardListenerAttached = true;
+            
+            // Initial fetch
+            fetchLeaderboardData();
+            
+            // Poll every 10 seconds for live updates
+            leaderboardPollInterval = setInterval(fetchLeaderboardData, 10000);
         }
 
         function renderTabsAndData() {

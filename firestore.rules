@@ -38,18 +38,9 @@ service cloud.firestore {
           request.resource.data.phone == docId
       );
 
-      // ── UPDATE: admin only ───────────────────────────────────
-      allow update: if isAdmin();
-
-      // ── DELETE: admin only ───────────────────────────────────
-      allow delete: if isAdmin();
-
-      // ── GET: public (needed for duplicate check + get-pass) ──
-      allow get: if true;
-
-      // ── LIST: public (needed for leaderboard) ────────────────
-      // Safe because email and paymentId are NOT in this collection
-      allow list: if true;
+      // ── ALL OTHER OPERATIONS: admin only ─────────────────────
+      // Public reads are fully blocked. Leaderboard & Pass use secure Vercel APIs.
+      allow update, delete, get, list: if isAdmin();
     }
 
     // ══════════════════════════════════════════════════════════
@@ -87,7 +78,7 @@ service cloud.firestore {
       // Anyone can create/update their own attempt record (keyed by phone)
       allow get: if true;
       allow create, update: if 
-        docId.matches('^\\\\+?[0-9]{7,15}$') &&
+        docId.matches('^\\+?[0-9]{7,15}$') &&
         request.resource.data.keys().hasOnly(['count', 'lockedUntil']) &&
         request.resource.data.count is number &&
         request.resource.data.lockedUntil is number &&

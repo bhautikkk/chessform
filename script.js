@@ -988,8 +988,23 @@ function initRegistrationApp() {
                 // ── PRE-CHECK: Duplicate Phone Number ─────────────
                 if (typeof db !== 'undefined') {
                     try {
-                        const docSnap = await db.collection("registrations").doc(templateParams.phone).get();
-                        if (docSnap.exists) {
+                        const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                        let apiUrl = '/api/checkDuplicate';
+                        if (isLocalhost) {
+                            const settingsDoc = await db.collection('settings').doc('global').get();
+                            if (settingsDoc.exists && settingsDoc.data().vercelUrl) {
+                                apiUrl = `${settingsDoc.data().vercelUrl.replace(/\/$/, '')}/api/checkDuplicate`;
+                            }
+                        }
+
+                        const res = await fetch(apiUrl, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ phone: templateParams.phone })
+                        });
+                        const data = await res.json();
+                        
+                        if (data.success && data.registered) {
                             alert("This phone number is already used for registration! Please use a different phone number.");
                             updateSubmitBtn();
                             if (btn) { btn.style.opacity = '1'; btn.style.pointerEvents = 'all'; }

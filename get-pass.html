@@ -624,81 +624,98 @@
                     }
                 }
 
-                // Verify registration
-                const docSnap = await db.collection('registrations').doc(phone).get();
+                // Verify registration via secure API
+                const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                let apiUrl = '/api/getPass';
                 
-                if (!docSnap.exists) {
-                    document.getElementById('loadingPhase').style.display = 'none';
-                    document.getElementById('searchPhase').style.display = 'block';
-                    const errDiv = document.getElementById('errorMsg');
-                    errDiv.innerHTML = '<i class="fas fa-exclamation-circle"></i> No registration found for this phone number.';
-                    errDiv.style.display = 'block';
-                    btn.innerHTML = 'Find My Pass';
-                } else {
-                    const userData = docSnap.data();
-                    // Securely verify name locally
-                    if (userData.name && userData.name.toUpperCase().trim() === name.toUpperCase().trim()) {
-                        
-                        if (!userData.cardId || userData.cardId === 'Pending') {
-                            document.getElementById('loadingPhase').style.display = 'none';
-                            document.getElementById('searchPhase').style.display = 'block';
-                            const errDiv = document.getElementById('errorMsg');
-                            errDiv.innerHTML = '<i class="fas fa-clock"></i> Your registration is under review. Approval usually takes up to 24 hours.';
-                            errDiv.style.display = 'block';
-                            btn.innerHTML = 'Find My Pass';
-                            return;
+                if (isLocalhost) {
+                    try {
+                        const settingsDoc = await db.collection('settings').doc('global').get();
+                        if (settingsDoc.exists && settingsDoc.data().vercelUrl) {
+                            apiUrl = `${settingsDoc.data().vercelUrl.replace(/\/$/, '')}/api/getPass`;
                         }
-
-                        // ✅ Success — reset server-side attempts
-                        await db.collection('pass_attempts').doc(phone).set({ count: 0, lockedUntil: 0 });
-
-                        // Hide skeleton, show pass card
-                        document.getElementById('loadingPhase').style.display = 'none';
-                        document.getElementById('resultPhase').style.display  = 'flex';
-                        document.getElementById('downloadBtn').style.display  = 'block';
-
-                        // Initialize 3D Tilt Effect
-                        VanillaTilt.init(document.querySelector(".ticket"), {
-                            max: 15,
-                            speed: 400,
-                            glare: true,
-                            "max-glare": 0.2,
-                            scale: 1.02
-                        });
-
-                        // Fill card
-                        document.getElementById('cardName').innerText     = userData.name.toUpperCase();
-                        document.getElementById('cardUsername').innerText = '@' + (userData.username || 'unknown');
-                        document.getElementById('cardId').innerText = userData.cardId || 'CB000';
-                        document.getElementById('cardRating').innerText = (userData.rating || '-') + ' ELO';
-                        
-                        // Generate QR Code — fetch YouTube video URL from Firestore
-                        document.getElementById('qrcode').innerHTML = '';
-                        (async () => {
-                            let qrUrl = 'https://chessbird-4625c.web.app'; // fallback
-                            try {
-                                if (typeof db !== 'undefined') {
-                                    const settingsDoc = await db.collection('settings').doc('global').get();
-                                    if (settingsDoc.exists && settingsDoc.data().qrVideoId) {
-                                        qrUrl = `https://youtu.be/${settingsDoc.data().qrVideoId}`;
-                                    }
-                                }
-                            } catch(e) { console.warn('QR URL fetch failed', e); }
-
-                            new QRCode(document.getElementById("qrcode"), {
-                                text: qrUrl,
-                                width: 80,
-                                height: 80,
-                                colorDark : "#111113",
-                                colorLight : "#ffffff",
-                                correctLevel : QRCode.CorrectLevel.M
-                            });
-                        })();
-                        
-                    } else {
-                        await recordFailedAttempt(phone); // Name mismatch
+                    } catch (e) {
+                        console.warn("Could not fetch vercelUrl for localhost testing");
                     }
                 }
+
+                const res = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone, name })
+                });
+
+                const data = await res.json();
+                
+                if (!data.success) {
+                    if (data.error === 'Incorrect name.') {
+                        await recordFailedAttempt(phone); // Name mismatch
+                    } else if (data.error.includes('under review')) {
+                        document.getElementById('loadingPhase').style.display = 'none';
+                        document.getElementById('searchPhase').style.display = 'block';
+                        const errDiv = document.getElementById('errorMsg');
+                        errDiv.innerHTML = `<i class="fas fa-clock"></i> ${escHtml(data.error)}`;
+                        errDiv.style.display = 'block';
+                        btn.innerHTML = 'Find My Pass';
+                    } else {
+                        document.getElementById('loadingPhase').style.display = 'none';
+                        document.getElementById('searchPhase').style.display = 'block';
+                        const errDiv = document.getElementById('errorMsg');
+                        errDiv.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${escHtml(data.error)}`;
+                        errDiv.style.display = 'block';
+                        btn.innerHTML = 'Find My Pass';
+                    }
+                    return;
+                }
+
+                const userData = data.player;
+
+                // ✅ Success — reset server-side attempts
+                await db.collection('pass_attempts').doc(phone).set({ count: 0, lockedUntil: 0 });
+
+                // Hide skeleton, show pass card
+                document.getElementById('loadingPhase').style.display = 'none';
+                document.getElementById('resultPhase').style.display  = 'flex';
+                document.getElementById('downloadBtn').style.display  = 'block';
+
+                // Initialize 3D Tilt Effect
+                VanillaTilt.init(document.querySelector(".ticket"), {
+                    max: 15,
+                    speed: 400,
+                    glare: true,
+                    "max-glare": 0.2,
+                    scale: 1.02
+                });
+
+                // Fill card
+                document.getElementById('cardName').innerText     = userData.name.toUpperCase();
+                document.getElementById('cardUsername').innerText = '@' + (userData.username || 'unknown');
+                document.getElementById('cardId').innerText = userData.cardId || 'CB000';
+                document.getElementById('cardRating').innerText = (userData.rating || '-') + ' ELO';
+                
+                // Generate QR Code — fetch YouTube video URL from Firestore
+                document.getElementById('qrcode').innerHTML = '';
+                (async () => {
+                    let qrUrl = 'https://chessbird-4625c.web.app'; // fallback
+                    try {
+                        if (typeof db !== 'undefined') {
+                            const settingsDoc = await db.collection('settings').doc('global').get();
+                            if (settingsDoc.exists && settingsDoc.data().qrVideoId) {
+                                qrUrl = `https://youtu.be/${settingsDoc.data().qrVideoId}`;
+                            }
+                        }
+                    } catch(e) { console.warn('QR URL fetch failed', e); }
+
+                    new QRCode(document.getElementById("qrcode"), {
+                        text: qrUrl,
+                        width: 80,
+                        height: 80,
+                        colorDark : "#111113",
+                        colorLight : "#ffffff",
+                        correctLevel : QRCode.CorrectLevel.M
+                    });
+                })();
+                        
             } catch (error) {
                 showError('Database Error: ' + error.message);
                 btn.innerHTML = 'Find My Pass';
