@@ -210,6 +210,12 @@ export default async function handler(req, res) {
             return res.status(400).json({ success: false, error: 'User already registered with this phone number.' });
         }
 
+        // Check if user is permanently banned due to multiple rejections
+        const rejectDoc = await db.collection('rejection_history').doc(phone).get();
+        if (rejectDoc.exists && rejectDoc.data().count >= 2) {
+            return res.status(403).json({ success: false, error: 'Your registration has been permanently blocked due to multiple failed verification attempts. Please contact support.' });
+        }
+
         // Public Data
         const publicData = {
             name: String(name || '').trim().substring(0, 100),

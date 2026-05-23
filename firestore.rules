@@ -123,6 +123,14 @@ service cloud.firestore {
     }
 
     // ══════════════════════════════════════════════════════════
+    // REJECTION HISTORY — tracking abuse and multiple rejections
+    // ══════════════════════════════════════════════════════════
+    match /rejection_history/{docId} {
+      allow get: if true; // Needed for verifyPayment.js via Vercel or frontend checks
+      allow list, create, update, delete: if isAdmin();
+    }
+
+    // ══════════════════════════════════════════════════════════
     // DEFAULT: Deny everything not explicitly allowed
     // ══════════════════════════════════════════════════════════
     match /{document=**} {

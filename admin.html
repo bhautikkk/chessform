@@ -3157,13 +3157,23 @@
                     if (rejectBtn) rejectBtn.disabled = true;
 
                     try {
+                        const rejectRef = db.collection('rejection_history').doc(player.phone || docId);
+                        const rejectSnap = await rejectRef.get();
+                        let rejectCount = (rejectSnap.exists ? rejectSnap.data().count : 0) + 1;
+
                         const batch = db.batch();
+                        batch.set(rejectRef, { count: rejectCount, lastRejected: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
                         batch.delete(db.collection('registrations').doc(docId));
                         batch.delete(db.collection('registrations_private').doc(docId));
                         batch.delete(db.collection('pass_attempts').doc(player.phone || docId));
                         await batch.commit();
 
                         showToast('success', 'Player Rejected', `"${escHtml(player.name)}" has been rejected and deleted.`);
+
+                        if (rejectCount >= 2) {
+                            showToast('warning', 'Permanent Ban', `Player rejected ${rejectCount} times. Email NOT sent to prevent spam.`);
+                            return; // Do not send email on second+ rejection
+                        }
 
                         // Send rejection email to player via backend
                         try {
