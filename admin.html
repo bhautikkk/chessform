@@ -1492,6 +1492,10 @@
                         <div class="section-title" style="margin-bottom:0;"><i class="fas fa-clock"></i> &nbsp;Pending Approvals</div>
                     </div>
                     <p style="font-size:13px; color:var(--muted); margin-bottom:16px;">These players have registered but require payment verification. Verify the UTR / transaction first, then Approve or Reject.</p>
+                    <div style="margin-bottom: 16px; position: relative;">
+                        <i class="fas fa-search" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--muted);"></i>
+                        <input type="text" id="pendingUtrSearch" onkeyup="filterPendingUTR()" placeholder="Search UTR Number, Name, or Phone..." style="width: 100%; padding: 10px 14px 10px 38px; background: #111113; border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'Inter', sans-serif; font-size: 14px; outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'">
+                    </div>
                     <div class="reg-list" id="pendingList" style="max-height:450px; overflow-y:auto; scrollbar-width:thin; scrollbar-color:rgba(198,168,124,0.3) transparent;">
                         <div class="empty-msg">No pending registrations.</div>
                     </div>
@@ -4617,6 +4621,46 @@
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = origHtml;
+            }
+        }
+
+        // ─── Filter Pending Registrations by UTR/Name ─────────────────
+        function filterPendingUTR() {
+            const input = document.getElementById('pendingUtrSearch');
+            if (!input) return;
+            const filter = input.value.toUpperCase();
+            const list = document.getElementById('pendingList');
+            const items = list.getElementsByClassName('reg-item');
+            
+            let visibleCount = 0;
+            for (let i = 0; i < items.length; i++) {
+                const item = items[i];
+                const textValue = item.textContent || item.innerText;
+                if (textValue.toUpperCase().indexOf(filter) > -1) {
+                    item.style.display = "";
+                    visibleCount++;
+                } else {
+                    item.style.display = "none";
+                }
+            }
+            
+            // Handle empty state msg
+            let emptyMsg = list.querySelector('.empty-msg');
+            if (visibleCount === 0 && items.length > 0) {
+                if (!emptyMsg) {
+                    emptyMsg = document.createElement('div');
+                    emptyMsg.className = 'empty-msg';
+                    list.appendChild(emptyMsg);
+                }
+                emptyMsg.style.display = '';
+                emptyMsg.textContent = 'No matching records found.';
+            } else if (emptyMsg) {
+                if (items.length === 0) {
+                    emptyMsg.style.display = '';
+                    emptyMsg.textContent = 'No pending registrations.';
+                } else {
+                    emptyMsg.style.display = 'none';
+                }
             }
         }
     </script>
