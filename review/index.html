@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ChessBirdReview System</title>
+    
+    <!-- Chessboard.js CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#81b64c">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css?v=163">
+
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-0Y22PDG4P6"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-0Y22PDG4P6');
+    </script>
+</head>
+<body data-mobile-state="home">
+    <!-- App Loading Skeleton -->
+    <div id="app-skeleton" class="skeleton-overlay">
+        <div class="skeleton-header"></div>
+        <div class="skeleton-body">
+            <!-- Left Panel Skeleton -->
+            <div class="skeleton-panel">
+                <div class="skeleton-hero"></div>
+                <div class="skeleton-card"></div>
+                <div class="skeleton-card"></div>
+                <div class="skeleton-card"></div>
+            </div>
+            <!-- Middle Panel Skeleton -->
+            <div class="skeleton-panel board-skeleton">
+                <div class="skeleton-bubble"></div>
+                <div class="skeleton-board"></div>
+                <div class="skeleton-controls"></div>
+            </div>
+            <!-- Right Panel Skeleton -->
+            <div class="skeleton-panel right-skeleton">
+                <div class="skeleton-tabs"></div>
+                <div class="skeleton-moves"></div>
+            </div>
+        </div>
+    </div>
+
+    <header>
+        <div class="logo">ChessBird<span>Review</span></div>
+        <div class="header-settings" style="margin-left: auto; display: flex; gap: 12px; align-items: center;">
+            <div class="gear-setting" style="display: flex; align-items: center; background: rgba(255,255,255,0.05); padding: 4px 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);">
+                <button id="btn-settings-gear" style="background: transparent; border: none; color: white; cursor: pointer; display: flex; align-items: center; font-size: 1.2rem; outline: none;" title="Settings">
+                    ⚙️
+                </button>
+            </div>            <div class="header-actions mobile-only">
+                <button id="btn-mobile-home" class="secondary-btn" style="padding: 6px 12px; font-size: 0.85rem;">New Game</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Left Panel: Input & Settings -->
+        <div class="panel input-panel">
+
+            <!-- Hero Section -->
+            <div class="home-hero">
+                <div class="home-hero-badge">✦ AI-Powered Analysis</div>
+                <h1 class="home-hero-title">Analyze Your<br><span class="home-hero-accent">Chess Games</span></h1>
+                <p class="home-hero-sub">Discover brilliant moves, blunders & deep insights powered by Stockfish 18.</p>
+            </div>
+
+            <!-- Chess.com Card -->
+            <div class="home-card" id="card-chesscom">
+                <div class="home-card-header">
+                    <div class="home-card-icon chesscom-icon">
+                        <svg width="20" height="20" viewBox="0 0 50 50" fill="none"><circle cx="25" cy="25" r="25" fill="#81b64c"/><text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" font-size="26" fill="white" font-weight="bold">♟</text></svg>
+                    </div>
+                    <div>
+                        <div class="home-card-title">Chess.com</div>
+                        <div class="home-card-sub">Fetch your recent games</div>
+                    </div>
+                </div>
+                <div class="home-input-row">
+                    <input type="text" id="chesscom-username" class="home-input" placeholder="Username" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+                    <button id="fetch-games-btn" class="home-fetch-btn chesscom-btn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                    </button>
+                </div>
+                <div id="fetch-error" class="error-msg hidden"></div>
+            </div>
+
+            <!-- Lichess Card -->
+            <div class="home-card" id="card-lichess">
+                <div class="home-card-header">
+                    <div class="home-card-icon lichess-icon">
+                        <svg width="20" height="20" viewBox="0 0 50 50" fill="none"><circle cx="25" cy="25" r="25" fill="#9966ff"/><text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" font-size="26" fill="white" font-weight="bold">♞</text></svg>
+                    </div>
+                    <div>
+                        <div class="home-card-title">Lichess</div>
+                        <div class="home-card-sub">Import from Lichess.org</div>
+                    </div>
+                </div>
+                <div class="home-input-row">
+                    <input type="text" id="lichess-username" class="home-input" placeholder="Username" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+                    <button id="lichess-fetch-btn" class="home-fetch-btn lichess-btn-color">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                    </button>
+                </div>
+                <div id="lichess-fetch-error" class="error-msg hidden"></div>
+            </div>
+
+            <!-- PGN Card -->
+            <div class="home-card" id="card-pgn">
+                <div class="home-card-header">
+                    <div class="home-card-icon pgn-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                    </div>
+                    <div>
+                        <div class="home-card-title">Paste PGN</div>
+                        <div class="home-card-sub">Analyze any game manually</div>
+                    </div>
+                </div>
+                <textarea id="pgn-input" class="modern-textarea" placeholder='[Event "Live Chess"]&#10;[White "Player1"]&#10;1. e4 e5 ...'></textarea>
+                <button id="load-btn" class="home-pgn-btn">Load & Analyze</button>
+            </div>
+
+            <!-- Settings moved to header -->
+
+            <div id="game-info" class="game-info hidden">
+                <div class="player-info">
+                    <div class="player-name" id="white-player">White Player</div>
+                    <div class="player-rating" id="white-rating"></div>
+                </div>
+                <div class="vs">vs</div>
+                <div class="player-info">
+                    <div class="player-name" id="black-player">Black Player</div>
+                    <div class="player-rating" id="black-rating"></div>
+                </div>
+                <div class="result" id="game-result">1/2 - 1/2</div>
+                
+                <button id="start-review-btn" class="action-btn mt-15">Run Full Review</button>
+                <button id="home-view-board-btn" class="secondary-btn mt-15 mobile-only">Just View Board</button>
+            </div>
+        </div>
+
+        <!-- Middle Panel: Board & Eval -->
+        <div class="panel board-panel">
+            <div class="coach-bubble-wrapper">
+                <div class="coach-bubble invisible" id="coach-bubble">
+                    <div class="coach-icon" id="coach-icon"></div>
+                    <div class="coach-body">
+                        <div class="coach-label" id="coach-label">Coach Analysis</div>
+                        <div class="coach-text" id="coach-text">Reviewing game...</div>
+                    </div>
+                    <div class="coach-score" id="coach-score"></div>
+                </div>
+            </div>
+
+            <div class="board-layout">
+                <div class="eval-container horizontal">
+                    <div class="eval-fill" id="eval-fill"></div>
+                    <span class="eval-score" id="eval-score">0.0</span>
+                </div>
+                <div class="board-wrapper">
+                    <div id="board"></div>
+                    <!-- SVG Overlay for Arrows -->
+                    <svg id="arrow-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10;">
+                        <defs>
+                            <marker id="arrowhead" markerWidth="2.5" markerHeight="2.5" refX="1.5" refY="1.25" orient="auto">
+                                <polygon points="0 0, 2.5 1.25, 0 2.5" fill="rgba(129, 182, 76, 0.9)" />
+                            </marker>
+                        </defs>
+                        <g id="arrow-group"></g>
+                    </svg>
+                </div>
+                <!-- Review Progress Bar removed from here, moved below controls -->
+            </div>
+            
+            <div class="controls-wrapper mt-15">
+                <div class="controls" style="justify-content: space-between; padding: 0 10px; margin-bottom: 5px;">
+                    <button id="btn-prev" class="control-btn" title="Previous Move" style="flex: 0 0 auto; max-width: none; width: 80px; height: 44px; border-radius: 22px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; transition: all 0.2s;">◄</button>
+                    <button id="btn-next" class="control-btn" title="Next Move" style="flex: 0 0 auto; max-width: none; width: 80px; height: 44px; border-radius: 22px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; transition: all 0.2s;">►</button>
+                </div>
+            </div>
+
+            <!-- Review Progress Bar (below controls, fully visible) -->
+            <div class="review-overlay hidden" id="review-overlay">
+                <div class="progress-info">
+                    <div class="progress-text" id="review-progress-text">0%</div>
+                </div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar" id="review-progress"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel: Moves & Analysis -->
+        <div class="panel analysis-panel">
+            <!-- Tabs -->
+            <div class="tabs">
+                <div class="tab active" id="tab-moves">Moves</div>
+                <div class="tab" id="tab-review">Review</div>
+            </div>
+            
+            <!-- Moves View -->
+            <div class="tab-content active" id="content-moves">
+                <div class="engine-info">
+                    <h3>Stockfish 18 NNUE SIMD <span class="engine-depth" id="engine-depth">Depth: 14</span></h3>
+                    <div class="score-display" id="best-move-display">Load game to start engine...</div>
+                </div>
+
+                <!-- Alternative Best Move panel -->
+                <div id="alt-best-panel" class="alt-best-panel hidden"></div>
+                
+                <div class="moves-container">
+                    <div class="moves-list" id="moves-list">
+                        <div class="placeholder-text">Load a PGN to see moves</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Review View -->
+            <div class="tab-content" id="content-review">
+                <div class="review-dashboard">
+                    <div class="review-header-grid">
+                        <div class="header-label">Players</div>
+                        <div class="player-col" id="report-col-w">
+                            <div class="report-username" id="report-w-name">White</div>
+                            <img src="" class="report-avatar" id="report-w-avatar" style="display: none;">
+                            <div class="report-avatar-placeholder" id="report-w-placeholder"></div>
+                        </div>
+                        <div class="player-col" id="report-col-b">
+                            <div class="report-username" id="report-b-name">Black</div>
+                            <img src="" class="report-avatar" id="report-b-avatar" style="display: none;">
+                            <div class="report-avatar-placeholder" id="report-b-placeholder"></div>
+                        </div>
+
+                        <div class="header-label">Accuracy</div>
+                        <div class="acc-box white-acc">
+                            <span id="acc-white">-</span>
+                        </div>
+                        <div class="acc-box black-acc">
+                            <span id="acc-black">-</span>
+                        </div>
+                    </div>
+
+                    <hr class="report-divider">
+                    
+                    <div class="stats-table">
+                        <div class="stat-row brilliant-row">
+                            <div class="stat-label">Brilliant</div>
+                            <div class="stat-val white-val" id="stat-w-brilliant">0</div>
+                            <div class="stat-icon"><img src="icons/brilliant.png" class="move-classification-img" alt="!!" /></div>
+                            <div class="stat-val black-val" id="stat-b-brilliant">0</div>
+                        </div>
+                        <div class="stat-row great-row">
+                            <div class="stat-label">Great</div>
+                            <div class="stat-val white-val" id="stat-w-great">0</div>
+                            <div class="stat-icon"><img src="icons/great.png" class="move-classification-img" alt="!" /></div>
+                            <div class="stat-val black-val" id="stat-b-great">0</div>
+                        </div>
+                        <div class="stat-row best-row">
+                            <div class="stat-label">Best</div>
+                            <div class="stat-val white-val" id="stat-w-best">0</div>
+                            <div class="stat-icon"><img src="icons/best.png" class="move-classification-img" alt="★" /></div>
+                            <div class="stat-val black-val" id="stat-b-best">0</div>
+                        </div>
+                        <div class="stat-row excellent-row">
+                            <div class="stat-label">Excellent</div>
+                            <div class="stat-val white-val" id="stat-w-excellent">0</div>
+                            <div class="stat-icon"><img src="icons/excelent.png" class="move-classification-img" alt="👍" /></div>
+                            <div class="stat-val black-val" id="stat-b-excellent">0</div>
+                        </div>
+                        <div class="stat-row good-row">
+                            <div class="stat-label">Good</div>
+                            <div class="stat-val white-val" id="stat-w-good">0</div>
+                            <div class="stat-icon"><img src="icons/good.png" class="move-classification-img" alt="✔" /></div>
+                            <div class="stat-val black-val" id="stat-b-good">0</div>
+                        </div>
+                        <div class="stat-row book-row">
+                            <div class="stat-label">Book</div>
+                            <div class="stat-val white-val" id="stat-w-book">0</div>
+                            <div class="stat-icon"><img src="icons/book.png" class="move-classification-img" alt="📖" /></div>
+                            <div class="stat-val black-val" id="stat-b-book">0</div>
+                        </div>
+                        <div class="stat-row inaccuracy-row">
+                            <div class="stat-label">Inaccuracy</div>
+                            <div class="stat-val white-val" id="stat-w-inaccuracy">0</div>
+                            <div class="stat-icon"><img src="icons/inaccuracy.png" class="move-classification-img" alt="?!" /></div>
+                            <div class="stat-val black-val" id="stat-b-inaccuracy">0</div>
+                        </div>
+                        <div class="stat-row mistake-row">
+                            <div class="stat-label">Mistake</div>
+                            <div class="stat-val white-val" id="stat-w-mistake">0</div>
+                            <div class="stat-icon"><img src="icons/mistake.png" class="move-classification-img" alt="?" /></div>
+                            <div class="stat-val black-val" id="stat-b-mistake">0</div>
+                        </div>
+                        <div class="stat-row miss-row">
+                            <div class="stat-label">Miss</div>
+                            <div class="stat-val white-val" id="stat-w-miss">0</div>
+                            <div class="stat-icon"><img src="icons/miss.png" class="move-classification-img" alt="✖" /></div>
+                            <div class="stat-val black-val" id="stat-b-miss">0</div>
+                        </div>
+                        <div class="stat-row blunder-row">
+                            <div class="stat-label">Blunder</div>
+                            <div class="stat-val white-val" id="stat-w-blunder">0</div>
+                            <div class="stat-icon"><img src="icons/blunder.png" class="move-classification-img" alt="??" /></div>
+                            <div class="stat-val black-val" id="stat-b-blunder">0</div>
+                        </div>
+                    </div>
+                    <div class="sticky-bottom-btn-container mobile-only">
+                        <button id="report-view-board-btn" class="primary-btn" style="width: 100%; margin: 0; box-shadow: 0 4px 12px rgba(0,0,0,0.4); padding: 14px; font-size: 1.1rem; border-radius: 8px;">Start Review</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Games List Modal -->
+    <div id="games-modal" class="games-modal hidden">
+        <div class="games-modal-header">
+            <div class="games-modal-title">
+                <div class="games-modal-logo">♟ Recent Games</div>
+                <div class="games-modal-subtitle" id="games-modal-subtitle">Loading...</div>
+            </div>
+            <button id="games-modal-close" class="games-modal-close" title="Close">✕</button>
+        </div>
+        <div class="games-modal-body">
+            <div id="games-modal-list" class="games-modal-list"></div>
+        </div>
+    </div>
+
+    <!-- PWA Install Prompt -->
+    <div id="pwa-prompt" class="pwa-modal hidden">
+        <div class="pwa-content">
+            <img src="app-logo.png" class="pwa-icon-img" alt="ChessBirdReview Logo">
+            <h3>Install ChessBirdReview</h3>
+            <p>Get the best experience by installing the app on your device.</p>
+            <div class="pwa-actions">
+                <button id="pwa-install-btn" class="primary-btn">Download App</button>
+                <button id="pwa-close-btn" class="secondary-btn">Continue in Browser</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Update Toast -->
+    <div id="update-toast" class="update-toast hidden">
+        <div class="update-toast-content">
+            <span style="font-size: 0.95rem; font-weight: 500;">New update available!</span>
+            <button id="update-toast-btn" class="primary-btn" style="padding: 6px 12px; font-size: 0.85rem;">Update Now</button>
+        </div>
+    </div>
+
+    <!-- Libraries -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <script src="./chessboard-local.js?v=150"></script>
+    
+    <!-- PWA Installation Script -->
+    <script>
+        let deferredPrompt;
+        let promptShown = false;
+        
+        // Check if already installed
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone || document.referrer.includes('android-app://');
+
+        window.showPwaPrompt = function() {
+            const pwaPrompt = document.getElementById('pwa-prompt');
+            if (pwaPrompt && !promptShown && !isStandalone && deferredPrompt) {
+                pwaPrompt.classList.remove('hidden');
+                promptShown = true;
+            }
+        };
+
+        // Catch the event globally as early as possible
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const btnInstall = document.getElementById('pwa-install-btn');
+            const btnClose = document.getElementById('pwa-close-btn');
+            const pwaPrompt = document.getElementById('pwa-prompt');
+
+            if (btnInstall) {
+                btnInstall.addEventListener('click', async () => {
+                    if (pwaPrompt) pwaPrompt.classList.add('hidden');
+                    if (deferredPrompt) {
+                        deferredPrompt.prompt();
+                        const { outcome } = await deferredPrompt.userChoice;
+                        if (outcome === 'accepted') {
+                            if (typeof gtag === 'function') {
+                                gtag('event', 'pwa_installed');
+                            }
+                        }
+                        deferredPrompt = null;
+                    } else {
+                        alert("Please click the 'App available' icon in your browser's address bar (top right) to install the app!");
+                    }
+                });
+            }
+            if (btnClose) {
+                btnClose.addEventListener('click', () => {
+                    if (pwaPrompt) pwaPrompt.classList.add('hidden');
+                });
+            }
+        });
+
+        // Register Service Worker and Auto-Reload on Update
+        if ('serviceWorker' in navigator) {
+            let newWorker;
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js').then(reg => {
+                    reg.addEventListener('updatefound', () => {
+                        newWorker = reg.installing;
+                        newWorker.addEventListener('statechange', () => {
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                // A new version is available, show the toast
+                                const toast = document.getElementById('update-toast');
+                                if (toast) toast.classList.remove('hidden');
+                            }
+                        });
+                    });
+                }).catch(err => console.log('SW reg failed:', err));
+            });
+
+            const updateBtn = document.getElementById('update-toast-btn');
+            if (updateBtn) {
+                updateBtn.addEventListener('click', () => {
+                    if (newWorker) {
+                        newWorker.postMessage('skipWaiting');
+                    }
+                });
+            }
+
+            // Automatically reload the page when the new Service Worker takes control
+            let refreshing = false;
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                if (!refreshing) {
+                    window.location.reload();
+                    refreshing = true;
+                }
+            });
+        }
+    </script>
+    <!-- Settings Modal -->
+    <div id="theme-modal" class="settings-modal-overlay hidden">
+        <div class="settings-modal-card">
+            <!-- Header -->
+            <div class="settings-modal-header">
+                <div class="settings-modal-title-group">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14M12 2v2M12 20v2M2 12h2M20 12h2"/></svg>
+                    <span class="settings-modal-title">Settings</span>
+                </div>
+                <button id="btn-close-theme" class="settings-modal-close-btn" title="Close">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+
+            <!-- Board Actions Section -->
+            <div id="settings-actions-section" class="settings-section">
+                <div class="settings-section-label">Board Actions</div>
+                <div class="settings-btn-row">
+                    <button class="settings-action-btn" id="btn-flip">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><polyline points="23 20 23 14 17 14"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10M23 14l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
+                        Flip Board
+                    </button>
+                    <button class="settings-action-btn" id="toggle-arrows-wrapper">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                        Arrows: <span id="arrows-status" class="settings-status-badge">Off</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Divider -->
+            <div class="settings-divider"></div>
+
+            <!-- Theme Section -->
+            <div id="settings-theme-section" class="settings-section">
+                <div class="settings-section-label">Board Theme</div>
+                <div class="settings-theme-grid">
+                    <button class="settings-theme-btn active" id="btn-theme-board1">
+                        <span class="theme-swatch" style="background: linear-gradient(135deg, #eeeed2 50%, #769656 50%);"></span>
+                        <span class="theme-name">Green</span>
+                    </button>
+                    <button class="settings-theme-btn" id="btn-theme-board2">
+                        <span class="theme-swatch" style="background: linear-gradient(135deg, #f0d9b5 50%, #b58863 50%);"></span>
+                        <span class="theme-name">Brown</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Script -->
+    <script src="openings.js?v=163"></script>
+    <script src="script.js?v=163"></script>
+</body>
+
+
+
