@@ -2,3 +2,6 @@ node_modules/
 
 # Local reference files — do not push
 CHANGES_GUIDE.md
+
+# Secret Keys
+.env

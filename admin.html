@@ -3105,8 +3105,39 @@
             } else {
                 console.warn('Player email not available — skipping player email.');
             }
+            // ── STEP 3: Send player confirmation SMS (via secure backend) ──────────────
+            if (player.phone) {
+                try {
+                    let sendSmsEndpoint = isLocalhost ? `${sendEmailEndpoint.replace('/api/sendEmail', '')}/api/sendSms` : '/api/sendSms';
+                    const smsRes = await fetch(sendSmsEndpoint, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${idToken}`
+                        },
+                        body: JSON.stringify({
+                            phone: player.phone,
+                            name: player.name,
+                            cardId: cardId
+                        })
+                    });
+                    
+                    if (!smsRes.ok) {
+                        const errText = await smsRes.text();
+                        console.error('Approval SMS API failed:', errText);
+                        showToast('error', 'SMS Failed', 'Could not send confirmation SMS. Check Vercel logs.');
+                    } else {
+                        showToast('info', 'SMS Sent 📱', `Approval SMS sent to ${player.phone}`);
+                    }
+                } catch (smsErr) {
+                    console.warn('Player SMS send failed:', smsErr);
+                    showToast('warning', 'Player SMS Failed', 'Network error while sending SMS.');
+                }
+            } else {
+                console.warn('Player phone not available — skipping player SMS.');
+            }
 
-            // ── STEP 3: Send admin notification email ───────────────
+            // ── STEP 4: Send admin notification email ───────────────
             try {
                 const adminEmailRes = await fetch(sendEmailEndpoint, {
                     method: 'POST',
