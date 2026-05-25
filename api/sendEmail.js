@@ -44,7 +44,7 @@ export default async function handler(req, res) {
         }
 
         const origin = req.headers.origin || req.headers.referer;
-        if (origin && !origin.includes('chessbirdform.vercel.app') && !origin.includes('localhost') && !origin.includes('127.0.0.1')) {
+        if (origin && !origin.includes('chessbirdform.vercel.app') && !origin.includes('chessbird.online') && !origin.includes('localhost') && !origin.includes('127.0.0.1')) {
             console.warn(`Blocked request from unauthorized origin: ${origin}`);
             return res.status(403).json({ success: false, error: 'Unauthorized Origin' });
         }

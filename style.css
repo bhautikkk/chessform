@@ -106,22 +106,24 @@ html {
 }
 
 .hero-text-container h1 {
-    font-family: var(--font-heading);
-    font-size: 4.8rem;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 4.5rem;
+    font-weight: 800;
     line-height: 1.05;
     margin-bottom: 24px;
     color: var(--text-pure);
+    letter-spacing: -1.5px;
 }
 
 .hero-text-container h1 span {
-    font-family: var(--font-body);
     font-weight: 800;
     background: linear-gradient(135deg, #f59e0b 0%, #fde68a 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    font-size: 3.8rem;
+    font-size: 4.5rem;
     letter-spacing: -2px;
     display: block;
+    margin-top: 2px;
 }
 
 .hero-text-container p {
