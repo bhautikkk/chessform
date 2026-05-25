@@ -3125,7 +3125,13 @@
                     if (!smsRes.ok) {
                         const errText = await smsRes.text();
                         console.error('Approval SMS API failed:', errText);
-                        showToast('error', 'SMS Failed', 'Could not send confirmation SMS. Check Vercel logs.');
+                        let errMsg = 'Could not send confirmation SMS.';
+                        try {
+                           const errObj = JSON.parse(errText);
+                           if (errObj.details && errObj.details.message) errMsg = errObj.details.message;
+                           else if (errObj.error) errMsg = errObj.error;
+                        } catch(e){}
+                        showToast('error', 'SMS Failed', errMsg);
                     } else {
                         showToast('info', 'SMS Sent 📱', `Approval SMS sent to ${player.phone}`);
                     }
