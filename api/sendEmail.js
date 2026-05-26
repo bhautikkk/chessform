@@ -144,6 +144,7 @@ export default async function handler(req, res) {
                                             </tr>
                                         </table>
 
+                                        <p style="margin: 0 0 20px 0; color: #71717a; font-size: 15px; line-height: 1.6;">If you need help, please contact our support team at <a href="mailto:chessbirdofficial@gmail.com" style="color: #0ea5e9;">chessbirdofficial@gmail.com</a>.</p>
                                         <p style="margin: 0; color: #71717a; font-size: 15px; line-height: 1.6;">See you on the board,<br><strong style="color: #18181b;">The ChessBird Team</strong></p>
                                     </td>
                                 </tr>
@@ -215,7 +216,7 @@ export default async function handler(req, res) {
                                             </tr>
                                         </table>
 
-                                        <p style="margin: 0; color: #71717a; font-size: 15px; line-height: 1.6;">If you need help, please contact our support team.<br><br><strong style="color: #18181b;">The ChessBird Team</strong></p>
+                                        <p style="margin: 0; color: #71717a; font-size: 15px; line-height: 1.6;">If you need help, please contact our support team at <a href="mailto:chessbirdofficial@gmail.com" style="color: #0ea5e9;">chessbirdofficial@gmail.com</a>.<br><br><strong style="color: #18181b;">The ChessBird Team</strong></p>
                                     </td>
                                 </tr>
                                 
