@@ -36,7 +36,7 @@ export default async function handler(req, res) {
         const docSnap = await db.collection('registrations').doc(phone).get();
         
         if (!docSnap.exists) {
-            return res.status(404).json({ success: false, error: 'Not found' });
+            return res.status(200).json({ success: true, status: 'Rejected' });
         }
 
         const userData = docSnap.data();

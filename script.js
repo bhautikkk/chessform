@@ -195,7 +195,7 @@ function initRegistrationApp() {
             if (data.success) {
                 // Mock docSnap to reuse applyStatusUI logic
                 const mockDocSnap = {
-                    exists: true,
+                    exists: data.status !== 'Rejected',
                     data: () => ({ cardId: data.status === 'Approved' ? 'Yes' : 'Pending' })
                 };
                 applyStatusUI(mockDocSnap);
