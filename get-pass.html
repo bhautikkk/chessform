@@ -526,13 +526,10 @@
                 errDiv.style.display = 'block';
                 btn.innerHTML = `Locked (${mins}:${String(secs).padStart(2,'0')})`;
 
-                if (left <= 0) {
                     clearInterval(countdownTimer);
                     btn.disabled = false;
                     btn.innerText = 'Find My Pass';
                     errDiv.style.display = 'none';
-                    // Reset server-side lockout when timer ends
-                    db.collection('pass_attempts').doc(phone).set({ count: 0, lockedUntil: 0 });
                 }
             }
 
@@ -540,27 +537,7 @@
             countdownTimer = setInterval(updateDisplay, 1000);
         }
 
-        async function recordFailedAttempt(phone) {
-            const ref = db.collection('pass_attempts').doc(phone);
-            try {
-                const doc = await ref.get();
-                let data = doc.exists ? doc.data() : { count: 0, lockedUntil: 0 };
-                
-                data.count += 1;
-                if (data.count >= MAX_ATTEMPTS) {
-                    data.lockedUntil = Date.now() + LOCKOUT_MS;
-                    await ref.set(data);
-                    startLockoutUI(LOCKOUT_MS, phone);
-                } else {
-                    await ref.set(data);
-                    const left = MAX_ATTEMPTS - data.count;
-                    showError(`<i class="fas fa-exclamation-circle"></i> Incorrect name. <b>${left}</b> attempt${left > 1 ? 's' : ''} remaining!`);
-                }
-            } catch (e) {
-                console.error("Rate limit error", e);
-                showError("Something went wrong. Please try again.");
-            }
-        }
+        // Server-side rate limiting now handles attempts and lockouts.
 
         function showError(msg) {
             document.getElementById('loadingPhase').style.display = 'none';
@@ -614,15 +591,7 @@
                     btn.innerHTML = 'Find My Pass';
                     return showToast("Your pass is not generated yet! Please wait.");
                 }
-                // SERVER-SIDE LOCKOUT CHECK FIRST
-                const attemptDoc = await db.collection('pass_attempts').doc(phone).get();
-                if (attemptDoc.exists) {
-                    const data = attemptDoc.data();
-                    if (data.lockedUntil > Date.now()) {
-                        startLockoutUI(data.lockedUntil - Date.now(), phone);
-                        return;
-                    }
-                }
+                // Server-side lockout check is now purely enforced in the backend.
 
                 // Verify registration via secure API
                 const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
@@ -649,7 +618,9 @@
                 
                 if (!data.success) {
                     if (data.error === 'Incorrect name.') {
-                        await recordFailedAttempt(phone); // Name mismatch
+                        showError(`<i class="fas fa-exclamation-circle"></i> Incorrect name. <b>${data.attemptsLeft}</b> attempt(s) remaining!`);
+                    } else if (data.error === 'Locked') {
+                        startLockoutUI(data.remainingMs, phone);
                     } else if (data.error.includes('under review')) {
                         document.getElementById('loadingPhase').style.display = 'none';
                         document.getElementById('searchPhase').style.display = 'block';
@@ -670,8 +641,7 @@
 
                 const userData = data.player;
 
-                // ✅ Success — reset server-side attempts
-                await db.collection('pass_attempts').doc(phone).set({ count: 0, lockedUntil: 0 });
+                // ✅ Success — rate limit is cleared automatically by backend
 
                 // Hide skeleton, show pass card
                 document.getElementById('loadingPhase').style.display = 'none';

@@ -172,16 +172,37 @@ function initRegistrationApp() {
         }
     }
 
-    // ── Helper: start real-time listener on user's registration doc ──
-    let statusUnsubscribe = null;
-    function listenToStatus() {
+    // ── Helper: check registration status securely via API ──
+    async function listenToStatus() {
         const userPhone = localStorage.getItem('userPhone');
-        if (!userPhone || typeof db === 'undefined') return;
-        if (statusUnsubscribe) statusUnsubscribe(); // clear old listener
-        statusUnsubscribe = db.collection('registrations').doc(userPhone)
-            .onSnapshot(docSnap => {
-                applyStatusUI(docSnap);
-            }, e => console.warn('Status listen failed', e));
+        if (!userPhone) return;
+        
+        try {
+            // Determine API URL (handle localhost fallback)
+            let apiUrl = '/api/checkStatus';
+            const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            if (isLocalhost && window.activeVercelUrl) {
+                apiUrl = `${window.activeVercelUrl.replace(/\/$/, '')}/api/checkStatus`;
+            }
+
+            const res = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ phone: userPhone })
+            });
+
+            const data = await res.json();
+            if (data.success) {
+                // Mock docSnap to reuse applyStatusUI logic
+                const mockDocSnap = {
+                    exists: true,
+                    data: () => ({ cardId: data.status === 'Approved' ? 'Yes' : 'Pending' })
+                };
+                applyStatusUI(mockDocSnap);
+            }
+        } catch (e) {
+            console.warn('Status check failed', e);
+        }
     }
 
     if (typeof db !== 'undefined') {

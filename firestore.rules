@@ -29,16 +29,9 @@ service cloud.firestore {
     // ══════════════════════════════════════════════════════════
     match /registrations/{docId} {
 
-      // ── CREATE ───────────────────────────────────────────────
-      // Creation is strictly blocked from frontend to prevent bot spam/bypassing.
       // All registrations MUST go through the secure Vercel API backend.
-      allow create: if isAdmin();
-
-      // ── ALL OTHER OPERATIONS: admin only ─────────────────────
-      // Allow public to 'get' their own registration status using their phone number. 
-      // Leaderboard & Pass use secure Vercel APIs.
-      allow get: if true;
-      allow update, delete, list: if isAdmin();
+      // Read access is also restricted to admin to protect Entry IDs (cardId).
+      allow read, write: if isAdmin();
     }
 
     // ══════════════════════════════════════════════════════════
@@ -48,24 +41,9 @@ service cloud.firestore {
     // ══════════════════════════════════════════════════════════
     match /registrations_private/{docId} {
 
-      // ── CREATE ───────────────────────────────────────────────
-      // Creation is allowed via Vercel Backend OR direct frontend free registrations
-      allow create: if isAdmin() || (
-          get(/databases/$(database)/documents/settings/global).data.isRegistrationOpen == true &&
-          request.resource.data.keys().hasAll(['email', 'paymentId', 'promoCode', 'discountApplied', 'amountPaid']) &&
-          request.resource.data.amountPaid == 0 &&
-          request.resource.data.discountApplied == 100 &&
-          request.resource.data.paymentId.matches('^FREE_.*') &&
-          // Hacker Protection: Verify the promo code ACTUALLY exists and is 100% OFF in the database!
-          request.resource.data.promoCode != null &&
-          exists(/databases/$(database)/documents/promo_codes/$(request.resource.data.promoCode)) &&
-          get(/databases/$(database)/documents/promo_codes/$(request.resource.data.promoCode)).data.discount == 100 &&
-          get(/databases/$(database)/documents/promo_codes/$(request.resource.data.promoCode)).data.active == true
-      );
-
-      // ── ALL READS AND UPDATES: admin only ────────────────────
-      // Nobody can read/update/delete private data except admin
-      allow get, list, update, delete: if isAdmin();
+      // ── ALL OPERATIONS: admin only ────────────────────
+      // Creation is strictly handled via Vercel Backend.
+      allow read, write: if isAdmin();
     }
 
     // ══════════════════════════════════════════════════════════
@@ -73,16 +51,9 @@ service cloud.firestore {
     // Prevents localStorage bypass attack
     // ══════════════════════════════════════════════════════════
     match /pass_attempts/{docId} {
-      // Anyone can create/update their own attempt record (keyed by phone)
-      allow get: if true;
-      allow create, update: if 
-        docId.matches('^\\+?[0-9]{7,15}$') &&
-        request.resource.data.keys().hasOnly(['count', 'lockedUntil']) &&
-        request.resource.data.count is number &&
-        request.resource.data.lockedUntil is number &&
-        exists(/databases/$(database)/documents/registrations/$(docId));
-      allow delete: if isAdmin();
-      allow list: if isAdmin();
+      // Frontend is no longer allowed to read/write attempts to prevent DoS.
+      // Rate limiting is handled purely in the Vercel backend.
+      allow read, write: if isAdmin();
     }
 
     // ══════════════════════════════════════════════════════════

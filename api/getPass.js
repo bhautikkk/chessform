@@ -33,6 +33,18 @@ export default async function handler(req, res) {
             return res.status(400).json({ success: false, error: 'Missing phone or name' });
         }
 
+        // --- SERVER-SIDE RATE LIMITING ---
+        const MAX_ATTEMPTS = 5;
+        const LOCKOUT_MS = 5 * 60 * 1000;
+        const attemptRef = db.collection('pass_attempts').doc(phone);
+        const attemptDoc = await attemptRef.get();
+        let attemptData = attemptDoc.exists ? attemptDoc.data() : { count: 0, lockedUntil: 0 };
+
+        if (attemptData.lockedUntil > Date.now()) {
+            const remainingMs = attemptData.lockedUntil - Date.now();
+            return res.status(429).json({ success: false, error: 'Locked', remainingMs: remainingMs });
+        }
+
         const docSnap = await db.collection('registrations').doc(phone).get();
         
         if (!docSnap.exists) {
@@ -48,6 +60,11 @@ export default async function handler(req, res) {
                 return res.status(403).json({ success: false, error: 'Your registration is under review. Approval usually takes up to 24 hours.' });
             }
 
+            // Reset attempts on success
+            if (attemptData.count > 0 || attemptData.lockedUntil > 0) {
+                await attemptRef.set({ count: 0, lockedUntil: 0 });
+            }
+
             // Return stripped data for pass
             return res.status(200).json({
                 success: true,
@@ -60,7 +77,19 @@ export default async function handler(req, res) {
             });
             
         } else {
-            return res.status(401).json({ success: false, error: 'Incorrect name.' });
+            attemptData.count += 1;
+            let isLocked = false;
+            if (attemptData.count >= MAX_ATTEMPTS) {
+                attemptData.lockedUntil = Date.now() + LOCKOUT_MS;
+                isLocked = true;
+            }
+            await attemptRef.set(attemptData);
+            
+            if (isLocked) {
+                return res.status(429).json({ success: false, error: 'Locked', remainingMs: LOCKOUT_MS });
+            } else {
+                return res.status(401).json({ success: false, error: 'Incorrect name.', attemptsLeft: MAX_ATTEMPTS - attemptData.count });
+            }
         }
         
     } catch (error) {
