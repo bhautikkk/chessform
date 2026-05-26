@@ -533,6 +533,7 @@
                 errDiv.style.display = 'block';
                 btn.innerHTML = `Locked (${mins}:${String(secs).padStart(2,'0')})`;
 
+                if (left <= 0) {
                     clearInterval(countdownTimer);
                     btn.disabled = false;
                     btn.innerText = 'Find My Pass';
