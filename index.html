@@ -655,20 +655,18 @@
                         </div>
                         <p class="upi-card-desc">Scan the QR code below or tap the button to pay using any UPI app (GPay, PhonePe, Paytm, BHIM, etc.). After paying, enter your 12-digit transaction UTR below.</p>
                         
-                        <div style="text-align:center; margin-bottom: 12px; padding: 0 10px;">
-                            <a href="#" id="upiPayBtn" class="status-btn" style="display:inline-flex; justify-content:center; width:100%; background:linear-gradient(135deg, #10b981 0%, #059669 100%); color:#fff; box-shadow: 0 4px 12px rgba(16,185,129,0.3); border: none; font-size: 14px; letter-spacing: 0.5px;">
-                                <i class="fas fa-location-arrow"></i> Open UPI App to Pay
-                            </a>
-                        </div>
-
-                        <div style="text-align:center; margin-bottom: 18px;">
-                            <button type="button" id="showQrBtn" style="background:transparent; border:1px solid #3f3f46; color:#a1a1aa; padding:8px 16px; border-radius:6px; font-size:12px; cursor:pointer; font-family:'Outfit', sans-serif; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.05)'; this.style.color='#f4f4f5';" onmouseout="this.style.background='transparent'; this.style.color='#a1a1aa';" onclick="document.getElementById('upiQrWrapper').style.display='flex'; this.style.display='none';">
-                                <i class="fas fa-qrcode"></i> Show QR Code instead
+                        <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 12px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
+                            <div style="text-align: left;">
+                                <div style="font-size: 0.75rem; color: #a1a1aa; margin-bottom: 2px;">Pay via UPI ID</div>
+                                <div id="upiIdDisplay" style="font-size: 1rem; font-weight: 600; color: #fff; user-select: all; letter-spacing: 0.5px;">chessbird@ybl</div>
+                            </div>
+                            <button type="button" id="upiCopyBtn" style="background: rgba(16, 185, 129, 0.15); border: none; color: #10b981; width: 36px; height: 36px; border-radius: 6px; cursor: pointer; transition: all 0.2s;" title="Copy UPI ID">
+                                <i class="far fa-copy"></i>
                             </button>
                         </div>
 
-                        <div class="upi-qr-wrapper" id="upiQrWrapper" style="display: none;">
-                            <div class="upi-qr-title">Scan to Pay <span id="upiAmountDisplay">₹29</span></div>
+                        <div class="upi-qr-wrapper" id="upiQrWrapper" style="display: flex;">
+                            <div class="upi-qr-title">Scan QR Code to Pay <span id="upiAmountDisplay">₹29</span></div>
                             <div class="upi-qr-code">
                                 <img id="upiQrCodeImg" src="" alt="UPI QR Code">
                             </div>
