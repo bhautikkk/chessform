@@ -1077,10 +1077,10 @@
             <!-- Vercel Live URL Settings (for Localhost Testing) -->
             <div class="card-box">
                 <div class="section-title"><i class="fas fa-link" style="color:var(--gold);"></i> &nbsp;Vercel Live URL (for Localhost testing)</div>
-                <p style="font-size:13px; color:var(--muted); margin-bottom:16px;">Configure your live Vercel domain URL (e.g. <code>https://chessbirdform.vercel.app</code>). When running on localhost, the registration form will send payment verification requests to this live API backend instead of direct client-side Firestore writes (which fail due to security rules).</p>
+                <p style="font-size:13px; color:var(--muted); margin-bottom:16px;">Configure your live Vercel domain URL (e.g. <code>https://chessbird.online</code>). When running on localhost, the registration form will send payment verification requests to this live API backend instead of direct client-side Firestore writes (which fail due to security rules).</p>
                 <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
                     <div style="flex:1; min-width:160px;">
-                        <input type="text" id="vercelUrlInput" placeholder="e.g. https://chessbirdform.vercel.app"
+                        <input type="text" id="vercelUrlInput" placeholder="e.g. https://chessbird.online"
                             style="width:100%; padding:10px 14px; background:#111113; border:1px solid var(--border); border-radius:8px; color:var(--text); font-family:'Inter',sans-serif; font-size:14px; outline:none; transition: border-color 0.2s;"
                             onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'"
                             onkeydown="if(event.key==='Enter') saveVercelUrl()">
@@ -2026,7 +2026,7 @@
                     
                     const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
                     const vercelUrlInputVal = (document.getElementById('vercelUrlInput') ? document.getElementById('vercelUrlInput').value : '').trim();
-                    const fallbackUrl = vercelUrlInputVal || 'https://chessbirdform.vercel.app';
+                    const fallbackUrl = vercelUrlInputVal || 'https://chessbird.online';
                     const apiEndpoint = isLocalhost ? `${fallbackUrl.replace(/\/$/, '')}/api/sendEmail` : '/api/sendEmail';
                     
                     fetch(apiEndpoint, {
@@ -2761,7 +2761,7 @@
             }
         }
 
-        // ─── Save Razorpay API Key ───────────────────────────────────
+        // ─── Save Payment Configuration ───────────────────────────────────
         async function saveUpiId() {
             const input = document.getElementById('upiIdInput');
             const btn   = document.getElementById('saveUpiIdBtn');
@@ -3065,11 +3065,11 @@
             
             try {
                 const settingsSnap = await db.collection('settings').doc('global').get();
-                const vercelUrl = (settingsSnap.exists && settingsSnap.data().vercelUrl) || 'https://chessbirdform.vercel.app';
+                const vercelUrl = (settingsSnap.exists && settingsSnap.data().vercelUrl) || 'https://chessbird.online';
                 sendEmailEndpoint = isLocalhost ? `${vercelUrl.replace(/\/$/, '')}/api/sendEmail` : '/api/sendEmail';
             } catch (e) {
                 console.warn('Could not fetch settings for Vercel URL, using default.');
-                sendEmailEndpoint = isLocalhost ? 'https://chessbirdform.vercel.app/api/sendEmail' : '/api/sendEmail';
+                sendEmailEndpoint = isLocalhost ? 'https://chessbird.online/api/sendEmail' : '/api/sendEmail';
             }
 
             if (player.email) {
@@ -3194,10 +3194,10 @@
                             let sendEmailEndpoint = '/api/sendEmail';
                             try {
                                 const settingsSnap = await db.collection('settings').doc('global').get();
-                                const vercelUrl = (settingsSnap.exists && settingsSnap.data().vercelUrl) || 'https://chessbirdform.vercel.app';
+                                const vercelUrl = (settingsSnap.exists && settingsSnap.data().vercelUrl) || 'https://chessbird.online';
                                 sendEmailEndpoint = isLocalhost ? `${vercelUrl.replace(/\/$/, '')}/api/sendEmail` : '/api/sendEmail';
                             } catch (e) {
-                                sendEmailEndpoint = isLocalhost ? 'https://chessbirdform.vercel.app/api/sendEmail' : '/api/sendEmail';
+                                sendEmailEndpoint = isLocalhost ? 'https://chessbird.online/api/sendEmail' : '/api/sendEmail';
                             }
 
                             if (player.email) {

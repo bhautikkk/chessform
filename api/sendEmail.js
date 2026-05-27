@@ -93,7 +93,7 @@ export default async function handler(req, res) {
                                 <!-- Header -->
                                 <tr>
                                     <td style="background-color: #111113; padding: 30px 20px; text-align: center; border-bottom: 2px solid #eab308;">
-                                        <img src="https://chessbirdform.vercel.app/header_logo.png" alt="ChessBird" style="height: 40px; margin-bottom: 15px;">
+                                        <img src="https://chessbird.online/header_logo.png" alt="ChessBird" style="height: 40px; margin-bottom: 15px;">
                                         <h1 style="margin: 0; font-family: 'Outfit', sans-serif; color: #ffffff; font-size: 24px; font-weight: 900; letter-spacing: -0.5px; text-transform: uppercase;">
                                             <span style="color: #22c55e;">Registration</span> Approved
                                         </h1>
@@ -113,7 +113,7 @@ export default async function handler(req, res) {
                                                 <td style="padding: 20px;">
                                                     <h3 style="margin: 0 0 10px 0; color: #0f172a; font-family: 'Outfit', sans-serif; font-size: 17px;">🎫 Official Tournament Pass</h3>
                                                     <p style="margin: 0 0 15px 0; color: #475569; font-size: 14px; line-height: 1.5;">Your unique Entry ID and digital tournament pass are ready. You will need your registered phone number to access the secure portal.</p>
-                                                    <a href="https://chessbirdform.vercel.app/get-pass.html" style="display: inline-block; background-color: #22c55e; color: #ffffff; text-decoration: none; padding: 12px 20px; border-radius: 8px; font-weight: 600; font-size: 14px; text-align: center;">Download Pass Now</a>
+                                                    <a href="https://chessbird.online/get-pass.html" style="display: inline-block; background-color: #22c55e; color: #ffffff; text-decoration: none; padding: 12px 20px; border-radius: 8px; font-weight: 600; font-size: 14px; text-align: center;">Download Pass Now</a>
                                                 </td>
                                             </tr>
                                         </table>
@@ -181,7 +181,7 @@ export default async function handler(req, res) {
                                 <!-- Header -->
                                 <tr>
                                     <td style="background-color: #111113; padding: 30px 20px; text-align: center; border-bottom: 2px solid #ef4444;">
-                                        <img src="https://chessbirdform.vercel.app/header_logo.png" alt="ChessBird" style="height: 40px; margin-bottom: 15px;">
+                                        <img src="https://chessbird.online/header_logo.png" alt="ChessBird" style="height: 40px; margin-bottom: 15px;">
                                         <h1 style="margin: 0; font-family: 'Outfit', sans-serif; color: #ffffff; font-size: 24px; font-weight: 900; letter-spacing: -0.5px; text-transform: uppercase;">
                                             <span style="color: #ef4444;">Action</span> Required
                                         </h1>
@@ -211,7 +211,7 @@ export default async function handler(req, res) {
                                                 <td style="padding: 20px;">
                                                     <h3 style="margin: 0 0 10px 0; color: #0f172a; font-family: 'Outfit', sans-serif; font-size: 17px;">🔄 How to fix this</h3>
                                                     <p style="margin: 0 0 15px 0; color: #475569; font-size: 14px; line-height: 1.5;">If you made a genuine mistake, you can simply register again with the correct 12-digit UTR number.</p>
-                                                    <a href="https://chessbirdform.vercel.app/?action=reregister" style="display: inline-block; background-color: #0f172a; color: #ffffff; text-decoration: none; padding: 12px 20px; border-radius: 8px; font-weight: 600; font-size: 14px; text-align: center;">Register Again</a>
+                                                    <a href="https://chessbird.online/?action=reregister" style="display: inline-block; background-color: #0f172a; color: #ffffff; text-decoration: none; padding: 12px 20px; border-radius: 8px; font-weight: 600; font-size: 14px; text-align: center;">Register Again</a>
                                                 </td>
                                             </tr>
                                         </table>
