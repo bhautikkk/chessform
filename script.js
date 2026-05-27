@@ -612,6 +612,31 @@ function initRegistrationApp() {
         });
     }
 
+    const downloadQrBtn = document.getElementById('downloadQrBtn');
+    if (downloadQrBtn) {
+        downloadQrBtn.addEventListener('click', async () => {
+            const qrImg = document.getElementById('upiQrCodeImg');
+            if (qrImg && qrImg.src) {
+                try {
+                    const response = await fetch(qrImg.src);
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = url;
+                    a.download = 'chessbird_qr.png';
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                } catch (err) {
+                    console.error('Error downloading QR code:', err);
+                    alert('Could not download the QR code. Please take a screenshot instead.');
+                }
+            }
+        });
+    }
+
     const utrInput = document.getElementById('upiUtrInput');
     const utrError = document.getElementById('upiUtrError');
     if (utrInput) {

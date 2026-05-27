@@ -667,8 +667,11 @@
 
                         <div class="upi-qr-wrapper" id="upiQrWrapper" style="display: flex;">
                             <div class="upi-qr-title">Scan QR Code to Pay <span id="upiAmountDisplay">₹29</span></div>
-                            <div class="upi-qr-code">
+                            <div class="upi-qr-code" style="position: relative; display: inline-block;">
                                 <img id="upiQrCodeImg" src="" alt="UPI QR Code">
+                                <button type="button" id="downloadQrBtn" style="position: absolute; bottom: -12px; right: -12px; background: #10b981; border: none; color: white; width: 34px; height: 34px; border-radius: 50%; cursor: pointer; box-shadow: 0 4px 10px rgba(16,185,129,0.4); transition: transform 0.2s, background 0.2s;" title="Download QR Code" onmouseover="this.style.transform='scale(1.1)'; this.style.background='#059669';" onmouseout="this.style.transform='scale(1)'; this.style.background='#10b981';">
+                                    <i class="fas fa-download"></i>
+                                </button>
                             </div>
                         </div>
                         
