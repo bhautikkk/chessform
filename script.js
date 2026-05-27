@@ -437,7 +437,8 @@ function initRegistrationApp() {
             if (upiAmountDisplay) upiAmountDisplay.textContent = `₹${finalDisplay}`;
             
             const upiId = window.activeUpiId || 'chessbird@ybl';
-            const qrData = `upi://pay?pa=${upiId}&pn=ChessBird&am=${finalDisplay}&cu=INR`;
+            const trId = 'CB' + Date.now();
+            const qrData = `upi://pay?pa=${upiId}&pn=ChessBird&tr=${trId}&am=${finalDisplay}&cu=INR`;
             const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(qrData)}`;
             if (upiQrCodeImg) upiQrCodeImg.src = qrUrl;
 
