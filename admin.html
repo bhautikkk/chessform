@@ -1540,8 +1540,33 @@
                     </div>
                 </div>
                 <p style="font-size:13px; color:var(--muted); margin-bottom:16px;">Assign Won/Draw/Lose to players. Only <b>Won</b> or <b>Draw</b> advances a player to the next round.</p>
-                <div class="reg-list" id="tournamentList" style="max-height:340px; overflow-y:auto; scrollbar-width:thin; scrollbar-color:rgba(198,168,124,0.3) transparent;">
+                <div class="reg-list" id="tournamentList" style="max-height:340px; overflow-y:auto; scrollbar-width:thin; scrollbar-color:rgba(198,168,124,0.3) transparent; margin-bottom: 24px;">
                     <div class="empty-msg"><span class="spinner"></span></div>
+                </div>
+
+                <hr style="border: none; border-top: 1px solid var(--border); margin-bottom: 16px;">
+                
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:12px;">
+                    <div class="section-title" style="margin-bottom:0;"><i class="fas fa-chess-board"></i> &nbsp;Elementary Pairings (Knockout Boards)</div>
+                </div>
+                <p style="font-size:13px; color:var(--muted); margin-bottom:16px;">Generate boards for the current round to download as a PDF. This only pairs players who have reached this round.</p>
+
+                <!-- Action Buttons -->
+                <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px;">
+                    <button class="action-btn" id="generateElemPairingBtn" onclick="generateElementaryPairings()" style="color:var(--gold); border-color:var(--gold); background:rgba(198,168,124,0.1);">
+                        <i class="fas fa-wand-magic-sparkles"></i> Generate Pairings
+                    </button>
+                    <button class="action-btn" id="exportElemPairingPdfBtn" onclick="exportElementaryPairingPDF()" style="color:#ef4444; border-color:#ef4444; background:rgba(239,68,68,0.1);">
+                        <i class="fas fa-file-pdf"></i> Export PDF
+                    </button>
+                    <button class="action-btn" id="clearElemPairingBtn" onclick="confirmClearElementaryPairings()" style="color:#f59e0b; border-color:#f59e0b; background:rgba(245,158,11,0.1);">
+                        <i class="fas fa-rotate-right"></i> Regenerate
+                    </button>
+                </div>
+
+                <!-- Pairings List -->
+                <div id="elementaryPairingList" style="max-height:300px; overflow-y:auto; scrollbar-width:thin; scrollbar-color:rgba(198,168,124,0.3) transparent;">
+                    <div class="empty-msg" style="color:var(--muted);"><i class="fas fa-chess-board" style="margin-right:8px; color:var(--gold);"></i>Click "Generate Pairings" to create boards for this round.</div>
                 </div>
             </div>
 
@@ -3248,6 +3273,7 @@
 
         // ─── Tournament Manager Logic ─────────────────────────────────
         function renderTournamentManager() {
+            loadElementaryPairings();
             const list = document.getElementById('tournamentList');
             if (!list) return;
 
@@ -3327,12 +3353,26 @@
                     actBtns = `
                         <span style="font-size:12px; font-weight:bold; color:#8b5cf6; margin-right:10px; text-transform:uppercase;">🏆 Winner ${wRank}</span>
                     `;
-                } else if (currentStatus === 'playing') {
+                } else if (currentStatus === 'playing' || currentStatus === 'under_review') {
+                    let reviewLabel = '';
+                    if (currentStatus === 'under_review') {
+                         reviewLabel = `<span style="font-size:12px; font-weight:bold; color:#0ea5e9; margin-right:10px; text-transform:uppercase;">Under Review</span>`;
+                    }
+                    
+                    let reviewBtn = '';
+                    if (currentStatus !== 'under_review') {
+                         reviewBtn = `<button class="action-btn" style="color:#0ea5e9; border-color:#0ea5e9; padding:4px 8px; font-size:11px;" onclick="updateMatchStatus('${d.docId}', ${selectedRound}, 'under_review')">Under Review</button>`;
+                    } else {
+                         reviewBtn = `<button class="action-btn" style="color:#a1a1aa; border-color:#a1a1aa; padding:4px 8px; font-size:11px;" onclick="updateMatchStatus('${d.docId}', ${selectedRound}, 'reset')">Undo</button>`;
+                    }
+
                     actBtns = `
+                        ${reviewLabel}
                         <button class="action-btn" style="color:#10b981; border-color:#10b981; padding:4px 8px; font-size:11px;" onclick="updateMatchStatus('${d.docId}', ${selectedRound}, 'won')">Won</button>
                         <button class="action-btn" style="color:#f59e0b; border-color:#f59e0b; padding:4px 8px; font-size:11px;" onclick="updateMatchStatus('${d.docId}', ${selectedRound}, 'draw')">Draw</button>
                         <button class="action-btn" style="color:#ef4444; border-color:#ef4444; padding:4px 8px; font-size:11px;" onclick="updateMatchStatus('${d.docId}', ${selectedRound}, 'lose')">Lose</button>
                         <button class="action-btn" title="Mark as Winner (ranked by click order)" style="color:#8b5cf6; border-color:#8b5cf6; padding:4px 8px; font-size:11px;" onclick="updateMatchStatus('${d.docId}', ${selectedRound}, 'winner')">Winner</button>
+                        ${reviewBtn}
                     `;
                 } else {
                     let stColor = '#ef4444';
@@ -3442,7 +3482,334 @@
             }
         }
 
+        // ─── Elementary: Load pairings from Firestore ─────────────────────
+        async function loadElementaryPairings() {
+            const round = parseInt(document.getElementById('roundSelector').value) || 1;
+            const listEl = document.getElementById('elementaryPairingList');
+            if (!listEl) return;
+            
+            listEl.innerHTML = '<div class="empty-msg"><span class="spinner"></span> Loading pairings...</div>';
+            try {
+                const snap = await db.collection('pairings').doc('elem_round_' + round).get();
+                if (!snap.exists || !snap.data().boards || snap.data().boards.length === 0) {
+                    listEl.innerHTML = '<div class="empty-msg" style="color:var(--muted);"><i class="fas fa-chess-board" style="margin-right:8px;color:var(--gold);"></i>No pairings yet for this round. Click "Generate Pairings".</div>';
+                    return;
+                }
+                renderElementaryPairings(snap.data().boards);
+            } catch(e) {
+                listEl.innerHTML = '<div class="empty-msg" style="color:#f87171;">Error loading pairings: ' + escHtml(e.message) + '</div>';
+            }
+        }
+
+        function renderElementaryPairings(boards) {
+            const listEl = document.getElementById('elementaryPairingList');
+            if (!listEl) return;
+            listEl.innerHTML = '';
+            boards.forEach((b) => {
+                const isBye = b.blackId === 'BYE';
+                listEl.innerHTML += `
+                    <div class="reg-item" style="background:${isBye ? 'rgba(245,158,11,0.05)' : 'rgba(198,168,124,0.04)'}; border-color:${isBye ? 'rgba(245,158,11,0.2)' : 'rgba(198,168,124,0.15)'};">
+                        <div style="display:flex; align-items:center; gap:12px; flex:1; flex-wrap:wrap;">
+                            <span style="font-size:13px; color:var(--muted); font-weight:700; min-width:28px;">B${b.board}</span>
+                            <div style="flex:1;">
+                                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                                    <span style="font-weight:700; color:#fff;">${escHtml(b.whiteName)}</span>
+                                    <span style="font-size:11px; color:var(--muted);">(${b.whiteRating ?? '—'})</span>
+                                    <span style="font-size:11px; color:var(--gold); font-weight:700;">vs</span>
+                                    ${isBye
+                                        ? '<span style="font-size:12px; color:#f59e0b; font-weight:700; background:rgba(245,158,11,0.1); padding:2px 8px; border-radius:4px;">BYE (Advances)</span>'
+                                        : `<span style="font-weight:700; color:#fff;">${escHtml(b.blackName)}</span><span style="font-size:11px; color:var(--muted);">(${b.blackRating ?? '—'})</span>`}
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
+            });
+        }
+
+        // ─── Elementary: Generate Pairings Algorithm ──────────────────────
+        async function generateElementaryPairings() {
+            const round = parseInt(document.getElementById('roundSelector').value) || 1;
+            const btn = document.getElementById('generateElemPairingBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;margin-right:5px;border-top-color:currentColor;"></span> Generating...';
+
+            try {
+                const playersRaw = window.allPlayersRaw || [];
+                
+                // Get all players who reached this round
+                let validPlayers = playersRaw.filter(p => {
+                    const pRound = p.currentRound || 1;
+                    if (pRound >= round) return true;
+                    return false;
+                });
+
+                if (validPlayers.length === 0) { 
+                    showToast('error', 'No Players', 'No players have reached this round yet.'); 
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-wand-magic-sparkles"></i> Generate Pairings';
+                    return; 
+                }
+
+                // Sort by Rating Descending to pair 1v2, 3v4 etc.
+                validPlayers.sort((a, b) => (parseInt(b.rating) || 0) - (parseInt(a.rating) || 0));
+
+                const boards = [];
+                let boardNum = 1;
+                
+                // If odd number, last player gets a BYE
+                let i = 0;
+                while (i < validPlayers.length) {
+                    if (i === validPlayers.length - 1) {
+                        // Odd one out gets a bye
+                        const byePlayer = validPlayers[i];
+                        boards.push({
+                            board: boardNum++,
+                            whiteId: byePlayer.docId || '—', whiteName: byePlayer.name || '—', whiteRating: parseInt(byePlayer.rating) || 0,
+                            blackId: 'BYE', blackName: 'BYE', blackRating: 0
+                        });
+                        break;
+                    }
+                    
+                    const whitePlayer = validPlayers[i];
+                    const blackPlayer = validPlayers[i+1];
+                    boards.push({
+                        board: boardNum++,
+                        whiteId: whitePlayer.docId || '—', whiteName: whitePlayer.name || '—', whiteRating: parseInt(whitePlayer.rating) || 0,
+                        blackId: blackPlayer.docId || '—', blackName: blackPlayer.name || '—', blackRating: parseInt(blackPlayer.rating) || 0
+                    });
+                    
+                    i += 2;
+                }
+
+                // Save to Firestore under 'elem_round_X'
+                await db.collection('pairings').doc('elem_round_' + round).set({ round, boards, generatedAt: firebase.firestore.FieldValue.serverTimestamp() });
+                showToast('success', 'Pairings Generated! ♟️', `${boards.length} boards created for Round ${round}.`);
+                loadElementaryPairings();
+            } catch(e) {
+                showToast('error', 'Generation Failed', e.message);
+                console.error(e);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-wand-magic-sparkles"></i> Generate Pairings';
+            }
+        }
+
+        function confirmClearElementaryPairings() {
+            const round = parseInt(document.getElementById('roundSelector').value) || 1;
+            showSoftConfirm({
+                icon: '<i class="fas fa-rotate-right" style="color:#f59e0b;"></i>',
+                title: `Regenerate Round ${round} Boards?`,
+                desc: 'This will recreate the boards based on current players who have advanced.',
+                confirmText: 'Yes, Regenerate',
+                onConfirm: () => generateElementaryPairings()
+            });
+        }
+
+        async function exportElementaryPairingPDF() {
+            const round = parseInt(document.getElementById('roundSelector').value) || 1;
+            const btn = document.getElementById('exportElemPairingPdfBtn');
+            const origHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;margin-right:5px;border-top-color:currentColor;"></span> PDF...';
+            
+            try {
+                const snap = await db.collection('pairings').doc('elem_round_' + round).get();
+                if (!snap.exists || !snap.data().boards || snap.data().boards.length === 0) {
+                    showToast('error', 'No Pairings', 'Generate pairings first before exporting PDF.');
+                    return;
+                }
+                const allBoards = snap.data().boards;
+                const boards    = allBoards.filter(b => b.blackId !== 'BYE');
+                const byeBoard  = allBoards.find(b => b.blackId === 'BYE');
+                const totalPlayers = allBoards.reduce((s, b) => s + (b.blackId === 'BYE' ? 1 : 2), 0);
+
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+                const W = 210, H = 297;
+                const GOLD   = [198, 168, 124];
+                const DARK   = [14, 14, 17];
+                const WHITE  = [255, 255, 255];
+                const MUTED  = [110, 110, 125];
+
+                doc.setFillColor(...DARK);
+                doc.rect(0, 0, W, H, 'F');
+                doc.setFillColor(...GOLD);
+                doc.rect(0, 0, W, 3, 'F');
+                doc.setFillColor(20, 20, 26);
+                doc.rect(0, 3, W, 44, 'F');
+
+                let logoLoaded = false;
+                let lW = 0;
+                try {
+                    const logoImg  = await loadImageAsBase64('header_logo.png');
+                    const logoMeta = await getImageDimensions('header_logo.png');
+                    const aspect = logoMeta.width / logoMeta.height;
+                    let lH = 26; 
+                    lW = lH * aspect;
+                    const maxW = 60;
+                    if (lW > maxW) { lW = maxW; lH = lW / aspect; }
+                    const lY = 3 + (44 - lH) / 2;
+                    doc.addImage(logoImg, 'PNG', 12, lY, lW, lH);
+                    logoLoaded = true;
+                } catch(e) {}
+
+                const rbW = 28, rbH = 38, rbX = W - 12 - rbW, rbY = 6;
+                doc.setFillColor(30, 28, 20);
+                doc.roundedRect(rbX, rbY, rbW, rbH, 3, 3, 'F');
+                doc.setFillColor(...GOLD);
+                doc.rect(rbX, rbY, rbW, 1.5, 'F');
+                doc.rect(rbX, rbY + rbH - 1.5, rbW, 1.5, 'F');
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(7);
+                doc.setTextColor(...MUTED);
+                doc.text('ROUND', rbX + rbW / 2, rbY + 9, { align: 'center' });
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(26);
+                doc.setTextColor(...GOLD);
+                doc.text(String(round), rbX + rbW / 2, rbY + 26, { align: 'center' });
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(6.5);
+                doc.setTextColor(...MUTED);
+                doc.text('Elementary', rbX + rbW / 2, rbY + 34, { align: 'center' });
+
+                const tX = logoLoaded ? (12 + lW + 6) : 12;
+                const midY = 3 + 22;
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(16);
+                doc.setTextColor(...GOLD);
+                doc.text('ChessBird Tournament', tX, midY - 5);
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(9);
+                doc.setTextColor(175, 175, 190);
+                doc.text('Official Knockout Pairing Sheet', tX, midY + 3);
+                doc.setFontSize(7.5);
+                doc.setTextColor(...MUTED);
+                doc.text(`${new Date().toLocaleDateString('en-IN')}  ·  ${totalPlayers} players`, tX, midY + 10);
+
+                doc.setFillColor(...GOLD);
+                doc.rect(0, 47, W, 0.8, 'F');
+                doc.setFillColor(18, 18, 24);
+                doc.rect(0, 47.8, W, 9, 'F');
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(8);
+                doc.setTextColor(...GOLD);
+                doc.text('PAIRINGS', 12, 53.5);
+                doc.setFont('helvetica', 'normal');
+                doc.setTextColor(...MUTED);
+                doc.text(`Round ${round}  ·  ${boards.length} board${boards.length !== 1 ? 's' : ''}${byeBoard ? ' + 1 BYE' : ''}`, W - 12, 53.5, { align: 'right' });
+
+                const tableBody = boards.map(b => {
+                    const wRating = `(${b.whiteRating ?? '—'})`;
+                    const bRating = `(${b.blackRating ?? '—'})`;
+                    
+                    let h = Math.floor(Math.random() * 12) + 1;
+                    let mOptions = ['00', '15', '30'];
+                    let mIndex = Math.floor(Math.random() * 3);
+                    let m1 = mOptions[mIndex];
+                    let m2 = (parseInt(m1) + 15).toString();
+                    let ampm = Math.random() < 0.5 ? 'pm' : 'am';
+                    let randomTime = `${h}:${m1} ${ampm} - ${h}:${m2} ${ampm}`;
+                    
+                    return [b.board, b.whiteName, wRating, 'vs', b.blackName, bRating, randomTime];
+                });
+
+                doc.autoTable({
+                    head: [[
+                        { content: '#', styles: { halign: 'center' } },
+                        { content: 'White Player', styles: { halign: 'left' } },
+                        { content: 'ELO', styles: { halign: 'center' } },
+                        { content: '', styles: { halign: 'center' } },
+                        { content: 'Black Player', styles: { halign: 'left' } },
+                        { content: 'ELO', styles: { halign: 'center' } },
+                        { content: 'Time', styles: { halign: 'center' } },
+                    ]],
+                    body: tableBody,
+                    startY: 59,
+                    margin: { left: 12, right: 12 },
+                    theme: 'plain',
+                    headStyles: {
+                        fillColor: [26, 26, 34],
+                        textColor: [198, 168, 124],
+                        fontStyle: 'bold',
+                        fontSize: 8,
+                        cellPadding: { top: 4, bottom: 4, left: 3, right: 3 },
+                    },
+                    bodyStyles: {
+                        fontSize: 10,
+                        textColor: [230, 230, 235],
+                        fillColor: [20, 20, 26],
+                        cellPadding: { top: 5, bottom: 5, left: 3, right: 3 },
+                        lineColor: [35, 35, 45],
+                        lineWidth: 0.3,
+                    },
+                    alternateRowStyles: { fillColor: [26, 26, 34] },
+                    columnStyles: {
+                        0: { cellWidth: 10, halign: 'center', fontStyle: 'bold', textColor: [198, 168, 124] },
+                        1: { cellWidth: 48, halign: 'left',   fontStyle: 'bold', textColor: [245, 245, 252] },
+                        2: { cellWidth: 16, halign: 'center', fontSize: 8,       textColor: [110, 110, 125] },
+                        3: { cellWidth: 10, halign: 'center', fontStyle: 'bold', textColor: [198, 168, 124], fontSize: 8 },
+                        4: { cellWidth: 48, halign: 'left',   fontStyle: 'bold', textColor: [245, 245, 252] },
+                        5: { cellWidth: 16, halign: 'center', fontSize: 8,       textColor: [110, 110, 125] },
+                        6: { cellWidth: 38, halign: 'center', fontStyle: 'bold', fontSize: 9 },
+                    },
+                    didDrawPage(data) {
+                        if (data.pageNumber > 1) {
+                            doc.setFillColor(...DARK);
+                            doc.rect(0, 0, W, H, 'F');
+                            doc.setFillColor(...GOLD);
+                            doc.rect(0, 0, W, 3, 'F');
+                            doc.rect(0, H - 3, W, 3, 'F');
+                        }
+                    },
+                });
+
+                if (byeBoard) {
+                    const byeY = doc.lastAutoTable.finalY + 6;
+                    doc.setFillColor(45, 35, 10);
+                    doc.roundedRect(12, byeY, W - 24, 11, 2, 2, 'F');
+                    doc.setFillColor(198, 168, 60);
+                    doc.roundedRect(12, byeY, 3, 11, 1, 1, 'F');
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(8.5);
+                    doc.setTextColor(230, 190, 80);
+                    doc.text('BYE:', 19, byeY + 7.5);
+                    doc.setFont('helvetica', 'normal');
+                    doc.setTextColor(210, 190, 140);
+                    doc.text(`${byeBoard.whiteName}  automatically advances this round`, 32, byeY + 7.5);
+                }
+
+                doc.setFillColor(...GOLD);
+                doc.rect(0, H - 2.5, W, 2.5, 'F');
+
+                const pageCount = doc.internal.getNumberOfPages();
+                for (let i = 1; i <= pageCount; i++) {
+                    doc.setPage(i);
+                    doc.setFillColor(22, 22, 28);
+                    doc.rect(0, H - 12, W, 12, 'F');
+                    doc.setFillColor(...GOLD);
+                    doc.rect(0, H - 12, W, 0.6, 'F');
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(7.5);
+                    doc.setTextColor(...MUTED);
+                    doc.text('ChessBird  |  Official Tournament Document  |  Elementary System', 14, H - 5);
+                    doc.setFont('helvetica', 'bold');
+                    doc.setTextColor(...GOLD);
+                    doc.text(`Round ${round}  —  Page ${i} / ${pageCount}`, W - 14, H - 5, { align: 'right' });
+                }
+
+                doc.save(`ChessBird_Round${round}_Elementary_Pairings.pdf`);
+                showToast('success', 'PDF Exported! 📄', `Round ${round} pairings saved as PDF.`);
+            } catch(e) {
+                showToast('error', 'PDF Failed', e.message);
+                console.error(e);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = origHtml;
+            }
+        }
+
         // ─── Save Event ID ───────────────────────────────────────────
+
         function saveEventId() {
             const newId = document.getElementById('eventIdInput').value.trim();
             const btn = document.getElementById('saveEventIdBtn');
